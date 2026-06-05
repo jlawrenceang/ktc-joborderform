@@ -3,6 +3,9 @@ export interface Consignee {
   code: string
   name: string
   status: AccreditationStatus
+  address: string | null
+  tin: string | null
+  doc_2303_path: string | null
 }
 
 export type BrokerStatus = 'pending' | 'approved' | 'rejected'
