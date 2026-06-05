@@ -2,11 +2,16 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
+interface SignUpExtras {
+  fullName?: string
+  idFile?: File | null
+}
+
 interface AuthValue {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, extras?: SignUpExtras) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
@@ -29,9 +34,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }
   }
-  const signUp: AuthValue['signUp'] = async (email, password) => {
-    const { error } = await supabase.auth.signUp({ email, password })
-    return { error: error?.message ?? null }
+  const signUp: AuthValue['signUp'] = async (email, password, extras) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: extras?.fullName ?? null } },
+    })
+    if (error) return { error: error.message }
+
+    // Upload the valid ID if we already have a session (email confirmation off).
+    // With confirmation on there's no session yet — the user uploads after first login.
+    if (extras?.idFile && data.session && data.user) {
+      const ext = extras.idFile.name.split('.').pop()?.toLowerCase() || 'dat'
+      const path = `${data.user.id}/valid-id.${ext}`
+      const { error: upErr } = await supabase.storage
+        .from('valid-ids')
+        .upload(path, extras.idFile, { upsert: true })
+      if (!upErr) {
+        await supabase.from('brokers').update({ valid_id_path: path }).eq('user_id', data.user.id)
+      }
+    }
+    return { error: null }
   }
   const signOut = async () => {
     await supabase.auth.signOut()

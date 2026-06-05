@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { useBroker } from '../lib/useBroker'
 
-const links = [
+const baseLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
   { to: '/accreditation', label: 'Accreditation' },
@@ -11,7 +12,9 @@ const links = [
 
 export default function Shell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth()
+  const { broker } = useBroker()
   const navigate = useNavigate()
+  const links = broker?.is_admin ? [...baseLinks, { to: '/admin', label: 'Admin' }] : baseLinks
 
   async function handleSignOut() {
     await signOut()

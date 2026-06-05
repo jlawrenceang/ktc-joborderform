@@ -55,8 +55,15 @@ assets/, scripts/, docs/   the original Jotform form + its theme (fallback)
 ## Status / next
 
 - [x] App scaffold, auth (Supabase), branded login + home shell
-- [x] Schema + RLS migration
+- [x] Schema + RLS migration (`0001`)
+- [x] Registration: full name + valid-ID upload (Supabase Storage, `0002`)
+- [x] Job Order form with per-broker approved-consignee dropdown
+- [x] Accreditation request + **admin approval** screen (`is_admin` framework)
 - [ ] Consignees uploader (Excel → `consignees`)
-- [ ] Accreditation request + admin approval
-- [ ] Job Order form with per-broker approved-consignee dropdown
 - [ ] Deploy to Vercel
+
+### Admin setup
+
+After a user signs up, make them an admin: run `supabase/seed-admin.sql` (with their
+email) in the SQL Editor. Admins get an **Admin** nav tab to approve/reject
+accreditation requests and view brokers' uploaded IDs.

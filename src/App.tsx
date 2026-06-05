@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import JobOrder from './pages/JobOrder'
 import Accreditation from './pages/Accreditation'
 import MyJobOrders from './pages/MyJobOrders'
+import Admin from './pages/Admin'
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/accreditation" element={<Protected><Accreditation /></Protected>} />
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
+          <Route path="/admin" element={<Protected><Admin /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -9,7 +9,9 @@ export interface Broker {
   user_id: string
   customer_id: string | null
   company_name: string | null
+  full_name: string | null
   email: string | null
+  valid_id_path: string | null
   is_admin: boolean
 }
 
