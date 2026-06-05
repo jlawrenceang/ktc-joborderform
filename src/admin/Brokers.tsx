@@ -13,29 +13,22 @@ export default function Brokers() {
   const [rows, setRows] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [acting, setActing] = useState<string | null>(null)
 
-  async function load() {
-    // External brokers only — staff/admins are managed under Settings.
-    const { data, error } = await supabase
+  useEffect(() => {
+    // External brokers only — staff/admins live under Settings.
+    supabase
       .from('brokers')
       .select('*')
       .eq('is_admin', false)
       .eq('is_owner', false)
       .order('created_at', { ascending: false })
-    if (error) { setError(error.message); setLoading(false); return }
-    setRows((data ?? []) as Broker[])
-    setLoading(false)
-  }
-  useEffect(() => { void load() }, [])
+      .then(({ data, error }) => {
+        if (error) setError(error.message)
+        else setRows((data ?? []) as Broker[])
+        setLoading(false)
+      })
+  }, [])
 
-  async function setStatus(id: string, status: 'approved' | 'rejected') {
-    setActing(id); setError(null)
-    const { error } = await supabase.from('brokers').update({ status, decided_at: new Date().toISOString() }).eq('id', id)
-    setActing(null)
-    if (error) return setError(error.message)
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)))
-  }
   async function viewId(path: string | null) {
     if (!path) return
     const { data, error } = await supabase.storage.from('valid-ids').createSignedUrl(path, 60)
@@ -48,7 +41,7 @@ export default function Brokers() {
       <div className="ktc-glass" style={{ padding: 28 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Brokers</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
-          Registered broker accounts. (Staff &amp; admin access is managed under Settings.)
+          All registered broker accounts and their status. Approve or reject under the Approvals tab.
         </p>
         {error && <div style={{ color: 'var(--acc-2)', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
@@ -72,16 +65,6 @@ export default function Brokers() {
                       {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
                       {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => viewId(b.valid_id_path)}>View ID</button></>)}
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {b.status !== 'approved' && (
-                      <button className="ktc-link" disabled={acting === b.id} onClick={() => setStatus(b.id, 'approved')}
-                        style={{ fontSize: 13, fontWeight: 600, color: 'hsl(150 60% 32%)' }}>Approve</button>
-                    )}
-                    {b.status !== 'rejected' && (
-                      <button className="ktc-link" disabled={acting === b.id} onClick={() => setStatus(b.id, 'rejected')}
-                        style={{ fontSize: 13, fontWeight: 600 }}>Reject</button>
-                    )}
                   </div>
                 </div>
               )
