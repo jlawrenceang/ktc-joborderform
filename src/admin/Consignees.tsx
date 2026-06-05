@@ -29,13 +29,26 @@ function parseCsv(text: string): string[][] {
 function rowsToConsignees(grid: string[][]): { code: string; name: string }[] {
   if (grid.length === 0) return []
   const header = grid[0].map((h) => h.trim().toLowerCase())
-  const hasHeader = header.includes('code') && header.includes('name')
-  const codeIdx = hasHeader ? header.indexOf('code') : 0
-  const nameIdx = hasHeader ? header.indexOf('name') : 1
-  const body = hasHeader ? grid.slice(1) : grid
-  return body
-    .map((r) => ({ code: (r[codeIdx] ?? '').trim(), name: (r[nameIdx] ?? '').trim() }))
-    .filter((r) => r.code && r.name)
+  const nameIdx = header.findIndex(
+    (h) => h === 'name' || h === 'consignee' || h.includes('customer name') || h.includes('consignee name'),
+  )
+  const codeIdx = header.findIndex((h) => h === 'code')
+  // With a recognized name header, use it (code optional). Otherwise assume a
+  // headerless two-column "code,name" file.
+  const nIdx = nameIdx >= 0 ? nameIdx : 1
+  const cIdx = nameIdx >= 0 ? codeIdx : 0
+  const body = nameIdx >= 0 ? grid.slice(1) : grid
+  const seen = new Set<string>()
+  const out: { code: string; name: string }[] = []
+  for (const r of body) {
+    const name = (r[nIdx] ?? '').trim()
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({ code: cIdx >= 0 ? (r[cIdx] ?? '').trim() : '', name })
+  }
+  return out
 }
 
 export default function Consignees() {
@@ -63,9 +76,16 @@ export default function Consignees() {
   useEffect(() => { void load() }, [])
 
   async function upsert(rows: { code: string; name: string }[]) {
-    // chunk to keep requests reasonable
-    for (let i = 0; i < rows.length; i += 500) {
-      const { error } = await supabase.from('consignees').upsert(rows.slice(i, i + 500), { onConflict: 'code' })
+    // rows with an explicit code -> upsert by code; code-less rows -> plain
+    // insert so the DB default (CN-#####) generates a unique code for each.
+    const withCode = rows.filter((r) => r.code)
+    const noCode = rows.filter((r) => !r.code)
+    for (let i = 0; i < withCode.length; i += 500) {
+      const { error } = await supabase.from('consignees').upsert(withCode.slice(i, i + 500), { onConflict: 'code' })
+      if (error) throw new Error(error.message)
+    }
+    for (let i = 0; i < noCode.length; i += 500) {
+      const { error } = await supabase.from('consignees').insert(noCode.slice(i, i + 500).map((r) => ({ name: r.name })))
       if (error) throw new Error(error.message)
     }
   }
