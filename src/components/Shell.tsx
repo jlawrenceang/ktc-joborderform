@@ -15,11 +15,10 @@ export default function Shell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth()
   const { broker } = useBroker()
   const navigate = useNavigate()
-  const isAdmin = hasAdminAccess(broker)
-  const links = isAdmin ? [...baseLinks, { to: '/admin', label: 'Admin' }] : baseLinks
+  const links = baseLinks
 
   // Account-approval gate: un-approved (non-admin) brokers can't use the tools yet.
-  const gated = !!broker && !isAdmin && broker.status !== 'approved'
+  const gated = !!broker && !hasAdminAccess(broker) && broker.status !== 'approved'
 
   async function handleSignOut() {
     await signOut()
