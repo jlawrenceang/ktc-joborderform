@@ -1,0 +1,18 @@
+# Secrets — never commit Jotform API keys, Google/Supabase creds
+.env
+.env.*
+!.env.example
+*.key
+service-account*.json
+
+# Node (Phase 2)
+node_modules/
+dist/
+npm-debug.log*
+
+# build artifact from scripts/apply-theme.sh (logo inlined into CSS)
+.theme-combined.css
+
+# OS / editor
+.DS_Store
+Thumbs.db
