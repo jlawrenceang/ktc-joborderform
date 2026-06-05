@@ -15,6 +15,7 @@ import Approvals from './admin/Approvals'
 import Brokers from './admin/Brokers'
 import Consignees from './admin/Consignees'
 import AllJobOrders from './admin/AllJobOrders'
+import Settings from './admin/Settings'
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/admin/brokers" element={<Admin><Brokers /></Admin>} />
           <Route path="/admin/consignees" element={<Admin><Consignees /></Admin>} />
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
+          <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

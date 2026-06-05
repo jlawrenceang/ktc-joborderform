@@ -9,6 +9,7 @@ const adminLinks = [
   { to: '/admin/brokers', label: 'Brokers' },
   { to: '/admin/consignees', label: 'Consignees' },
   { to: '/admin/job-orders', label: 'Job Orders' },
+  { to: '/admin/settings', label: 'Settings' },
 ]
 
 export default function AdminShell({ children }: { children: ReactNode }) {
