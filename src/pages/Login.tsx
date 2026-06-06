@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import Turnstile, { captchaEnabled } from '../components/Turnstile'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -13,17 +14,32 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  // bumping this remounts the widget, forcing a fresh single-use token
+  const [captchaKey, setCaptchaKey] = useState(0)
+
+  function resetCaptcha() {
+    setCaptchaToken(null)
+    setCaptchaKey((k) => k + 1)
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (captchaEnabled && !captchaToken) {
+      setError('Please complete the CAPTCHA.')
+      return
+    }
     setBusy(true)
     setError(null)
     setNotice(null)
+    const token = captchaToken ?? undefined
     const res =
       mode === 'signin'
-        ? await signIn(email, password)
-        : await signUp(email, password, { fullName, idFile })
+        ? await signIn(email, password, token)
+        : await signUp(email, password, { fullName, idFile, captchaToken: token })
     setBusy(false)
+    // tokens are single-use — always reset after an attempt
+    if (captchaEnabled) resetCaptcha()
     if (res.error) {
       setError(res.error)
       return
@@ -85,10 +101,18 @@ export default function Login() {
             </div>
           )}
 
+          {captchaEnabled && (
+            <Turnstile
+              key={captchaKey}
+              onVerify={(t) => setCaptchaToken(t)}
+              onExpire={() => setCaptchaToken(null)}
+            />
+          )}
+
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
           {notice && <div className="ktc-label" style={{ fontSize: 13 }}>{notice}</div>}
 
-          <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 6 }}>
+          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken)} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
@@ -96,7 +120,7 @@ export default function Login() {
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null) }}>
+            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha() }}>
             {isSignup ? 'Sign in' : 'Create one'}
           </button>
         </p>

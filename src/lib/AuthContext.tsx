@@ -5,12 +5,13 @@ import { supabase } from './supabase'
 interface SignUpExtras {
   fullName?: string
   idFile?: File | null
+  captchaToken?: string
 }
 
 interface AuthValue {
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string, extras?: SignUpExtras) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
@@ -30,19 +31,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  const signIn: AuthValue['signIn'] = async (identifier, password) => {
+  const signIn: AuthValue['signIn'] = async (identifier, password, captchaToken) => {
     // staff log in with a username (no @) -> map to the synthetic staff email
     const email = identifier.includes('@')
       ? identifier.trim()
       : `${identifier.trim().toLowerCase()}@ktc-staff.local`
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    })
     return { error: error?.message ?? null }
   }
   const signUp: AuthValue['signUp'] = async (email, password, extras) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: extras?.fullName ?? null } },
+      options: {
+        data: { full_name: extras?.fullName ?? null },
+        ...(extras?.captchaToken ? { captchaToken: extras.captchaToken } : {}),
+      },
     })
     if (error) return { error: error.message }
 
