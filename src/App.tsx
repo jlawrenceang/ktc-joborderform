@@ -6,6 +6,8 @@ import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
 import Irr from './pages/Irr'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 import Home from './pages/Home'
 import JobOrder from './pages/JobOrder'
 import Accreditation from './pages/Accreditation'
@@ -50,8 +52,10 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          {/* Public — readable before registering and linked from the IRR acceptance checkbox */}
+          {/* Public — readable before registering and linked from the registration consents */}
           <Route path="/irr" element={<Irr />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           {/* Broker portal */}
           <Route path="/" element={<Protected><RoleLanding /></Protected>} />

@@ -2,7 +2,11 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
-import { IRR_VERSION, IRR_VERSION_LABEL } from '../content/irr'
+import {
+  IRR_VERSION, IRR_VERSION_LABEL,
+  TERMS_VERSION, TERMS_VERSION_LABEL,
+  PRIVACY_VERSION, PRIVACY_VERSION_LABEL,
+} from '../content/legal'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -16,7 +20,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [agreedIrr, setAgreedIrr] = useState(false)
+  const [agreedTerms, setAgreedTerms] = useState(false) // Terms & Conditions + Broker IRR
+  const [consentPrivacy, setConsentPrivacy] = useState(false) // DPA data-privacy consent
   // bumping this remounts the widget, forcing a fresh single-use token
   const [captchaKey, setCaptchaKey] = useState(0)
 
@@ -27,8 +32,12 @@ export default function Login() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (mode === 'signup' && !agreedIrr) {
-      setError('Please read and accept the Broker IRR to continue.')
+    if (mode === 'signup' && !agreedTerms) {
+      setError('Please read and accept the Terms & Conditions and Broker IRR to continue.')
+      return
+    }
+    if (mode === 'signup' && !consentPrivacy) {
+      setError('Please give your data-privacy consent to continue.')
       return
     }
     if (captchaEnabled && !captchaToken) {
@@ -42,7 +51,14 @@ export default function Login() {
     const res =
       mode === 'signin'
         ? await signIn(email, password, token)
-        : await signUp(email, password, { fullName, idFile, captchaToken: token, irrVersion: IRR_VERSION })
+        : await signUp(email, password, {
+            fullName,
+            idFile,
+            captchaToken: token,
+            irrVersion: IRR_VERSION,
+            termsVersion: TERMS_VERSION,
+            privacyVersion: PRIVACY_VERSION,
+          })
     setBusy(false)
     // tokens are single-use — always reset after an attempt
     if (captchaEnabled) resetCaptcha()
@@ -55,7 +71,8 @@ export default function Login() {
       setMode('signin')
       setFullName('')
       setIdFile(null)
-      setAgreedIrr(false)
+      setAgreedTerms(false)
+      setConsentPrivacy(false)
       return
     }
     navigate('/', { replace: true })
@@ -109,19 +126,38 @@ export default function Login() {
           )}
 
           {isSignup && (
-            <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
-              <input
-                type="checkbox"
-                checked={agreedIrr}
-                onChange={(e) => setAgreedIrr(e.target.checked)}
-                style={{ marginTop: 2, flex: '0 0 auto' }}
-                required
-              />
-              <span className="ktc-label" style={{ fontSize: 13 }}>
-                I have read and agree to the{' '}
-                <Link to="/irr" target="_blank" className="ktc-link">KTC Broker IRR ({IRR_VERSION_LABEL})</Link>.
-              </span>
-            </label>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
+                <input
+                  type="checkbox"
+                  checked={agreedTerms}
+                  onChange={(e) => setAgreedTerms(e.target.checked)}
+                  style={{ marginTop: 2, flex: '0 0 auto' }}
+                  required
+                />
+                <span className="ktc-label" style={{ fontSize: 13 }}>
+                  I have read and agree to the{' '}
+                  <Link to="/terms" target="_blank" className="ktc-link">Terms &amp; Conditions ({TERMS_VERSION_LABEL})</Link>{' '}
+                  and the{' '}
+                  <Link to="/irr" target="_blank" className="ktc-link">Broker IRR ({IRR_VERSION_LABEL})</Link>.
+                </span>
+              </label>
+              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
+                <input
+                  type="checkbox"
+                  checked={consentPrivacy}
+                  onChange={(e) => setConsentPrivacy(e.target.checked)}
+                  style={{ marginTop: 2, flex: '0 0 auto' }}
+                  required
+                />
+                <span className="ktc-label" style={{ fontSize: 13 }}>
+                  I consent to KTC collecting and processing my personal data, including the valid ID I upload,
+                  in accordance with the{' '}
+                  <Link to="/privacy" target="_blank" className="ktc-link">Privacy Notice ({PRIVACY_VERSION_LABEL})</Link>{' '}
+                  (Data Privacy Act of 2012).
+                </span>
+              </label>
+            </div>
           )}
 
           {captchaEnabled && (
@@ -135,7 +171,7 @@ export default function Login() {
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
           {notice && <div className="ktc-label" style={{ fontSize: 13 }}>{notice}</div>}
 
-          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedIrr)} style={{ marginTop: 6 }}>
+          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && (!agreedTerms || !consentPrivacy))} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
@@ -143,9 +179,15 @@ export default function Login() {
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha(); setAgreedIrr(false) }}>
+            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha(); setAgreedTerms(false); setConsentPrivacy(false) }}>
             {isSignup ? 'Sign in' : 'Create one'}
           </button>
+        </p>
+
+        <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.85, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link to="/terms" className="ktc-link">Terms</Link>
+          <Link to="/privacy" className="ktc-link">Privacy</Link>
+          <Link to="/irr" className="ktc-link">Broker IRR</Link>
         </p>
       </div>
     </div>

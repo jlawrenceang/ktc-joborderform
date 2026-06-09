@@ -50,20 +50,26 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     await expect(page.getByText('Valid ID', { exact: false })).toBeVisible()
   })
 
-  test('IRR page is public and renders the document', async ({ page }) => {
-    const res = await page.goto('/irr')
-    expect(res?.status()).toBe(200)
-    await expect(page).toHaveURL(/\/irr$/) // public — not redirected to /login
-    await expect(
-      page.getByRole('heading', { name: /Implementing Rules and Regulations/i }),
-    ).toBeVisible()
+  test('public legal pages (IRR, Terms, Privacy) render without auth', async ({ page }) => {
+    const cases: [string, RegExp][] = [
+      ['/irr', /Implementing Rules and Regulations/i],
+      ['/terms', /Terms and Conditions/i],
+      ['/privacy', /Privacy Notice/i],
+    ]
+    for (const [path, heading] of cases) {
+      const res = await page.goto(path)
+      expect(res?.status()).toBe(200)
+      await expect(page).toHaveURL(new RegExp(`${path}$`)) // public — not redirected to /login
+      await expect(page.getByRole('heading', { name: heading }).first()).toBeVisible()
+    }
   })
 
-  test('registration requires accepting the IRR', async ({ page }) => {
+  test('registration requires Terms/IRR agreement and data-privacy consent', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('button', { name: 'Create one' }).click()
-    await expect(page.getByRole('checkbox')).toBeVisible()
-    await expect(page.getByRole('link', { name: /KTC Broker IRR/i })).toBeVisible()
+    await expect(page.getByRole('checkbox')).toHaveCount(2)
+    await expect(page.getByRole('link', { name: /Terms & Conditions/i }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: /Privacy Notice/i }).first()).toBeVisible()
   })
 
   test('login enforces CAPTCHA: Turnstile mounts and the submit is gated', async ({ page }) => {

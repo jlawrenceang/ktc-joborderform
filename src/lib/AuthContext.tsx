@@ -7,6 +7,8 @@ interface SignUpExtras {
   idFile?: File | null
   captchaToken?: string
   irrVersion?: string
+  termsVersion?: string
+  privacyVersion?: string
 }
 
 interface AuthValue {
@@ -57,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: extras?.fullName ?? null,
           irr_version: extras?.irrVersion ?? null,
           irr_accepted_at: extras?.irrVersion ? acceptedAt : null,
+          terms_version: extras?.termsVersion ?? null,
+          terms_accepted_at: extras?.termsVersion ? acceptedAt : null,
+          privacy_consent_version: extras?.privacyVersion ?? null,
+          privacy_consented_at: extras?.privacyVersion ? acceptedAt : null,
         },
         ...(extras?.captchaToken ? { captchaToken: extras.captchaToken } : {}),
       },
@@ -79,6 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (extras?.irrVersion) {
         updates.irr_version = extras.irrVersion
         updates.irr_accepted_at = acceptedAt
+      }
+      if (extras?.termsVersion) {
+        updates.terms_version = extras.termsVersion
+        updates.terms_accepted_at = acceptedAt
+      }
+      if (extras?.privacyVersion) {
+        updates.privacy_consent_version = extras.privacyVersion
+        updates.privacy_consented_at = acceptedAt
       }
       if (Object.keys(updates).length > 0) {
         await supabase.from('brokers').update(updates).eq('user_id', data.user.id)

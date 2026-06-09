@@ -11,13 +11,13 @@ last_updated: 2026-06-07
 
 | Metric | Count |
 |--------|-------|
-| Migrations | **11** (`0001_init` … `0011_broker_irr_acceptance`; 0011 pending apply to KTC DB) |
+| Migrations | **12** (`0001_init` … `0012_broker_consents`; 0011 + 0012 pending apply to KTC DB) |
 | Core tables | 5 (`brokers`, `consignees`, `accreditations`, `job_orders`, `job_order_lines`) |
 | SECURITY DEFINER RPCs | `create_staff` (+ defaults/triggers per migration) |
 | Storage buckets | `valid-ids` (broker IDs) + consignee 2303 docs |
-| Routes | broker (`/`, `/job-order`, `/job-orders`) + public `/irr` + `/accreditation` (notice) + admin (`/admin`, `/admin/approvals`, `/admin/brokers`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`) + `/login` |
-| ADRs | **8** (`docs/adr/` — 0001–0008, all Accepted) |
-| Automated tests | **10 Playwright** (Phase 1 unauth smoke, passing) + 5 `test.fixme` (Phase 2, blocked on CAPTCHA-free env). No Vitest unit suite. |
+| Routes | broker (`/`, `/job-order`, `/job-orders`) + public `/irr` `/terms` `/privacy` + `/accreditation` (notice) + admin (`/admin`, `/admin/approvals`, `/admin/brokers`, `/admin/consignees`, `/admin/job-orders`, `/admin/settings`) + `/login` |
+| ADRs | **9** (`docs/adr/` — 0001–0009, all Accepted) |
+| Automated tests | **12 Playwright** (Phase 1 unauth smoke, passing) + 5 `test.fixme` (Phase 2, blocked on CAPTCHA-free env). No Vitest unit suite. |
 
 ## Data
 

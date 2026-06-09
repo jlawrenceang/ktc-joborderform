@@ -16,13 +16,13 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 ## Apply migrations
 
-- [ ] **Apply `0011_broker_irr_acceptance.sql`** to the KTC DB (`node scripts/run-migrations.mjs` with `DATABASE_URL`, or the SQL Editor) so the `brokers.irr_version` / `irr_accepted_at` columns exist. IRR acceptance is recorded in auth metadata until then.
+- [ ] **Apply `0011_broker_irr_acceptance.sql` and `0012_broker_consents.sql`** to the KTC DB (`node scripts/run-migrations.mjs` with `DATABASE_URL`, or the SQL Editor) so the broker IRR/Terms/Privacy consent columns exist. Consents are recorded in auth metadata until then.
 
-## Broker IRR (NEXT)
+## Legal docs / consents (NEXT)
 
-- [ ] KTC + counsel to finalize the IRR template (`src/content/broker-irr.md`) — fees, penalties, dates, legal citations. Bump `IRR_VERSION` on material change.
-- [ ] Enforce re-acceptance when `IRR_VERSION` changes for already-registered brokers (compare stored vs current on login).
-- [ ] Surface `irr_version` / `irr_accepted_at` in the admin Brokers/Approvals view.
+- [ ] KTC + counsel to finalize the templates: `broker-irr.md`, `terms-and-conditions.md`, `privacy-notice.md` — fees, penalties, dates, **DPO contact**, retention periods, venue, legal citations. Confirm **NPC registration** obligations. Bump the relevant `*_VERSION` on material change.
+- [ ] Enforce re-acceptance / re-consent when a `*_VERSION` changes for already-registered brokers (compare stored vs current on login).
+- [ ] Surface IRR/Terms/Privacy consent version + timestamp in the admin Brokers/Approvals view.
 
 ## Admin / processing (NEXT)
 
