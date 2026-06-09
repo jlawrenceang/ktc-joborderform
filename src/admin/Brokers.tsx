@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
+import { BrokerReview } from './BrokerReview'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
@@ -68,6 +69,7 @@ export default function Brokers() {
                       {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
                       {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => viewId(b.valid_id_path)}>View ID</button></>)}
                     </div>
+                    <BrokerReview b={b} />
                   </div>
                 </div>
               )
