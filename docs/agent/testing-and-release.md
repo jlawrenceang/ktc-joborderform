@@ -51,6 +51,6 @@ npm run test:e2e:ui                                # interactive
 ```
 
 - **`e2e/smoke.spec.ts` — Phase 1, active (10 tests).** Unauthenticated smoke: routing, login render, protected-route redirects, SPA rewrite, Turnstile mounts + submit gated. Runs without completing a login, so the server-side CAPTCHA does not block it. This is the automated counterpart to ST01's no-auth checks.
-- **`e2e/authenticated.spec.ts` — Phase 2, `test.fixme` (5 tests).** ST01 Lanes 2–5. Blocked until a CAPTCHA-free auth path exists (dedicated test Supabase project, or service-role session minting) — see the file header. Do NOT disable prod CAPTCHA to run tests.
+- **`e2e/authenticated.spec.ts` — Phase 2 (skips by default).** Authenticated flows (ST01 Lanes 1–5). Uses `mintSession()` (`e2e/helpers/session.ts`) — service-role magic-link login, so CAPTCHA is never in the way and never disabled (ADR-0010). Runs only when `E2E_SUPABASE_URL` + `E2E_SERVICE_ROLE_KEY` are set (point at a dedicated test project for mutation lanes); skips cleanly otherwise. Mutation-heavy lanes are `test.fixme` until pointed at a seeded test project. Setup in `e2e/README.md`. Never disable prod CAPTCHA or mutate prod data to test.
 
-There is no Vitest unit suite. When adding coverage for a new workflow, write the Playwright smoke first. See `docs/obsidian-vault/07-Memory/Pending Items.md` for the Phase 2 unblock decision.
+There is no Vitest unit suite. When adding coverage for a new workflow, write the Playwright smoke first.
