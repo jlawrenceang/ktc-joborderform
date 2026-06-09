@@ -3,8 +3,11 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
+import { useIdleLogout } from '../lib/useIdleLogout'
 import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
+
+const IDLE_LOGOUT_MS = 10 * 60 * 1000 // auto sign-out after 10 min of inactivity
 
 const baseLinks = [
   { to: '/', label: 'Home', end: true },
@@ -29,6 +32,12 @@ export default function Shell({ children }: { children: ReactNode }) {
     await signOut()
     navigate('/login', { replace: true })
   }
+
+  // Idle timeout: sign brokers out after 10 minutes of inactivity.
+  useIdleLogout(() => {
+    sessionStorage.setItem('ktc_idle_logout', '1')
+    void handleSignOut()
+  }, IDLE_LOGOUT_MS)
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 24px 60px' }}>

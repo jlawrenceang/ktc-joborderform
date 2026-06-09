@@ -33,6 +33,14 @@ export default function Login() {
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) setScrolledAgreement(true)
   }
 
+  // Surface an inactivity sign-out (set by the broker portal's idle timeout).
+  useEffect(() => {
+    if (sessionStorage.getItem('ktc_idle_logout')) {
+      setNotice('You were signed out after 10 minutes of inactivity. Please sign in again.')
+      sessionStorage.removeItem('ktc_idle_logout')
+    }
+  }, [])
+
   // Reset when leaving signup; if the agreement is too short to scroll, enable immediately.
   useEffect(() => {
     if (mode !== 'signup') { setScrolledAgreement(false); return }
