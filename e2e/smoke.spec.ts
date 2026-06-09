@@ -47,7 +47,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     await expect(page.getByRole('heading', { name: 'Create account' })).toBeVisible()
     await expect(page.locator('#fullName')).toBeVisible()
     await expect(page.locator('#validId')).toBeVisible()
-    await expect(page.getByText('Valid ID', { exact: false })).toBeVisible()
+    await expect(page.getByText('Valid ID (image or PDF)')).toBeVisible()
   })
 
   test('public legal pages (IRR, Terms, Privacy) render without auth', async ({ page }) => {

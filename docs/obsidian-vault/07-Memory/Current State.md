@@ -11,7 +11,7 @@ last_updated: 2026-06-07
 
 ## 2026-06-09 — Terms & Conditions + Data Privacy consent
 
-**Added (ADR-0009).** Public `/terms` and `/privacy` pages (single-source Markdown via a shared `MarkdownDoc` renderer). The Privacy Notice is **DPA (R.A. 10173)-aware** — required because brokers upload a government ID. Registration now requires two consents: (1) Terms & Conditions + Broker IRR, (2) a **separate** data-privacy consent. Versions + timestamps recorded in auth metadata + `brokers` columns via migration **`0012`** (apply to KTC DB; metadata holds the record until then). Login page has footer links. 12 Playwright Phase 1 tests. All three legal docs are templates pending KTC/legal finalization. See [[Data Privacy and Consents]].
+**Added (ADR-0009).** Public `/terms` and `/privacy` pages (single-source Markdown via a shared `MarkdownDoc` renderer). The Privacy Notice is **DPA (R.A. 10173)-aware** — required because brokers upload a government ID. Registration now requires two consents: (1) Terms & Conditions + Broker IRR, (2) a **separate** data-privacy consent. Versions + timestamps recorded in auth metadata + `brokers` columns via migration **`0012`** (apply to KTC DB; metadata holds the record until then). Login page has footer links. 10 Playwright Phase 1 tests. All three legal docs are templates pending KTC/legal finalization. See [[Data Privacy and Consents]].
 
 ## 2026-06-09 — Broker IRR acceptance gate
 
@@ -39,7 +39,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … `0010_create_staff`, all applied. RLS enabled; role model via `is_owner`/`is_admin`/`status`.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … `0012_broker_consents` (`0011`–`0012` pending apply to the KTC DB; consents recorded in auth metadata until then). RLS enabled; role model via `is_owner`/`is_admin`/`status`.
 
 ## In progress / not yet
 
@@ -47,7 +47,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 - Per-broker accredited-consignee scoping.
 - Resend SMTP (email confirmations / password resets).
 - Supabase Auth Site URL / Redirect URLs not yet pointed at the custom domain.
-- No automated test suite yet (lint + build + manual/`curl` smoke).
+- Playwright Phase 1 unauth smoke (10 tests, passing); Phase 2 authenticated flows pending a CAPTCHA-free path. No Vitest unit suite.
 
 ## Immediate priorities
 
