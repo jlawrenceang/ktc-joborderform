@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { AdminRow } from './AdminRow'
@@ -10,6 +10,39 @@ interface PendingBroker {
   email: string | null
   customer_id: string | null
   valid_id_path: string | null
+  terms_version: string | null
+  terms_accepted_at: string | null
+  privacy_consent_version: string | null
+  privacy_consented_at: string | null
+}
+
+function fmtDate(s: string | null): string | null {
+  if (!s) return null
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString()
+}
+
+const pill = (bg: string, fg: string): CSSProperties => ({
+  fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: bg, color: fg,
+})
+
+// Pre-approval review: does this broker have a valid ID on file, and did they
+// accept the Terms and give DPA consent (and when)?
+function BrokerReview({ b }: { b: PendingBroker }) {
+  const ok = pill('hsl(150 50% 93%)', 'hsl(150 60% 30%)')
+  const warn = pill('hsl(0 70% 95%)', 'hsl(0 65% 45%)')
+  const neutral = pill('rgba(0,0,0,0.06)', 'hsl(var(--ink-2))')
+  const terms = fmtDate(b.terms_accepted_at)
+  const dpa = fmtDate(b.privacy_consented_at)
+  const ver = b.terms_version || b.privacy_consent_version
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+      <span style={b.valid_id_path ? ok : warn}>{b.valid_id_path ? '✓ Valid ID on file' : '⚠ No valid ID'}</span>
+      {ver && <span style={neutral}>Agreement {ver}</span>}
+      <span style={terms ? ok : warn}>{terms ? `✓ Terms ${terms}` : '⚠ Terms not accepted'}</span>
+      <span style={dpa ? ok : warn}>{dpa ? `✓ DPA consent ${dpa}` : '⚠ No DPA consent'}</span>
+    </div>
+  )
 }
 
 interface PendingAccreditation {
@@ -31,7 +64,7 @@ export default function Approvals() {
 
   async function load() {
     const [b, a] = await Promise.all([
-      supabase.from('brokers').select('id, broker_code, full_name, email, customer_id, valid_id_path').eq('status', 'pending').order('created_at'),
+      supabase.from('brokers').select('id, broker_code, full_name, email, customer_id, valid_id_path, terms_version, terms_accepted_at, privacy_consent_version, privacy_consented_at').eq('status', 'pending').order('created_at'),
       supabase.from('accreditations').select('id, broker:brokers(full_name, email), consignee:consignees(code, name)').eq('status', 'pending').order('requested_at'),
     ])
     if (b.error || a.error) { setError(b.error?.message ?? a.error?.message ?? 'Load failed'); setLoading(false); return }
@@ -68,7 +101,7 @@ export default function Approvals() {
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Account approvals</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review the broker's valid ID before approving their account.</p>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review the broker's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.</p>
         {loading ? <span className="ktc-label">Loading…</span> : brokers.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>No accounts pending. 🎉</div>
         ) : (
@@ -76,6 +109,7 @@ export default function Approvals() {
             {brokers.map((b) => (
               <AdminRow key={b.id} title={`${b.broker_code ? b.broker_code + ' · ' : ''}${b.full_name || b.email || 'Unknown'}`}
                 subtitle={`${b.email ?? ''}${b.customer_id ? ` · #${b.customer_id}` : ''}`}
+                extra={<BrokerReview b={b} />}
                 onViewId={b.valid_id_path ? () => viewId(b.valid_id_path) : undefined}
                 busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved')} onReject={() => decideBroker(b.id, 'rejected')} />
             ))}

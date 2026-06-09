@@ -1,6 +1,9 @@
+import type { ReactNode } from 'react'
+
 interface Props {
   title: string
   subtitle: string
+  extra?: ReactNode
   onViewId?: () => void
   busy: boolean
   onApprove: () => void
@@ -21,6 +24,7 @@ export function AdminRow(props: Props) {
       <div style={{ fontSize: 14, lineHeight: 1.5 }}>
         <div><b>{props.title}</b></div>
         <div className="ktc-label" style={{ fontSize: 13 }}>{props.subtitle}</div>
+        {props.extra}
         {props.onViewId && (
           <button className="ktc-link" style={{ fontSize: 12, marginTop: 2 }} onClick={props.onViewId}>
             View valid ID

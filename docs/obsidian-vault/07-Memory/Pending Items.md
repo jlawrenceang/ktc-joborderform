@@ -22,7 +22,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 - [ ] KTC + counsel to finalize the **one** template `src/content/broker-agreement.md` — DPO contact, retention periods, venue, fees, penalties, legal citations; confirm **NPC registration** obligations. Bump `AGREEMENT_VERSION` on material change.
 - [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered brokers (compare stored vs current on login).
-- [ ] Surface the consent version + timestamp in the admin Brokers/Approvals view.
+- [x] Surface the consent version + timestamp in the admin Approvals view (valid-ID + Terms/DPA badges on each broker card). *(Brokers list could get the same treatment later.)*
 
 ## Admin / processing (NEXT)
 

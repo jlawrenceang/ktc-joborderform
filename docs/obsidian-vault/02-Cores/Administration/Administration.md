@@ -45,6 +45,7 @@ The internal staff portal: broker approvals, consignee management, job-order pro
 ## Done
 
 - Approval queue, broker + consignee management, owner-only staff creation, deployment live.
+- **Approval review (2026-06-09):** broker cards on `/admin/approvals` show valid-ID-on-file status + Agreement version and Terms/DPA consent badges (with dates) so the admin verifies consent + ID before approving. See [[Broker Agreement]].
 
 ## Partial / open
 
