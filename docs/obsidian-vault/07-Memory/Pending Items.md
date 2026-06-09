@@ -16,7 +16,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 
 ## Apply migrations
 
-- [ ] **Apply `0011_broker_irr_acceptance.sql` and `0012_broker_consents.sql`** to the KTC DB (`node scripts/run-migrations.mjs` with `DATABASE_URL`, or the SQL Editor) so the broker IRR/Terms/Privacy consent columns exist. Consents are recorded in auth metadata until then.
+- [x] **All migrations 0001–0013 applied + verified** (2026-06-09). `DATABASE_URL` (session pooler) now lives in the gitignored `.env.local`, so future KTC migrations apply directly via `node scripts/run-migrations.mjs` (idempotent). 0013 verified: `decision_reason` on brokers+accreditations, `suspended` in the status check.
 
 ## Legal docs / consents (NEXT)
 
