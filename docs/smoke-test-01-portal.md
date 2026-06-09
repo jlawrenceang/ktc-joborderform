@@ -52,20 +52,20 @@ PASS / AMBER / FAIL / BLOCKED / N/A (see template).
 
 | Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| 1A-1 | `/login` | Load page | Logged out | — | KTC logo + Sign in form render | Turnstile widget visible | Submit disabled until widget solved | | |
-| 1A-2 | `/login` | Try Sign in **without** solving CAPTCHA | — | client guard | Blocked with "Please complete the CAPTCHA." | No auth call fired | Button stays disabled | | |
-| 1A-3 | `/login` | Solve CAPTCHA, sign in as **owner** | owner exists | `supabase.auth.signInWithPassword` + captcha verify | Session created | Redirect to `/admin` (Admin Portal), Owner badge | Owner NOT dumped into broker portal | | |
-| 1A-4 | `/admin` | Observe shell | owner session | `useBroker` (`.eq('user_id')`) | Admin nav (Dashboard/Approvals/Brokers/Consignees/Job Orders/Settings) | Owner/Admin badge correct | `useBroker` returns owner's own row despite admin-all RLS | | |
-| 1A-5 | API | `curl` tokenless `POST /auth/v1/token` | anon key | Supabase Auth (Attack Protection) | `captcha_failed`, no login | — | Direct-API bypass blocked | | |
-| 1A-6 | header | Sign out | owner session | `supabase.auth.signOut` | Back to `/login` | Session cleared | — | | |
+| 1A-1 | `/login` | Load page | Logged out | — | KTC logo + Sign in form render | Turnstile widget visible (Managed: auto-passes legit clients, shows green check) | Submit gated until a token exists | **PASS** (manual 2026-06-09) |
+| 1A-2 | `/login` | Observe CAPTCHA behavior | — | Turnstile (Managed) | Widget auto-issues a token for legitimate browsers — no manual puzzle | Green check appears automatically | **N/A** — Managed Turnstile auto-passes legit clients by design; real enforcement is server-side (see 1A-5). |
+| 1A-3 | `/login` | Sign in as **owner** | owner exists | `supabase.auth.signInWithPassword` + captcha verify | Session created | Redirect to `/admin` (Admin Portal), Owner badge | Owner NOT dumped into broker portal | **PASS** (manual 2026-06-09) |
+| 1A-4 | `/admin` | Observe shell | owner session | `useBroker` (`.eq('user_id')`) | Admin nav (Dashboard/Approvals/Brokers/Consignees/Job Orders/Settings) | Owner/Admin badge correct | `useBroker` returns owner's own row despite admin-all RLS | **PASS** (manual 2026-06-09) |
+| 1A-5 | API | `curl` tokenless `POST /auth/v1/token` | anon key | Supabase Auth (Attack Protection) | `captcha_failed`, no login | — | Direct-API bypass blocked | **PASS** (preflight P7) |
+| 1A-6 | header | Sign out | owner session | `supabase.auth.signOut` | Back to `/login` | Session cleared | — | **PASS** (manual 2026-06-09) |
 
 #### Route closure
-- [ ] CAPTCHA required on every sign-in attempt
-- [ ] Owner → `/admin`, never broker home
-- [ ] Tokenless API login rejected (`captcha_failed`)
+- [x] CAPTCHA present + server-enforced (Managed Turnstile auto-passes legit clients; tokenless API blocked)
+- [x] Owner → `/admin`, never broker home
+- [x] Tokenless API login rejected (`captcha_failed`)
 
 #### Lane closeout
-- [ ] Auth + CAPTCHA coherent end-to-end
+- [x] Auth + CAPTCHA coherent end-to-end — **PASS** (manual walkthrough 2026-06-09; Managed Turnstile confirmed working as designed)
 
 ---
 
@@ -78,12 +78,15 @@ PASS / AMBER / FAIL / BLOCKED / N/A (see template).
 
 | Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| 2A-1 | `/login` (register) | Fill email + password + full name; upload valid ID; solve CAPTCHA; Sign up | logged out | `supabase.auth.signUp` + storage upload to `valid-ids` | auth user + `brokers` row `status='pending'`; `valid_id_path` set | Notice "Account created…"; switches to Sign in | Sign up needs CAPTCHA too | | |
-| 2A-2 | `/login` | Sign in as the new broker | account created | signInWithPassword | Session created | Lands on broker home | — | | |
-| 2A-3 | `/` (Shell) | Observe | broker `pending` | `useBroker` | Pending-approval panel shown | New Job Order / Accreditation gated off | Un-approved broker cannot transact | | |
-| 2A-4 | `/admin/approvals` (as owner) | Open queue; view broker + valid ID | owner session | select brokers; signed URL | Broker visible; valid ID viewable | Signed URL opens the uploaded file | Only admin/owner can view valid IDs | | |
+| 2A-0 | header | **Sign out** of the owner account | owner session | `signOut` | Back to `/login` | — | — | | |
+| 2A-1 | `/login` (register) | Click "Create one"; fill email + password + full name; upload valid ID; **tick both consents** (Terms+IRR, Privacy); CAPTCHA auto-passes; Sign up | logged out | `supabase.auth.signUp` + storage upload to `valid-ids` + consent recorded (metadata + brokers) | auth user + `brokers` row `status='pending'`; `valid_id_path`, irr/terms/privacy versions set | "Account created…"; switches to Sign in | **Sign up disabled until BOTH consent boxes ticked** | | |
+| 2A-2 | `/login` | Sign in as the new broker | account created; **email confirmation OFF** | signInWithPassword | Session created | Lands on broker home | If "Email not confirmed" → turn off Confirm email in Supabase (see note below) | | |
+| 2A-3 | `/` (Shell) | Observe | broker `pending` | `useBroker` | Pending-approval panel shown | New Job Order gated off | Un-approved broker cannot transact | | |
+| 2A-4 | `/admin/approvals` (as owner) | Sign out, log back in as owner; open queue; view broker + valid ID | owner session | select brokers; signed URL | Broker visible; valid ID viewable | Signed URL opens the uploaded file | Only admin/owner can view valid IDs | | |
 | 2A-5 | `/admin/approvals` | Approve the broker | owner session | update `brokers` `status='approved'`, `decided_at` | Status flips to approved | Row leaves pending list | — | | |
-| 2A-6 | `/` (broker) | Re-login as broker | approved | — | Broker home with "Your Broker ID: BR-#####" | Nav unlocked (Home/New JO/Accreditation/My JOs) | — | | |
+| 2A-6 | `/` (broker) | Sign out; re-login as broker | approved | — | Broker home with "Your Broker ID: BR-#####" | Nav unlocked (Home / New Job Order / My Job Orders / IRR) | — | | |
+
+> **Note (email confirmation):** Lane 2 assumes Supabase **Confirm email is OFF** (Authentication → Providers → Email). With Resend not yet configured, a confirmation email won't arrive, so leave it off for prod testing — otherwise the new broker can't sign in at 2A-2. Tip: use a `you+broker1@gmail.com` alias as the throwaway.
 
 #### Route closure
 - [ ] Pending gate blocks un-approved brokers
