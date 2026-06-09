@@ -5,6 +5,7 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 ## [Unreleased]
 
 ### 2026-06-09
+- **Flow change (ADR-0007):** disabled per-broker consignee accreditation. The New Job Order page now searches the full consignee master list (debounced server-side typeahead) instead of an accreditation-fed dropdown; any approved broker can pick any consignee. Removed the Accreditation nav link; `/accreditation` now shows a notice (route kept). `accreditations` table + admin features untouched (reversible).
 - Added Playwright E2E (`e2e/`, `playwright.config.ts`, `test:e2e` scripts). Phase 1 `smoke.spec.ts` (8 tests) — unauthenticated smoke against the deployed site (routing, login render, protected-route redirects, SPA rewrite, Turnstile mounts + submit gated); all passing. Phase 2 `authenticated.spec.ts` (5 `test.fixme`) — ST01 Lanes 2–5, blocked on a CAPTCHA-free auth path (documented in-file).
 
 ### 2026-06-08

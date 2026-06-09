@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
@@ -15,31 +14,56 @@ function emptyLine(): LineDraft {
 }
 
 export default function JobOrder() {
-  const { broker, loading: brokerLoading } = useBroker()
-  const [consignees, setConsignees] = useState<Consignee[]>([])
-  const [loadingConsignees, setLoadingConsignees] = useState(true)
+  const { broker } = useBroker()
 
+  // Consignee picker — searchable typeahead over the full master list.
+  // (No per-broker accreditation gate: any registered broker can pick any consignee.)
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Consignee[]>([])
+  const [searching, setSearching] = useState(false)
+  const [showList, setShowList] = useState(false)
   const [consigneeId, setConsigneeId] = useState('')
+
   const [entryNumber, setEntryNumber] = useState('')
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [createdJo, setCreatedJo] = useState<string | null>(null)
 
+  // Debounced server-side search (the master list has thousands of rows, past
+  // the 1000-row select cap — so we query as the broker types).
   useEffect(() => {
-    supabase
-      .from('accreditations')
-      .select('consignee:consignees(id, code, name)')
-      .eq('status', 'approved')
-      .then(({ data }) => {
-        const rows = (data ?? []) as unknown as { consignee: Consignee | Consignee[] | null }[]
-        const list = rows
-          .map((r) => (Array.isArray(r.consignee) ? (r.consignee[0] ?? null) : r.consignee))
-          .filter((c): c is Consignee => !!c)
-        setConsignees(list)
-        setLoadingConsignees(false)
-      })
-  }, [])
+    if (consigneeId) return // a consignee is selected; don't search
+    const q = query.trim()
+    if (q.length < 2) {
+      setResults([])
+      return
+    }
+    setSearching(true)
+    const handle = setTimeout(async () => {
+      const { data } = await supabase
+        .from('consignees')
+        .select('id, code, name')
+        .or(`code.ilike.%${q}%,name.ilike.%${q}%`)
+        .order('code')
+        .limit(40)
+      setResults((data ?? []) as Consignee[])
+      setSearching(false)
+    }, 250)
+    return () => clearTimeout(handle)
+  }, [query, consigneeId])
+
+  function selectConsignee(c: Consignee) {
+    setConsigneeId(c.id)
+    setQuery(`${c.code} – ${c.name}`)
+    setShowList(false)
+  }
+  function clearConsignee() {
+    setConsigneeId('')
+    setQuery('')
+    setResults([])
+    setShowList(true)
+  }
 
   function updateLine(i: number, patch: Partial<LineDraft>) {
     setLines((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)))
@@ -58,6 +82,10 @@ export default function JobOrder() {
       setError('Broker profile not found.')
       return
     }
+    if (!consigneeId) {
+      setError('Select a consignee from the list.')
+      return
+    }
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) {
       setError('Add at least one container.')
@@ -68,7 +96,7 @@ export default function JobOrder() {
       .from('job_orders')
       .insert({
         broker_id: broker.id,
-        consignee_id: consigneeId || null,
+        consignee_id: consigneeId,
         entry_number: entryNumber.trim() || null,
       })
       .select('id, jo_number')
@@ -92,7 +120,7 @@ export default function JobOrder() {
       return
     }
     setCreatedJo((jo as { jo_number: string }).jo_number)
-    setConsigneeId('')
+    clearConsignee()
     setEntryNumber('')
     setLines([emptyLine()])
   }
@@ -120,89 +148,150 @@ export default function JobOrder() {
           </div>
         )}
 
-        {!brokerLoading && !loadingConsignees && consignees.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14, lineHeight: 1.6 }}>
-            You have no <b>approved consignees</b> yet. Request accreditation first on the{' '}
-            <Link to="/accreditation" className="ktc-link">Accreditation</Link> page — once KTC approves them,
-            they'll appear here.
-          </div>
-        ) : (
-          <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
-            <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="consignee">Consignee</label>
-              <select
+        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <label className="ktc-label" htmlFor="consignee">Consignee</label>
+            <div style={{ position: 'relative' }}>
+              <input
                 id="consignee"
                 className="ktc-input"
-                value={consigneeId}
-                onChange={(e) => setConsigneeId(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  {loadingConsignees ? 'Loading…' : 'Select an accredited consignee'}
-                </option>
-                {consignees.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} – {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="entry">Entry Number</label>
-              <input
-                id="entry"
-                className="ktc-input"
-                placeholder="e.g. C-0000012345"
-                value={entryNumber}
-                onChange={(e) => setEntryNumber(e.target.value)}
+                placeholder="Search consignee by code or name…"
+                value={query}
+                autoComplete="off"
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  setConsigneeId('')
+                  setShowList(true)
+                }}
+                onFocus={() => {
+                  if (!consigneeId) setShowList(true)
+                }}
+                onBlur={() => setTimeout(() => setShowList(false), 150)}
               />
-            </div>
-
-            <div style={{ display: 'grid', gap: 10 }}>
-              <span className="ktc-label">Container Details</span>
-              {lines.map((line, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    className="ktc-input"
-                    style={{ flex: '1 1 45%' }}
-                    placeholder="Container number (e.g. ABCD1234567)"
-                    value={line.container_number}
-                    onChange={(e) => updateLine(i, { container_number: e.target.value })}
-                  />
-                  <select
-                    className="ktc-input"
-                    style={{ flex: '1 1 45%' }}
-                    value={line.service_request}
-                    onChange={(e) => updateLine(i, { service_request: e.target.value })}
-                  >
-                    {SERVICE_REQUESTS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="ktc-link"
-                    onClick={() => removeLine(i)}
-                    style={{ opacity: lines.length === 1 ? 0.3 : 1 }}
-                    aria-label="Remove row"
-                  >
-                    ✕
-                  </button>
+              {consigneeId && (
+                <button
+                  type="button"
+                  className="ktc-link"
+                  onClick={clearConsignee}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12 }}
+                >
+                  Change
+                </button>
+              )}
+              {showList && !consigneeId && (
+                <div
+                  role="listbox"
+                  style={{
+                    position: 'absolute',
+                    zIndex: 20,
+                    top: 'calc(100% + 4px)',
+                    left: 0,
+                    right: 0,
+                    maxHeight: 260,
+                    overflowY: 'auto',
+                    borderRadius: 12,
+                    background: 'rgba(255,255,255,0.92)',
+                    backdropFilter: 'blur(20px) saturate(1.6)',
+                    border: '1px solid var(--glass-brd)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+                    padding: 6,
+                  }}
+                >
+                  {searching ? (
+                    <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>Searching…</div>
+                  ) : query.trim().length < 2 ? (
+                    <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>
+                      Type at least 2 characters to search the consignee master list.
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>No matches.</div>
+                  ) : (
+                    results.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        // onMouseDown (not onClick) so selection fires before the input blur closes the list
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          selectConsignee(c)
+                        }}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '8px 10px',
+                          borderRadius: 8,
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          fontSize: 14,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.05)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <b>{c.code}</b> – {c.name}
+                      </button>
+                    ))
+                  )}
                 </div>
-              ))}
-              <button type="button" className="ktc-link" onClick={addLine} style={{ justifySelf: 'start' }}>
-                + Add container
-              </button>
+              )}
             </div>
+          </div>
 
-            {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
+          <div style={{ display: 'grid', gap: 6 }}>
+            <label className="ktc-label" htmlFor="entry">Entry Number</label>
+            <input
+              id="entry"
+              className="ktc-input"
+              placeholder="e.g. C-0000012345"
+              value={entryNumber}
+              onChange={(e) => setEntryNumber(e.target.value)}
+            />
+          </div>
 
-            <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-              {busy ? 'Submitting…' : 'Submit Job Order'}
+          <div style={{ display: 'grid', gap: 10 }}>
+            <span className="ktc-label">Container Details</span>
+            {lines.map((line, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  className="ktc-input"
+                  style={{ flex: '1 1 45%' }}
+                  placeholder="Container number (e.g. ABCD1234567)"
+                  value={line.container_number}
+                  onChange={(e) => updateLine(i, { container_number: e.target.value })}
+                />
+                <select
+                  className="ktc-input"
+                  style={{ flex: '1 1 45%' }}
+                  value={line.service_request}
+                  onChange={(e) => updateLine(i, { service_request: e.target.value })}
+                >
+                  {SERVICE_REQUESTS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="ktc-link"
+                  onClick={() => removeLine(i)}
+                  style={{ opacity: lines.length === 1 ? 0.3 : 1 }}
+                  aria-label="Remove row"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button type="button" className="ktc-link" onClick={addLine} style={{ justifySelf: 'start' }}>
+              + Add container
             </button>
-          </form>
-        )}
+          </div>
+
+          {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
+
+          <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+            {busy ? 'Submitting…' : 'Submit Job Order'}
+          </button>
+        </form>
       </div>
     </Shell>
   )

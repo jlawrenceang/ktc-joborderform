@@ -60,3 +60,9 @@ Chosen option: **Option A**. A broker self-registers (email + password + full na
 
 * `supabase/migrations/0003_broker_account_approval.sql`, `0008_consignee_approval.sql`, `0009_consignee_accreditation_docs.sql`
 * `src/admin/Consignees.tsx` · `src/components/Shell.tsx` (pending gate)
+
+---
+
+## Current-State Addendum (2026-06-09)
+
+The **per-broker consignee accreditation gate** described here was **disabled** by [ADR-0007](0007-disable-per-broker-consignee-accreditation.md). Brokers now pick any consignee from the master list on the Job Order form; the broker self-register → admin-approve gate and the admin-side consignee approval/accreditation (TIN/2303) features remain valid and in effect. Treat ADR-0007 as the present-day rule for consignee targeting.

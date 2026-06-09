@@ -6,7 +6,7 @@ type: workflow
 
 # 🔄 Consignee Accreditation
 
-How a consignee becomes an approved, accredited target for job orders.
+How a consignee becomes an approved, accredited record in the master. **Note (2026-06-09, ADR-0007):** this is now an **admin-side data-quality** process only — it no longer gates which consignees a broker can target. Brokers pick any consignee from the master list (see [[Job Order Submission]]). The per-broker "request accreditation" page is disabled.
 
 ## Steps
 

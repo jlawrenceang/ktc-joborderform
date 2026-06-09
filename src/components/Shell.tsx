@@ -7,7 +7,6 @@ import { hasAdminAccess } from '../lib/types'
 const baseLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
-  { to: '/accreditation', label: 'Accreditation' },
   { to: '/job-orders', label: 'My Job Orders' },
 ]
 
@@ -41,7 +40,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             {broker!.status === 'rejected'
               ? 'Your account application was not approved. Please contact KTC for details.'
               : 'Thanks for registering. A KTC admin is reviewing your account and valid ID. ' +
-                "You'll be able to request accreditations and submit job orders once approved."}
+                "You'll be able to submit job orders once approved."}
           </p>
         </div>
       ) : (

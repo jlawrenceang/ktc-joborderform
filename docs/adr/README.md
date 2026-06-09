@@ -17,6 +17,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0004](0004-owner-failsafe-and-invite-only-staff.md) | Establish an owner failsafe and invite-only staff | Accepted | 2026-06-05 | Security |
 | [0005](0005-admin-approval-and-consignee-accreditation-controls.md) | Require admin approval + consignee accreditation controls | Accepted | 2026-06-05 | Workflow |
 | [0006](0006-host-on-vercel-with-turnstile-captcha.md) | Host on Vercel and gate auth with Turnstile CAPTCHA | Accepted | 2026-06-07 | Integration \| Security |
+| [0007](0007-disable-per-broker-consignee-accreditation.md) | Disable per-broker consignee accreditation (brokers pick from master) | Accepted | 2026-06-09 | Workflow |
 
 ## Governance
 

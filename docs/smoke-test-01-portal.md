@@ -127,13 +127,13 @@ PASS / AMBER / FAIL / BLOCKED / N/A (see template).
 
 ### Route 4A — Submit against an approved consignee
 
-**Objective:** An approved broker submits a job order with service lines against an approved consignee; both broker and admin can see it.
-**Start state:** Approved broker session; at least one approved consignee.
+**Objective:** An approved broker submits a job order with service lines against a consignee chosen from the master list; both broker and admin can see it.
+**Start state:** Approved broker session. (No accreditation prerequisite — per ADR-0007 the broker picks from the consignee master list.)
 
 | Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects | Guardrail Test | Result | Evidence |
 |---|---|---|---|---|---|---|---|---|---|
-| 4A-1 | `/job-order` | Open New Job Order | approved broker | — | Form renders | Consignee selector lists **approved** consignees | Un-approved consignees NOT selectable | | |
-| 4A-2 | `/job-order` | Pick consignee + add service line(s) | approved consignee | `SERVICE_REQUESTS` enum | Lines added (X-ray / DEA / OOG stripping) | Line UI updates | Only valid service types | | |
+| 4A-1 | `/job-order` | Open New Job Order; type ≥2 chars in the Consignee box | approved broker | `consignees` `.or` ilike `.limit(40)` | Typeahead returns master-list matches | Results list renders; "Type at least 2 characters" before that | Server-side search (handles >1000 rows); submit blocked until one is selected | | |
+| 4A-2 | `/job-order` | Select a consignee + add service line(s) | search results shown | `SERVICE_REQUESTS` enum | Consignee chosen (box shows code – name, "Change" appears); lines added | Line UI updates | Only valid service types; "Select a consignee" error if none chosen | | |
 | 4A-3 | `/job-order` | Submit | lines present | insert `job_orders` + `job_order_lines` | Header + lines persisted | Confirmation / redirect | — | | |
 | 4A-4 | `/job-orders` | Open My Job Orders | submitted | select own job orders | The new order appears | Lines + consignee shown (via `one<T>()`) | Broker sees only own orders (RLS) | | |
 | 4A-5 | `/admin/job-orders` (owner) | Open admin list | order exists | select all | The order is visible to admin | Broker + consignee resolved | Admin sees all orders | | |

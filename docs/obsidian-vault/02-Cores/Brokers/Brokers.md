@@ -20,7 +20,7 @@ External broker accounts — registration, identity verification (valid ID), adm
 
 - `/login` (register tab) — email + password + full name + valid-ID upload
 - `/` — broker home (`src/pages/Home.tsx`) once approved; shows "Your Broker ID: BR-#####"
-- Broker shell: `src/components/Shell.tsx` (nav: Home / New Job Order / Accreditation / My Job Orders)
+- Broker shell: `src/components/Shell.tsx` (nav: Home / New Job Order / My Job Orders — the Accreditation link was removed 2026-06-09, ADR-0007)
 
 ## Lifecycle
 

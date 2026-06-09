@@ -25,8 +25,8 @@ The core transaction: an approved broker submits a Job Order requesting terminal
 ## Model
 
 - `job_orders` (header) + `job_order_lines` (lines).
-- Service requests enumerated in `SERVICE_REQUESTS` (`src/lib/types.ts`) — X-ray / DEA / OOG stripping, etc.
-- Job orders may only target **approved** consignees (invariant; see [[Operational Invariants]]).
+- Service requests enumerated in `SERVICE_REQUESTS` (`src/lib/types.ts`) — X-ray / DEA variants / OOG stripping.
+- Consignee is chosen from the **master list** via a searchable typeahead. Per-broker accreditation is disabled (ADR-0007, 2026-06-09) — only the broker-approval gate applies.
 
 ## Backend surface (key)
 
