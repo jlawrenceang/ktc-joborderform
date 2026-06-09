@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-10
+- **Email-confirmation gate on the portal:** `ProtectedRoute` now blocks an authenticated-but-unconfirmed broker — instead of the portal it renders an **"Awaiting email confirmation"** page (check inbox + spam) with a **Resend confirmation email** button (`supabase.auth.resend`). Staff (`@ktc-staff.local` synthetic logins) are exempt. This backs up Supabase's **Confirm email = ON** setting (verified `mailer_autoconfirm: false`) so the portal can never render for an unverified email. Closes the Lane-A gap where a broker could reach the portal before confirming.
+- **Resend email fully wired:** `ktcterminal.com` verified in the `jla.ktcport@gmail.com` Resend account (same account as the sending key); approval-email trigger delivers `200` to non-owner Gmail + Yahoo. Hardened `scripts/set-vault-secrets.mjs` to read `.env.local` over a stale ambient `RESEND_API_KEY` and verify the stored fingerprint.
+
 ### 2026-06-09
 - **Open-order cap for verified brokers:** an approved broker may have at most **10 open** orders (`submitted`/`processing`) at once; the 11th is blocked with "You have 10 open job orders — contact KTC admin to file more." Completed/cancelled orders free up slots. Generalizes the held-cap into `enforce_order_caps` (migration **`0019_open_order_cap.sql`**). JO numbers are assigned by `nextval` (atomic) so concurrent filing never collides — verified with 5 simultaneous inserts → 5 distinct numbers; `jo_number` UNIQUE is a backstop.
 - **Idle auto-logout (broker portal):** brokers are signed out after **10 minutes** of inactivity (`src/lib/useIdleLogout.ts`, wired in `src/components/Shell.tsx`; mouse/key/scroll/touch/click reset the timer, throttled to 1/s). On timeout the session is signed out and the login page shows "You were signed out after 10 minutes of inactivity." Applies to the broker portal only (admin portal unaffected).
