@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Agreement from './pages/Agreement'
 import Home from './pages/Home'
 import JobOrder from './pages/JobOrder'
+import VerifyId from './pages/VerifyId'
 import Accreditation from './pages/Accreditation'
 import MyJobOrders from './pages/MyJobOrders'
 import AdminRoute from './admin/AdminRoute'
@@ -59,6 +60,7 @@ export default function App() {
 
           {/* Broker portal */}
           <Route path="/" element={<Protected><RoleLanding /></Protected>} />
+          <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/accreditation" element={<Protected><Accreditation /></Protected>} />
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />

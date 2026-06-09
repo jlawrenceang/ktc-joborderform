@@ -14,7 +14,7 @@ function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email,
-      options: { emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+      options: { emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined },
     })
     setBusy(false)
     setNotice(error ? error.message : 'Confirmation email resent — check your inbox and spam folder.')
