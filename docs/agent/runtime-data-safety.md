@@ -26,7 +26,7 @@ If `.env.local` and Vercel env vars ever disagree, the deployed site uses Vercel
 ## Applying schema changes
 
 - Migrations live in `supabase/migrations/` (`0001_init` … forward).
-- Apply via `node scripts/run-migrations.mjs` over `DATABASE_URL` (session pooler, `ssl rejectUnauthorized:false`), or paste into the KTC project's SQL Editor.
+- Apply via `node scripts/run-migrations.mjs` (session pooler, `ssl rejectUnauthorized:false`), or paste into the KTC project's SQL Editor. The script reads `DATABASE_URL` from the env or a **gitignored `.env.local`** (`DATABASE_URL="postgresql://...pooler.supabase.com:5432/postgres"`) — the connection string holds the DB password, so keep it only in gitignored files, never commit or echo it. Apply migrations is idempotent (safe to re-run all).
 - **Migrations are forward-only:** never edit an applied migration; write a new patch migration. Idempotent guards (`IF NOT EXISTS`, `drop policy if exists`, `create or replace`) are the house style.
 - `git push` deploys the **frontend to Vercel only** — it does NOT run migrations.
 - GoTrue gotcha: when inserting `auth.users` manually (e.g. `create_staff`), token columns (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`, `reauthentication_token`) must be `''`, never NULL, or login fails with "Database error querying schema".
