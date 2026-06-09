@@ -6,6 +6,7 @@ interface SignUpExtras {
   fullName?: string
   idFile?: File | null
   captchaToken?: string
+  irrVersion?: string
 }
 
 interface AuthValue {
@@ -44,26 +45,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null }
   }
   const signUp: AuthValue['signUp'] = async (email, password, extras) => {
+    const acceptedAt = new Date().toISOString()
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: extras?.fullName ?? null },
+        // IRR acceptance is recorded on the auth user immediately — works even
+        // when there is no session yet (email confirmation on) and before the
+        // 0011 migration adds the brokers columns.
+        data: {
+          full_name: extras?.fullName ?? null,
+          irr_version: extras?.irrVersion ?? null,
+          irr_accepted_at: extras?.irrVersion ? acceptedAt : null,
+        },
         ...(extras?.captchaToken ? { captchaToken: extras.captchaToken } : {}),
       },
     })
     if (error) return { error: error.message }
 
-    // Upload the valid ID if we already have a session (email confirmation off).
-    // With confirmation on there's no session yet — the user uploads after first login.
-    if (extras?.idFile && data.session && data.user) {
-      const ext = extras.idFile.name.split('.').pop()?.toLowerCase() || 'dat'
-      const path = `${data.user.id}/valid-id.${ext}`
-      const { error: upErr } = await supabase.storage
-        .from('valid-ids')
-        .upload(path, extras.idFile, { upsert: true })
-      if (!upErr) {
-        await supabase.from('brokers').update({ valid_id_path: path }).eq('user_id', data.user.id)
+    // With a session (email confirmation off), persist the valid ID + IRR
+    // acceptance onto the broker row for admin visibility. Best-effort: the
+    // brokers update silently no-ops if the 0011 columns aren't applied yet.
+    if (data.session && data.user) {
+      const updates: Record<string, unknown> = {}
+      if (extras?.idFile) {
+        const ext = extras.idFile.name.split('.').pop()?.toLowerCase() || 'dat'
+        const path = `${data.user.id}/valid-id.${ext}`
+        const { error: upErr } = await supabase.storage
+          .from('valid-ids')
+          .upload(path, extras.idFile, { upsert: true })
+        if (!upErr) updates.valid_id_path = path
+      }
+      if (extras?.irrVersion) {
+        updates.irr_version = extras.irrVersion
+        updates.irr_accepted_at = acceptedAt
+      }
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('brokers').update(updates).eq('user_id', data.user.id)
       }
     }
     return { error: null }

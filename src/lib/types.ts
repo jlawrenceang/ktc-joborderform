@@ -23,6 +23,8 @@ export interface Broker {
   decided_at: string | null
   is_admin: boolean
   is_owner: boolean
+  irr_version: string | null
+  irr_accepted_at: string | null
 }
 
 /** Owner is a superset of admin — treat both as admin in the UI. */

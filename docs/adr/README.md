@@ -18,6 +18,7 @@ ADRs in this folder preserve decision history for the KTC broker portal.
 | [0005](0005-admin-approval-and-consignee-accreditation-controls.md) | Require admin approval + consignee accreditation controls | Accepted | 2026-06-05 | Workflow |
 | [0006](0006-host-on-vercel-with-turnstile-captcha.md) | Host on Vercel and gate auth with Turnstile CAPTCHA | Accepted | 2026-06-07 | Integration \| Security |
 | [0007](0007-disable-per-broker-consignee-accreditation.md) | Disable per-broker consignee accreditation (brokers pick from master) | Accepted | 2026-06-09 | Workflow |
+| [0008](0008-broker-irr-acceptance-at-registration.md) | Require broker IRR acceptance at registration | Accepted | 2026-06-09 | Workflow \| Security |
 
 ## Governance
 

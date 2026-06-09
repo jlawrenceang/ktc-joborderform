@@ -14,6 +14,16 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 - [ ] Execute **ST01 browser lanes** (`docs/smoke-test-01-portal.md`, lanes 1–5) on `portal.ktcterminal.com`. Preflight P1–P7 already PASS (2026-06-07); lanes 1–5 need a manual walk.
 - [ ] Supabase Auth → URL Configuration: Site URL `https://portal.ktcterminal.com`; add Redirect URL `https://portal.ktcterminal.com/**`.
 
+## Apply migrations
+
+- [ ] **Apply `0011_broker_irr_acceptance.sql`** to the KTC DB (`node scripts/run-migrations.mjs` with `DATABASE_URL`, or the SQL Editor) so the `brokers.irr_version` / `irr_accepted_at` columns exist. IRR acceptance is recorded in auth metadata until then.
+
+## Broker IRR (NEXT)
+
+- [ ] KTC + counsel to finalize the IRR template (`src/content/broker-irr.md`) — fees, penalties, dates, legal citations. Bump `IRR_VERSION` on material change.
+- [ ] Enforce re-acceptance when `IRR_VERSION` changes for already-registered brokers (compare stored vs current on login).
+- [ ] Surface `irr_version` / `irr_accepted_at` in the admin Brokers/Approvals view.
+
 ## Admin / processing (NEXT)
 
 - [ ] `/admin/job-orders` — status workflow + decisions (process/complete/reject).

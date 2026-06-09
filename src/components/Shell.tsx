@@ -8,6 +8,7 @@ const baseLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/job-order', label: 'New Job Order' },
   { to: '/job-orders', label: 'My Job Orders' },
+  { to: '/irr', label: 'IRR' },
 ]
 
 export default function Shell({ children }: { children: ReactNode }) {

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
+import { IRR_VERSION, IRR_VERSION_LABEL } from '../content/irr'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
@@ -15,6 +16,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [agreedIrr, setAgreedIrr] = useState(false)
   // bumping this remounts the widget, forcing a fresh single-use token
   const [captchaKey, setCaptchaKey] = useState(0)
 
@@ -25,6 +27,10 @@ export default function Login() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (mode === 'signup' && !agreedIrr) {
+      setError('Please read and accept the Broker IRR to continue.')
+      return
+    }
     if (captchaEnabled && !captchaToken) {
       setError('Please complete the CAPTCHA.')
       return
@@ -36,7 +42,7 @@ export default function Login() {
     const res =
       mode === 'signin'
         ? await signIn(email, password, token)
-        : await signUp(email, password, { fullName, idFile, captchaToken: token })
+        : await signUp(email, password, { fullName, idFile, captchaToken: token, irrVersion: IRR_VERSION })
     setBusy(false)
     // tokens are single-use — always reset after an attempt
     if (captchaEnabled) resetCaptcha()
@@ -49,6 +55,7 @@ export default function Login() {
       setMode('signin')
       setFullName('')
       setIdFile(null)
+      setAgreedIrr(false)
       return
     }
     navigate('/', { replace: true })
@@ -101,6 +108,22 @@ export default function Login() {
             </div>
           )}
 
+          {isSignup && (
+            <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5 }}>
+              <input
+                type="checkbox"
+                checked={agreedIrr}
+                onChange={(e) => setAgreedIrr(e.target.checked)}
+                style={{ marginTop: 2, flex: '0 0 auto' }}
+                required
+              />
+              <span className="ktc-label" style={{ fontSize: 13 }}>
+                I have read and agree to the{' '}
+                <Link to="/irr" target="_blank" className="ktc-link">KTC Broker IRR ({IRR_VERSION_LABEL})</Link>.
+              </span>
+            </label>
+          )}
+
           {captchaEnabled && (
             <Turnstile
               key={captchaKey}
@@ -112,7 +135,7 @@ export default function Login() {
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
           {notice && <div className="ktc-label" style={{ fontSize: 13 }}>{notice}</div>}
 
-          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken)} style={{ marginTop: 6 }}>
+          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedIrr)} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
@@ -120,7 +143,7 @@ export default function Login() {
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha() }}>
+            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); resetCaptcha(); setAgreedIrr(false) }}>
             {isSignup ? 'Sign in' : 'Create one'}
           </button>
         </p>

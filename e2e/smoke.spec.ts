@@ -50,6 +50,22 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     await expect(page.getByText('Valid ID', { exact: false })).toBeVisible()
   })
 
+  test('IRR page is public and renders the document', async ({ page }) => {
+    const res = await page.goto('/irr')
+    expect(res?.status()).toBe(200)
+    await expect(page).toHaveURL(/\/irr$/) // public — not redirected to /login
+    await expect(
+      page.getByRole('heading', { name: /Implementing Rules and Regulations/i }),
+    ).toBeVisible()
+  })
+
+  test('registration requires accepting the IRR', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('button', { name: 'Create one' }).click()
+    await expect(page.getByRole('checkbox')).toBeVisible()
+    await expect(page.getByRole('link', { name: /KTC Broker IRR/i })).toBeVisible()
+  })
+
   test('login enforces CAPTCHA: Turnstile mounts and the submit is gated', async ({ page }) => {
     await page.goto('/login')
     // The Turnstile API script is loaded by src/components/Turnstile.tsx.
