@@ -34,7 +34,9 @@ export default function AdminShell({ children, crumb }: { children: ReactNode; c
     <div style={{ maxWidth: 980, margin: '0 auto', padding: '28px 24px 60px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/ktc-logo.png" alt="KTC" style={{ height: 44 }} />
+          <Link to="/admin" aria-label="Go to Dashboard" style={{ display: 'inline-flex' }}>
+            <img src="/ktc-logo.png" alt="KTC" style={{ height: 44 }} />
+          </Link>
           <span
             style={{
               fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
@@ -51,23 +53,24 @@ export default function AdminShell({ children, crumb }: { children: ReactNode; c
         </div>
       </header>
 
-      <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 14 }}>
-        {isDashboard ? (
-          <span style={{ fontWeight: 600 }}>Dashboard</span>
-        ) : (
-          <>
+      {!isDashboard && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22, flexWrap: 'wrap' }}>
+          <Link to="/admin" className="ktc-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'inherit' }}>
+            <span style={{ fontSize: 15, lineHeight: 1 }}>←</span> Back to Dashboard
+          </Link>
+          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'hsl(var(--ink-2))' }}>
             <Link to="/admin" className="ktc-link">Dashboard</Link>
-            <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+            <span style={{ opacity: 0.5 }}>›</span>
             {isCustomerDetail && (
               <>
                 <Link to="/admin/customers" className="ktc-link">Customers</Link>
-                <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+                <span style={{ opacity: 0.5 }}>›</span>
               </>
             )}
-            <span style={{ fontWeight: 600 }}>{current}</span>
-          </>
-        )}
-      </nav>
+            <span style={{ fontWeight: 600, color: 'hsl(var(--ink))' }}>{current}</span>
+          </nav>
+        </div>
+      )}
       {children}
     </div>
   )

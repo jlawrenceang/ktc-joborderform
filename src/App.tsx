@@ -10,7 +10,9 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Agreement from './pages/Agreement'
 import Home from './pages/Home'
+import Account from './pages/Account'
 import JobOrder from './pages/JobOrder'
+import JobOrderPrint from './pages/JobOrderPrint'
 import VerifyId from './pages/VerifyId'
 import Accreditation from './pages/Accreditation'
 import MyJobOrders from './pages/MyJobOrders'
@@ -67,8 +69,10 @@ export default function App() {
 
           {/* Broker portal */}
           <Route path="/" element={<Protected><RoleLanding /></Protected>} />
+          <Route path="/account" element={<Protected><Account /></Protected>} />
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
+          <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />
           <Route path="/accreditation" element={<Protected><Accreditation /></Protected>} />
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
 

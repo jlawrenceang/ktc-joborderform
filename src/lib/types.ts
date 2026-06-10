@@ -65,6 +65,7 @@ export interface JobOrder {
   entry_number: string | null
   status: string
   created_at: string
+  admin_note: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
 }

@@ -6,6 +6,41 @@ import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
 import { APP_VERSION } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
+import Notice from '../components/Notice'
+
+// Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
+// email, disable sign-in for LOCK_MS. (Supabase's server-side auth rate limits
+// are the real backstop; this just stops casual repeated guessing in the UI.)
+const MAX_FAILS = 5
+const LOCK_MS = 60_000
+const LOCK_KEY = (em: string) => `ktc_login_lock_${em.trim().toLowerCase()}`
+
+function readLock(em: string): number | null {
+  if (!em.trim()) return null
+  try {
+    const raw = localStorage.getItem(LOCK_KEY(em))
+    if (!raw) return null
+    const o = JSON.parse(raw) as { lockedUntil?: number }
+    return o.lockedUntil && o.lockedUntil > Date.now() ? o.lockedUntil : null
+  } catch { return null }
+}
+function recordFail(em: string): number | null {
+  try {
+    const raw = localStorage.getItem(LOCK_KEY(em))
+    const o = raw ? (JSON.parse(raw) as { count?: number }) : { count: 0 }
+    const count = (o.count ?? 0) + 1
+    if (count >= MAX_FAILS) {
+      const lockedUntil = Date.now() + LOCK_MS
+      localStorage.setItem(LOCK_KEY(em), JSON.stringify({ count: 0, lockedUntil }))
+      return lockedUntil
+    }
+    localStorage.setItem(LOCK_KEY(em), JSON.stringify({ count }))
+    return null
+  } catch { return null }
+}
+function clearFails(em: string) {
+  try { localStorage.removeItem(LOCK_KEY(em)) } catch { /* ignore */ }
+}
 
 export default function Login() {
   const { signIn, signUp, session } = useAuth()
@@ -21,6 +56,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [lockUntil, setLockUntil] = useState<number | null>(null) // sign-in cooldown after repeated failures
+  const [nowTs, setNowTs] = useState(() => Date.now())
   const [agreedTerms, setAgreedTerms] = useState(false) // one tick = Terms + NDA + DPA consent (whole Agreement)
   const [scrolledAgreement, setScrolledAgreement] = useState(false) // must read to the end to tick
   const agreementRef = useRef<HTMLDivElement>(null)
@@ -92,6 +129,23 @@ export default function Login() {
     if (el && el.scrollHeight <= el.clientHeight + 8) setScrolledAgreement(true)
   }, [mode])
 
+  // Re-check the sign-in cooldown whenever the typed email changes.
+  useEffect(() => { setLockUntil(readLock(email)) }, [email])
+
+  // Tick the countdown while a cooldown is active.
+  useEffect(() => {
+    if (!lockUntil) return
+    const id = setInterval(() => {
+      const t = Date.now()
+      setNowTs(t)
+      if (t >= lockUntil) setLockUntil(null)
+    }, 500)
+    return () => clearInterval(id)
+  }, [lockUntil])
+
+  const lockSecs = lockUntil ? Math.max(0, Math.ceil((lockUntil - nowTs) / 1000)) : 0
+  const isLocked = lockSecs > 0
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (mode === 'signup' && !agreedTerms) {
@@ -101,6 +155,11 @@ export default function Login() {
     if (captchaEnabled && !captchaToken) {
       setError('Please complete the CAPTCHA.')
       return
+    }
+    // Sign-in cooldown after repeated wrong passwords.
+    if (mode === 'signin') {
+      const lk = readLock(email)
+      if (lk) { setLockUntil(lk); setError(null); return }
     }
     setBusy(true)
     setError(null)
@@ -125,6 +184,11 @@ export default function Login() {
       if (mode === 'signin' && /not confirmed|confirm/i.test(res.error)) {
         setShowResend(true) // the top banner shows the message + resend button
       } else {
+        // Count wrong-password failures toward the cooldown.
+        if (mode === 'signin' && /invalid login credentials|invalid email or password|invalid/i.test(res.error)) {
+          const lockedUntil = recordFail(email)
+          if (lockedUntil) { setLockUntil(lockedUntil); setError(null); return }
+        }
         setError(res.error)
       }
       return
@@ -137,6 +201,7 @@ export default function Login() {
       setAgreedTerms(false)
       return
     }
+    clearFails(email) // successful sign-in resets the cooldown counter
     navigate('/', { replace: true })
   }
 
@@ -150,24 +215,26 @@ export default function Login() {
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
       <div className="ktc-glass" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
-        {notice && (
-          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(150 55% 95%)', border: '1px solid hsl(150 45% 80%)', color: 'hsl(150 55% 26%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
-            {notice}
-          </div>
+        {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
+        {isLocked && (
+          <Notice tone="warning" style={{ marginBottom: 14 }}>
+            Too many failed sign-in attempts. Please wait <b>{lockSecs}s</b> before trying again.
+          </Notice>
         )}
-        {error && (
-          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(0 75% 96%)', border: '1px solid hsl(0 70% 85%)', color: 'hsl(0 65% 42%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
-            {error}
-          </div>
-        )}
+        {error && !isLocked && <Notice tone="error" style={{ marginBottom: 14 }}>{error}</Notice>}
         {showResend && (
-          <div style={{ marginBottom: 14, padding: '12px 14px', borderRadius: 12, background: 'hsl(40 95% 94%)', border: '1px solid hsl(40 85% 78%)', color: 'hsl(30 75% 32%)', fontSize: 13, lineHeight: 1.55, display: 'grid', gap: 10 }}>
-            <span style={{ fontWeight: 500 }}>Please confirm your email first — check your inbox (and spam folder) for the confirmation link.</span>
-            <button type="button" disabled={busy} onClick={() => void resendConfirmation()}
-              style={{ justifySelf: 'start', border: 0, borderRadius: 9, padding: '7px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
-              {busy ? 'Resending…' : 'Resend confirmation email'}
-            </button>
-          </div>
+          <Notice
+            tone="warning"
+            style={{ marginBottom: 14 }}
+            action={
+              <button type="button" disabled={busy} onClick={() => void resendConfirmation()}
+                style={{ border: 0, borderRadius: 9, padding: '7px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
+                {busy ? 'Resending…' : 'Resend confirmation email'}
+              </button>
+            }
+          >
+            Please confirm your email first — check your inbox (and spam folder) for the confirmation link.
+          </Notice>
         )}
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
           {isSignup ? 'Create account' : 'Sign in'}
@@ -273,8 +340,8 @@ export default function Login() {
           )}
 
 
-          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedTerms)} style={{ marginTop: 6 }}>
-            {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
+          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedTerms) || (!isSignup && isLocked)} style={{ marginTop: 6 }}>
+            {busy ? 'Please wait…' : !isSignup && isLocked ? `Try again in ${lockSecs}s` : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
 

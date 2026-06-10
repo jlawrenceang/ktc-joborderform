@@ -15,6 +15,7 @@ const CRUMBS: Record<string, string> = {
   '/': 'Home',
   '/job-order': 'New Job Order',
   '/job-orders': 'My Job Orders',
+  '/account': 'My Account',
   '/accreditation': 'Accreditation',
 }
 
@@ -46,8 +47,13 @@ export default function Shell({ children }: { children: ReactNode }) {
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 24px 60px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 48 }} />
-        <button className="ktc-link" onClick={handleSignOut}>Sign out</button>
+        <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex' }}>
+          <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 48 }} />
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/account" className="ktc-link">My Account</Link>
+          <button className="ktc-link" onClick={handleSignOut}>Sign out</button>
+        </div>
       </header>
 
       {locked ? (
@@ -55,17 +61,18 @@ export default function Shell({ children }: { children: ReactNode }) {
       ) : (
         <>
           {pending && <BrokerStatusBanner broker={broker!} />}
-          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 14 }}>
-            {isHome ? (
-              <span style={{ fontWeight: 600 }}>Home</span>
-            ) : (
-              <>
+          {!isHome && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22, flexWrap: 'wrap' }}>
+              <Link to="/" className="ktc-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'inherit' }}>
+                <span style={{ fontSize: 15, lineHeight: 1 }}>←</span> Back to Home
+              </Link>
+              <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'hsl(var(--ink-2))' }}>
                 <Link to="/" className="ktc-link">Home</Link>
-                <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
-                <span style={{ fontWeight: 600 }}>{current}</span>
-              </>
-            )}
-          </nav>
+                <span style={{ opacity: 0.5 }}>›</span>
+                <span style={{ fontWeight: 600, color: 'hsl(var(--ink))' }}>{current}</span>
+              </nav>
+            </div>
+          )}
           {children}
         </>
       )}

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
@@ -15,6 +16,7 @@ function emptyLine(): LineDraft {
 
 export default function JobOrder() {
   const { broker } = useBroker()
+  const navigate = useNavigate()
 
   // Consignee picker — searchable typeahead over the full master list.
   // (No per-broker accreditation gate: any registered broker can pick any consignee.)
@@ -26,10 +28,12 @@ export default function JobOrder() {
 
   const [entryNumber, setEntryNumber] = useState('')
   const [lines, setLines] = useState<LineDraft[]>([emptyLine()])
+  const [showBulk, setShowBulk] = useState(false)
+  const [bulkText, setBulkText] = useState('')
+  const [bulkService, setBulkService] = useState<string>(SERVICE_REQUESTS[0])
+  const [bulkNote, setBulkNote] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [createdJo, setCreatedJo] = useState<string | null>(null)
-  const [createdHeld, setCreatedHeld] = useState(false)
 
   // Debounced server-side search (the master list has thousands of rows, past
   // the 1000-row select cap — so we query as the broker types).
@@ -74,6 +78,26 @@ export default function JobOrder() {
   }
   function removeLine(i: number) {
     setLines((ls) => (ls.length === 1 ? ls : ls.filter((_, idx) => idx !== i)))
+  }
+
+  // Bulk paste: one container number per line (commas/spaces also split). Each
+  // becomes a row with the chosen service; duplicates (case-insensitive) are skipped.
+  function addBulk() {
+    const tokens = bulkText.split(/[\s,;]+/).map((t) => t.trim().toUpperCase()).filter(Boolean)
+    if (tokens.length === 0) { setBulkNote('Paste at least one container number first.'); return }
+    const existing = new Set(lines.map((l) => l.container_number.trim().toUpperCase()).filter(Boolean))
+    const added: LineDraft[] = []
+    let dupes = 0
+    for (const t of tokens) {
+      if (existing.has(t)) { dupes++; continue }
+      existing.add(t)
+      added.push({ container_number: t, service_request: bulkService })
+    }
+    // Drop the single empty starter row if nothing's been typed into it yet.
+    const base = lines.length === 1 && !lines[0].container_number.trim() ? [] : lines
+    setLines([...base, ...added])
+    setBulkText('')
+    setBulkNote(`Added ${added.length} container${added.length === 1 ? '' : 's'}${dupes ? `, skipped ${dupes} duplicate${dupes === 1 ? '' : 's'}` : ''}.`)
   }
 
   const approved = broker?.status === 'approved'
@@ -126,11 +150,9 @@ export default function JobOrder() {
       setError(lineErr.message)
       return
     }
-    setCreatedJo((jo as { jo_number: string | null }).jo_number)
-    setCreatedHeld(!approved)
-    clearConsignee()
-    setEntryNumber('')
-    setLines([emptyLine()])
+    // Redirect to the list and auto-expand the order we just filed.
+    sessionStorage.setItem('ktc_jo_filed_id', (jo as { id: string }).id)
+    navigate('/job-orders')
   }
 
   return (
@@ -140,29 +162,6 @@ export default function JobOrder() {
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
           For X-ray / DEA / OOG stripping service orders.
         </p>
-
-        {(createdJo || createdHeld) && (
-          <div
-            style={{
-              marginBottom: 18,
-              padding: '12px 14px',
-              borderRadius: 12,
-              background: 'rgb(var(--acc-rgb) / 0.1)',
-              border: '1px solid rgb(var(--acc-rgb) / 0.25)',
-              fontSize: 14,
-            }}
-          >
-            {createdHeld ? '✅ Job order filed (held).' : <>✅ Job Order <b>{createdJo}</b> submitted.</>}
-            {createdHeld && (
-              <div style={{ marginTop: 4, fontSize: 13 }}>
-                It’s <b>held — it can’t be processed until you pass final verification</b>, and it gets its official JO number when released.{' '}
-                {hasId
-                  ? 'Your valid ID is on file; a KTC admin will verify your account, then it’s sent automatically.'
-                  : 'Upload your valid ID for final verification (banner above) so KTC can process your job orders.'}
-              </div>
-            )}
-          </div>
-        )}
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
           <div style={{ display: 'grid', gap: 6 }}>
@@ -297,9 +296,37 @@ export default function JobOrder() {
                 </button>
               </div>
             ))}
-            <button type="button" className="ktc-link" onClick={addLine} style={{ justifySelf: 'start' }}>
-              + Add container
-            </button>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button type="button" className="ktc-link" onClick={addLine}>+ Add container</button>
+              <button type="button" className="ktc-link" onClick={() => { setShowBulk((v) => !v); setBulkNote(null) }}>
+                {showBulk ? 'Hide bulk paste' : '⧉ Bulk paste'}
+              </button>
+            </div>
+
+            {showBulk && (
+              <div style={{ display: 'grid', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.5)', border: '1px solid var(--glass-brd)' }}>
+                <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Bulk paste container numbers</span>
+                <textarea
+                  className="ktc-input"
+                  rows={5}
+                  placeholder={'One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321'}
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  style={{ resize: 'vertical', minHeight: 110, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13 }}
+                />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>Service for all:</label>
+                  <select id="bulkSvc" className="ktc-input" style={{ width: 'auto', minWidth: 160, flex: '0 1 auto' }} value={bulkService} onChange={(e) => setBulkService(e.target.value)}>
+                    {SERVICE_REQUESTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button type="button" className="ktc-btn" onClick={addBulk} style={{ width: 'auto', padding: '9px 18px' }}>Add to list</button>
+                </div>
+                {bulkNote && <span className="ktc-label" style={{ fontSize: 12.5, color: 'var(--acc-2)', fontWeight: 600 }}>{bulkNote}</span>}
+                <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.7, lineHeight: 1.5 }}>
+                  Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.
+                </span>
+              </div>
+            )}
           </div>
 
           {error && <div style={{ color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}

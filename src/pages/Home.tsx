@@ -12,10 +12,14 @@ const NewOrderIcon = () => (
 const OrdersIcon = () => (
   <svg {...iconProps}><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
 )
+const AccountIcon = () => (
+  <svg {...iconProps}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+)
 
 const cards: { to: string; title: string; desc: string; icon: ReactNode }[] = [
-  { to: '/job-order', title: 'New Job Order', desc: 'X-ray / DEA / OOG stripping requests', icon: <NewOrderIcon /> },
-  { to: '/job-orders', title: 'My Job Orders', desc: 'Track your filed orders', icon: <OrdersIcon /> },
+  { to: '/job-order', title: 'New Job Order', desc: 'File for terminal services', icon: <NewOrderIcon /> },
+  { to: '/job-orders', title: 'My Job Orders', desc: 'Track your job order status', icon: <OrdersIcon /> },
+  { to: '/account', title: 'My Account', desc: 'Profile & settings', icon: <AccountIcon /> },
 ]
 
 export default function Home() {

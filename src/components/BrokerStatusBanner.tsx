@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
+import Notice from './Notice'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
 // customer. They get full access to browse and prepare job orders (submit is gated
@@ -29,45 +30,32 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
   const needsId = !broker.valid_id_path
 
   return (
-    <div
-      className="ktc-glass"
-      style={{
-        padding: '18px 20px',
-        marginBottom: 18,
-        borderRadius: 14,
-        border: `1px solid ${needsId ? 'hsl(35 85% 80%)' : 'var(--glass-brd)'}`,
-        background: needsId ? 'hsl(40 90% 97%)' : undefined,
-      }}
+    <Notice
+      tone={needsId ? 'warning' : 'info'}
+      badge="PENDING FINAL VERIFICATION"
+      title={needsId ? 'Upload your valid ID to get verified' : 'Your account is awaiting admin verification'}
+      style={{ marginBottom: 18 }}
+      action={
+        needsId ? (
+          <Link to="/verify-id" style={{
+            display: 'inline-block', padding: '9px 16px', borderRadius: 10,
+            fontWeight: 600, fontSize: 13, textDecoration: 'none', color: '#fff',
+            background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
+          }}>
+            Upload your valid ID →
+          </Link>
+        ) : undefined
+      }
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(35 90% 90%)', color: 'hsl(30 80% 35%)', letterSpacing: '0.02em' }}>
-          PENDING FINAL VERIFICATION
-        </span>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, letterSpacing: '-0.01em' }}>
-          {needsId ? 'Upload your valid ID to get verified' : 'Your account is awaiting admin verification'}
-        </h2>
-      </div>
-      <p className="ktc-label" style={{ marginTop: 8, marginBottom: 0, lineHeight: 1.6, fontSize: 13 }}>
-        {needsId ? (
-          'You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.'
-        ) : (
-          <>
-            A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
-            <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
-          </>
-        )}
-      </p>
-
-      {needsId && (
-        <Link to="/verify-id" style={{
-          display: 'inline-block', marginTop: 14, padding: '9px 16px', borderRadius: 10,
-          fontWeight: 600, fontSize: 13, textDecoration: 'none', color: '#fff',
-          background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
-        }}>
-          Upload your valid ID →
-        </Link>
+      {needsId ? (
+        'You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.'
+      ) : (
+        <>
+          A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
+          <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
+        </>
       )}
-    </div>
+    </Notice>
   )
 }
