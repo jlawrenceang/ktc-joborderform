@@ -11,6 +11,7 @@ interface Props {
   onReject: () => void
   approveLabel?: string
   rejectLabel?: string
+  canApprove?: boolean // false → Approve disabled (e.g. no valid ID yet)
 }
 
 export function AdminRow(props: Props) {
@@ -36,10 +37,13 @@ export function AdminRow(props: Props) {
         )}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={props.onApprove} disabled={props.busy}
+        <button type="button" onClick={props.onApprove} disabled={props.busy || props.canApprove === false}
+          title={props.canApprove === false ? 'A valid ID is required before you can approve' : undefined}
           style={{
             border: 0, borderRadius: 10, padding: '8px 14px', fontWeight: 600, fontSize: 13,
-            cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg, hsl(150 55% 42%), hsl(150 60% 34%))',
+            cursor: props.busy || props.canApprove === false ? 'not-allowed' : 'pointer', color: '#fff',
+            background: 'linear-gradient(135deg, hsl(150 55% 42%), hsl(150 60% 34%))',
+            opacity: props.canApprove === false ? 0.5 : 1,
           }}>
           {props.approveLabel ?? 'Approve'}
         </button>

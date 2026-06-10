@@ -93,6 +93,7 @@ export default function Approvals() {
   const [acting, setActing] = useState<string | null>(null)
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [approvedName, setApprovedName] = useState<string | null>(null)
 
   async function load() {
     const [b, a] = await Promise.all([
@@ -109,6 +110,10 @@ export default function Approvals() {
   function resetReject() { setRejectId(null); setRejectReason('') }
 
   async function decideBroker(id: string, status: 'approved' | 'rejected' | 'suspended', reason?: string, path?: string | null) {
+    if (status === 'approved' && !path) {
+      return setError('Cannot approve — no valid ID on file yet. Ask the customer to upload one first.')
+    }
+    const who = brokers.find((r) => r.id === id)
     setActing(id); setError(null)
     // On a final decision (approve/suspend) the ID has been reviewed — delete it
     // (DPA data-minimisation). Only clear valid_id_path if the file actually deleted.
@@ -127,6 +132,7 @@ export default function Approvals() {
     if (error) return setError(error.message)
     resetReject()
     setBrokers((x) => x.filter((r) => r.id !== id))
+    if (status === 'approved') setApprovedName(who?.full_name || who?.email || 'The customer')
   }
   async function decideAccreditation(id: string, status: 'approved' | 'rejected', reason?: string) {
     setActing(id); setError(null)
@@ -170,6 +176,7 @@ export default function Approvals() {
                   extra={<BrokerReview b={b} />}
                   onViewId={b.valid_id_path ? () => viewId(b.valid_id_path) : undefined}
                   onDownloadId={b.valid_id_path ? () => downloadId(b.valid_id_path) : undefined}
+                  canApprove={!!b.valid_id_path}
                   busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved', undefined, b.valid_id_path)}
                   onReject={() => { setRejectId(b.id); setRejectReason('') }} />
                 {rejectId === b.id && (
@@ -204,6 +211,22 @@ export default function Approvals() {
           </div>
         )}
       </div>
+
+      {approvedName && (
+        <div onClick={() => setApprovedName(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 380, width: '100%', padding: 28, textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, margin: '0 auto', borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 30, color: '#fff', background: 'linear-gradient(135deg, hsl(150 55% 45%), hsl(150 60% 36%))' }}>✓</div>
+            <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>Account approved</h2>
+            <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.6, fontSize: 14 }}>
+              <b>{approvedName}</b> has been approved and notified by email. Their valid ID was removed from storage.
+            </p>
+            <button className="ktc-btn" type="button" onClick={() => setApprovedName(null)} style={{ marginTop: 18, width: '100%' }}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </AdminShell>
   )
 }
