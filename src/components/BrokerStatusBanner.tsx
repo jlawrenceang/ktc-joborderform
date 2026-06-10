@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
-import { SUPPORT_EMAIL, SUPPORT_PHONE } from '../lib/contact'
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
 // customer. They get full access to browse and prepare job orders (submit is gated
@@ -53,7 +53,8 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
         ) : (
           <>
             A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> · {SUPPORT_PHONE}.
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
+            <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
           </>
         )}
       </p>
