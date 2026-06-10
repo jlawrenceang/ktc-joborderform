@@ -1,141 +1,78 @@
-# Smoke Test ST02 — Customer Lifecycle & Anti-Spam Guards (KTC Online Portal)
+# Smoke Test ST02 — Customer Lifecycle (KTC Online Portal)
 
 **Smoke Test ID:** ST02
-**Date:** 2026-06-10
-**Status:** READY TO EXECUTE — server-side guardrails verified (automated); browser lanes pending manual run
-**Target:** https://portal.ktcterminal.com (prod-testing) — or local `npm run dev`
+**Date:** 2026-06-10 (refreshed)
+**Status:** READY TO EXECUTE — server guardrails verified; browser lanes manual
+**Target:** https://portal.ktcterminal.com
 **Format:** Canonical (see `docs/smoke-test-template-canonical.md`)
 
 ## Purpose
 
-Verify the full customer lifecycle on the renamed/rebranded system (**KTC Online Portal**, `customers` table): register (with contact number) → **branded confirm email** → **/verify-id** (DPA consent + valid-ID upload) → portal as *pending final verification* → file **held** job orders (deferred `JO-######` numbering) → admin verify/approve → held orders **release + number** + **approval email**. Plus the guards: held cap (10), open cap (10), 48h verification TTL, and 10-minute idle logout. Covers migrations `0014`–`0023` and ADR-0012.
+Verify the current end-to-end customer lifecycle: register (one consent tick + contact number) → **confirm email → /confirmed → sign in with password** → portal as *pending* → **/verify-id** (attach → view/remove → submit) → admin **view/download → approve** (blocked without an ID) → **approved popup**, ID **deleted** (DPA), held orders **released** as `JO-000001`. Plus: rejection/resubmit (3 outcomes), caps (10 held / 10 open), 48h TTL, idle logout, customer profile + history. Covers migrations `0014`–`0027`.
 
-## Result codes
+## Preflight — ✅ PASS (2026-06-10)
 
-PASS / AMBER / FAIL / BLOCKED / N/A (see template).
-
-## Test accounts / data
-
-| Role | Identity | Notes |
+| Check | Expected | Result |
 |---|---|---|
-| Owner | `jla.ktcport@gmail.com` | server-only `is_owner`; admin portal |
-| Test customer | a throwaway email you control (e.g. `you+st02@gmail.com`) | created during Lane A |
+| `npm run lint` / `npm run build` | clean | ✅ |
+| Deploy `HEAD /` | 200 | ✅ |
+| Migrations tracked | 27 (… `0027_admin_delete_valid_ids`) | ✅ |
+| Accounts | owner + Jen (approved); 0 job orders | ✅ |
 
-> Email is now fully wired (Resend domain verified; branded confirm + approval templates installed), so the email steps are **no longer blocked**.
-
----
-
-## Preflight gate — ✅ PASS (2026-06-10)
-
-| Check | Command | Expected | Result |
-|---|---|---|---|
-| P1 TypeScript | `npm run lint` | 0 errors | ✅ PASS |
-| P2 Build | `npm run build` | PASS | ✅ PASS |
-| P3 Deploy health | `HEAD https://portal.ktcterminal.com` | `200` | ✅ PASS |
-| P4 Migrations | `node scripts/run-migrations.mjs` | tracked, only new applied | ✅ PASS — 23 tracked (… `0023_jo_number_prefix`) |
-| P5 Schema | introspection | `customers` table, `contact_number` col, JO-prefix, owner-only | ✅ PASS — customers=1 (owner), contact_number present, job_orders=0 |
-| P6 Confirm email template | Management API GET `/config/auth` | branded + subject + Confirm-email ON | ✅ PASS — subject "Confirm your KTC Online Portal account", logo+button present, `mailer_autoconfirm=false` |
-| P7 E2E Phase 1 | `BASE_URL=…prod npx playwright test e2e/smoke.spec.ts` | passing | re-run after deploy |
+## Lane G — Server guardrails (automated, ✅ verified earlier)
+Held order → no number; approve → released + `JO-000001`; held cap 10; open cap 10; completed frees a slot; reject/suspend handling; concurrent numbering distinct; rename integrity (customers); resubmit guard (rejected→pending only). 
 
 ---
 
-## Lane G — Server-side guardrails (automated) — ✅ PASS (2026-06-10)
+## Lane A — Full lifecycle (register → confirm → sign in → verify → approve)
 
-Exercised directly against the renamed `customers` schema (rows created, asserted, deleted; JO seq reset).
+**Start:** logged out at `/login`. Use a throwaway email you control.
 
-| ID | Guardrail | Expected | Result |
+| ID | Step | Expected | Result |
 |---|---|---|---|
-| G-1 | Held order has no number | `held` insert → `jo_number IS NULL` | ✅ |
-| G-2 | Release assigns JO number | approve → `held`→`submitted` + **`JO-000001`** | ✅ |
-| G-3 | Held cap | 11th `held` rejected | ✅ "at most 10 … on hold" |
-| G-4 | Open cap | 11th open (`submitted/processing`) rejected | ✅ "10 open job orders — contact KTC admin" |
-| G-5 | Completed frees a slot | `completed` doesn't count toward open cap | ✅ |
-| G-6 | Reject/suspend cancels holds | status→rejected/suspended cancels `held` | ✅ |
-| G-7 | Concurrent numbering | 5 simultaneous inserts → 5 distinct numbers | ✅ (UNIQUE backstop) |
-| G-8 | TTL function | `expire_unverified_brokers()` runs (hourly pg_cron) | ✅ returns 0 |
-| G-9 | Rename integrity | functions/policies/triggers resolve on `customers` | ✅ 14 policies, 3 triggers, held→release cycle works |
+| A-1 | Register: full name + **contact number** + email + password; scroll the **inline agreement** to the end; tick the **single consent** box; CAPTCHA; **Sign up** | Top **green banner**: "✓ Account created! …confirm your email, then log in again." Form flips to Sign in. `customers` row `status=pending`, `contact_number` set, **BR-000001** | |
+| A-2 | Open the **branded confirm email** → click **Confirm** | Lands on **`/confirmed`** page: "Email confirmed ✓ — Sign in to continue" | |
+| A-3 | Click **Sign in to continue** | Signed out → `/login` with green **"✓ Your email is confirmed — please sign in"** | |
+| A-4 | Sign in with **email + password** | Lands in the portal (pending). Breadcrumb **Home**; banner **"PENDING FINAL VERIFICATION"** with **"Upload your valid ID →"** button | |
+| A-5 | Click **Upload your valid ID →** | Goes to **`/verify-id`** | |
+| A-6 | Tick consent → **attach** a file | File shows as a chip 📎 with **View** / **Remove**; **View** opens a modal preview; nothing uploaded yet | |
+| A-7 | Click **Submit valid ID for verification** | Uploads; records Terms/DPA timestamps; redirected to portal; banner now "awaiting verification" (+ customer-service email/phone) | |
+| A-8 | File a **held** job order (`/job-order`) | Saves as held; My Job Orders shows **"Draft (no number yet)"** + "Pending approval" | |
+| A-9 | Sign in as **owner** → `/admin/approvals` | Card shows email + **contact number** + badges (✓ Email confirmed · ✓ Valid ID on file · ✓ Terms & DPA). **Approve is disabled** if no ID | |
+| A-10 | **View** and **Download** the ID | Opens / downloads via signed URL | |
+| A-11 | **Approve** | **"✓ Account approved"** popup ("notified by email, ID removed"). Approval email sent | |
+| A-12 | Check Storage `valid-ids` | The customer's ID file is **gone** (deleted on approval) | |
+| A-13 | Customer re-logs in → My Job Orders | The held order is now **`JO-000001`** / Submitted | |
+| A-14 | `/admin/customers` → click the customer's name | **Profile page** (breadcrumb Dashboard › Customers › Name): details + badges (**✓ ID verified**, since deleted) + **Job order history** showing `JO-000001` | |
 
 ---
 
-## Lane A — Customer lifecycle (register → held → verify → release)
+## Lane B — Rejection / resubmit (3 outcomes)
 
-**Objective:** A new customer can register with a contact number, confirm email, land on the verify-ID page, file held job orders, and have them released + numbered on approval.
-**Start state:** Logged out at `/login`.
+| ID | Step | Expected | Result |
+|---|---|---|---|
+| B-1 | On a pending customer, **Reject** → choose **"ID unreadable"** or **"Needs updated info"** | status `rejected`; ID kept | |
+| B-2 | That customer logs in | Gentle **"ACTION NEEDED → Resubmit your details"** panel (no harsh "rejected"); shows "What to update"; can edit name/contact + re-upload ID | |
+| B-3 | Edit + **Resubmit for review** | Back to `status=pending`, reappears in admin queue | |
+| B-4 | Reject → **Suspend** | Terminal "Account suspended — contact customer service" screen (email/phone); held orders cancelled | |
 
-| ID | Screen | UI Action | Expected | Result | Evidence |
-|---|---|---|---|---|---|
-| A-1 | `/login` | Create account: full name + **contact number** + email + password; scroll the inline **KTC Customer Agreement** to the end; tick **both** consents; CAPTCHA; Sign up | "Account created — check your email" notice; `customers` row `status='pending'`, `contact_number` set | | |
-| A-2 | inbox | Open the **branded** confirm email (KTC logo + orange button) → **Confirm** | Email confirmed; session created; **redirected to `/verify-id`** | | |
-| A-3 | `/verify-id` | Observe | Focused page: "PENDING FINAL VERIFICATION", **DPA consent tick** (links to `/agreement`), valid-ID upload (disabled until ticked), and a **"Skip for now — continue to the portal →"** link | | |
-| A-4 | `/verify-id` | Tick consent → upload a valid ID (image/PDF) | Stored to `valid-ids/{uid}/…`; `valid_id_path` + Terms/DPA consent timestamps recorded; redirected to the portal | | |
-| A-5 | `/` (portal) | Observe | Full portal (Home / New Job Order / My Job Orders / Agreement) + **PENDING FINAL VERIFICATION** banner; Home shows **"Your Customer ID: BR-…"** | | |
-| A-6 | `/job-order` | Fill + **File Job Order** | Saves; "filed (held)" confirmation; can't be processed until verified | | |
-| A-7 | `/job-orders` | My Job Orders | Order shows **"Draft (no number yet)"** + "Pending approval" | | |
-| A-8 | `/admin/approvals` (owner) | Re-login as owner; review the card | Shows email + **contact number**; badges: ✓ Email confirmed · ✓ Valid ID on file · Agreement v1 · ✓ Terms · ✓ DPA. "View valid ID" opens (signed URL) | | |
-| A-9 | `/admin/approvals` | **Approve** | Row leaves queue | | |
-| A-10 | inbox | — | Customer receives the **branded "account approved"** email | | |
-| A-11 | `/job-orders` (customer) | Re-login as customer | The held order is now **`submitted`** with **`JO-000001`** | | |
-| A-12 | `/admin/job-orders` (owner) | Admin queue | The released order is visible; held orders were **not** shown pre-release | | |
+## Lane C — Caps & limits
+- C-1: pending customer can't exceed **10 held**; C-2: approved can't exceed **10 open** ("contact KTC admin"); C-3: idle **10 min** → auto-logout with notice.
 
-#### Lane closeout
-- [ ] Lifecycle coherent end-to-end (register+contact → confirm → verify-id → held → approve → release + JO number + email)
+## Lane D — Gating (URL access)
+- Logged out → any protected URL → `/login`. Verified user at `/verify-id` → redirected to `/`. Authenticated at `/login` → redirected to `/`. Non-admin at `/admin/*` → `/`.
 
 ---
-
-## Lane B — Held cap (pending customer)
-
-| ID | UI Action | Expected | Result |
-|---|---|---|---|
-| B-1 | File 10 held orders | All 10 saved (Draft / Pending approval) | |
-| B-2 | Attempt an 11th | Blocked: "You can keep at most 10 job orders on hold until your account is verified…" | |
-
-## Lane C — Open cap (verified customer)
-
-| ID | UI Action | Expected | Result |
-|---|---|---|---|
-| C-1 | Submit 10 orders (approved) | All 10 `submitted`, each `JO-######` | |
-| C-2 | Attempt an 11th | Blocked: "You have 10 open job orders — contact KTC admin to file more." | |
-| C-3 | Admin completes one (when processing UI exists) | A slot frees; can file again | |
-
-## Lane D — Idle auto-logout
-
-| ID | UI Action | Expected | Result |
-|---|---|---|---|
-| D-1 | Sign in, idle 10 min | Auto sign-out → `/login` with "You were signed out after 10 minutes of inactivity." | |
-| D-2 | Interact within 10 min | Session stays alive | |
-
-> Tip: to test fast, temporarily set `IDLE_LOGOUT_MS` in `src/components/Shell.tsx` to `15 * 1000`, then revert.
-
-## Lane E — Email-confirmation gate
-
-| ID | UI Action | Expected | Result |
-|---|---|---|---|
-| E-1 | (Confirm email ON) register, but DON'T click the link; try to reach the portal | No session → `/login`. If a session ever exists unconfirmed, the **"Awaiting email confirmation"** page shows (with **Resend confirmation email**) | |
-
----
-
-## Defects tracker
-
-| ID | Lane / Action | Severity | Issue | Expected | Actual | Status |
-|---|---|---|---|---|---|---|
-| | | | | | | OPEN |
 
 ## Final summary
 
-| Lane | Status | Go / Hold |
+| Lane | Status | Go/Hold |
 |---|---|---|
-| Preflight | ✅ PASS | Go |
-| G — Server guardrails (auto) | ✅ PASS | Go |
+| Preflight + G | ✅ | Go |
 | A — Lifecycle | | |
-| B — Held cap | | |
-| C — Open cap | | |
-| D — Idle logout | | |
-| E — Email-confirmation gate | | |
+| B — Reject/resubmit | | |
+| C — Caps/idle | | |
+| D — Gating | | |
 
-**Overall go / no-go:** ____
-
-## Cleanup after run
-
-- Delete the test customer (auth user + `customers` row) and its job orders; delete its `valid-ids/{uid}/…` file in the Storage dashboard.
-- Reset numbering if needed (only safe with zero job orders): `select setval('public.jo_number_seq', 1, false);` → next is `JO-000001`.
-- (I can run the customer/auth cleanup via the transaction pooler on request.)
+## Cleanup
+- Delete the test customer (auth + `customers`); its ID file is auto-deleted on approval (else clear in Storage). Reset `jo_number_seq` / `broker_code_seq` if you want `JO-000001` / `BR-000001` next (only when zero orders).
