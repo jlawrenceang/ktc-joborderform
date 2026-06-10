@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from '../lib/contact'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
 // broker. They get full access to browse and prepare job orders; the actual submit
@@ -63,9 +64,14 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
         </h2>
       </div>
       <p className="ktc-label" style={{ marginTop: 8, marginBottom: 0, lineHeight: 1.6, fontSize: 13 }}>
-        {needsId
-          ? 'You can already file job orders — they’re held pending verification. To get verified, upload your valid ID below; a KTC admin reviews it, and once approved your held orders are sent to KTC automatically (we’ll email you).'
-          : 'Thanks — your valid ID is on file. A KTC admin is verifying your account. You can keep filing job orders; they’re held until you’re verified, then sent to KTC automatically and we’ll email you.'}
+        {needsId ? (
+          'You can already file job orders — they’re held pending verification. Upload your valid ID below to get verified; once approved, your held orders are sent to KTC automatically.'
+        ) : (
+          <>
+            A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> · {SUPPORT_PHONE}.
+          </>
+        )}
       </p>
 
       {needsId && (
