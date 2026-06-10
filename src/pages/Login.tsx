@@ -21,8 +21,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [agreedTerms, setAgreedTerms] = useState(false) // KTC Customer Agreement — Terms & Conditions + NDA
-  const [consentDpa, setConsentDpa] = useState(false) // Data Privacy Act consent
+  const [agreedTerms, setAgreedTerms] = useState(false) // one tick = Terms + NDA + DPA consent (whole Agreement)
   const [scrolledAgreement, setScrolledAgreement] = useState(false) // must read to the end to tick
   const agreementRef = useRef<HTMLDivElement>(null)
   const modalAgreementRef = useRef<HTMLDivElement>(null)
@@ -93,11 +92,7 @@ export default function Login() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (mode === 'signup' && !agreedTerms) {
-      setError('Please accept the KTC Customer Agreement (Terms & Conditions) to continue.')
-      return
-    }
-    if (mode === 'signup' && !consentDpa) {
-      setError('Please give your Data Privacy Act consent to continue.')
+      setError('Please accept the KTC Customer Agreement (Terms & Data Privacy consent) to continue.')
       return
     }
     if (captchaEnabled && !captchaToken) {
@@ -137,7 +132,6 @@ export default function Login() {
       setFullName('')
       setContactNumber('')
       setAgreedTerms(false)
-      setConsentDpa(false)
       return
     }
     navigate('/', { replace: true })
@@ -256,22 +250,9 @@ export default function Login() {
                   required
                 />
                 <span className="ktc-label" style={{ fontSize: 13 }}>
-                  I have read and agree to the Terms &amp; Conditions and the confidentiality / non-disclosure
-                  obligations of the KTC Customer Agreement above.
-                </span>
-              </label>
-              <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, opacity: scrolledAgreement ? 1 : 0.5 }}>
-                <input
-                  type="checkbox"
-                  checked={consentDpa}
-                  onChange={(e) => setConsentDpa(e.target.checked)}
-                  disabled={!scrolledAgreement}
-                  style={{ marginTop: 2, flex: '0 0 auto' }}
-                  required
-                />
-                <span className="ktc-label" style={{ fontSize: 13 }}>
-                  I consent to KTC processing my personal data, including the valid ID I upload, under the
-                  Data Privacy Act of 2012 as described in the Agreement above.
+                  I have read and agree to the <b>KTC Customer Agreement</b> — including the Terms &amp; Conditions,
+                  confidentiality / non-disclosure obligations, and my consent to KTC processing my personal data
+                  (including the valid ID I upload) under the Data Privacy Act of 2012.
                 </span>
               </label>
             </div>
@@ -286,7 +267,7 @@ export default function Login() {
           )}
 
 
-          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && (!agreedTerms || !consentDpa))} style={{ marginTop: 6 }}>
+          <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedTerms)} style={{ marginTop: 6 }}>
             {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
@@ -294,7 +275,7 @@ export default function Login() {
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button className="ktc-link" type="button"
-            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false); setConsentDpa(false) }}>
+            onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false) }}>
             {isSignup ? 'Sign in' : 'Create one'}
           </button>
         </p>

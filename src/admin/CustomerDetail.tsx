@@ -60,7 +60,7 @@ export default function CustomerDetail() {
 
   const ss = STATUS_STYLE[cust.status] ?? STATUS_STYLE.pending
   return (
-    <AdminShell>
+    <AdminShell crumb={cust.full_name || cust.email || 'Customer'}>
       {error && <div className="ktc-glass" style={{ padding: 14, marginBottom: 16, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>

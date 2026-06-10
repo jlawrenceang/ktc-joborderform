@@ -14,14 +14,14 @@ const CRUMBS: Record<string, string> = {
   '/admin/settings': 'Settings',
 }
 
-export default function AdminShell({ children }: { children: ReactNode }) {
+export default function AdminShell({ children, crumb }: { children: ReactNode; crumb?: string }) {
   const { signOut } = useAuth()
   const { broker } = useBroker()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const isDashboard = pathname === '/admin'
   const isCustomerDetail = pathname.startsWith('/admin/customers/')
-  const current = CRUMBS[pathname] ?? (isCustomerDetail ? 'Customer' : '')
+  const current = crumb ?? CRUMBS[pathname] ?? (isCustomerDetail ? 'Customer' : '')
 
   async function handleSignOut() {
     await signOut()
