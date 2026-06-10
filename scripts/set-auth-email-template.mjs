@@ -24,12 +24,15 @@ if (!token) { console.error('Add SUPABASE_ACCESS_TOKEN to .env.local (Supabase D
 if (!url) { console.error('VITE_SUPABASE_URL missing from .env.local'); process.exit(1) }
 const ref = new URL(url).host.split('.')[0]
 
-let html = readFileSync(path.join(root, 'docs/email-templates/confirm-signup.html'), 'utf8')
-html = html.replace(/<!--[\s\S]*?-->/, '').trim() // drop the leading instructions comment
+const readTpl = (f) => readFileSync(path.join(root, 'docs/email-templates', f), 'utf8').replace(/<!--[\s\S]*?-->/, '').trim()
+const confirmHtml = readTpl('confirm-signup.html')
+const resetHtml = readTpl('reset-password.html')
 
 const body = {
   mailer_subjects_confirmation: 'Confirm your KTC Online Portal account',
-  mailer_templates_confirmation_content: html,
+  mailer_templates_confirmation_content: confirmHtml,
+  mailer_subjects_recovery: 'Reset your KTC Online Portal password',
+  mailer_templates_recovery_content: resetHtml,
 }
 
 const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/auth`, {
@@ -41,9 +44,9 @@ const out = await res.json().catch(() => ({}))
 console.log('project ref:', ref)
 console.log('PATCH /config/auth status:', res.status)
 if (res.ok) {
-  console.log('✓ Confirm-signup template + subject installed.')
-  console.log('  subject:', out.mailer_subjects_confirmation)
-  console.log('  template length:', (out.mailer_templates_confirmation_content || '').length, 'chars')
+  console.log('✓ Confirm-signup + reset-password templates installed.')
+  console.log('  confirm:', out.mailer_subjects_confirmation, '—', (out.mailer_templates_confirmation_content || '').length, 'chars')
+  console.log('  recovery:', out.mailer_subjects_recovery, '—', (out.mailer_templates_recovery_content || '').length, 'chars')
 } else {
   console.log(JSON.stringify(out).slice(0, 400))
 }
