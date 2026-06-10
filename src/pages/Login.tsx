@@ -118,7 +118,7 @@ export default function Login() {
           {isSignup ? 'Create account' : 'Sign in'}
         </h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 24 }}>
-          KTC Online Portal — Container Terminal Services.
+          KTC Online Portal — Container Terminal Services
         </p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
