@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import type { AccreditationStatus, Consignee } from '../lib/types'
+import { prepareUpload } from '../lib/validation'
+import { useFileViewer } from '../components/FileViewerModal'
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -64,18 +66,13 @@ interface EditState {
 }
 
 async function upload2303(consigneeId: string, file: File): Promise<string> {
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf'
+  const prepared = await prepareUpload(file) // oversized images auto-compress
+  if ('error' in prepared) throw new Error(prepared.error)
+  const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'pdf'
   const path = `${consigneeId}/2303.${ext}`
-  const { error } = await supabase.storage.from('consignee-docs').upload(path, file, { upsert: true })
+  const { error } = await supabase.storage.from('consignee-docs').upload(path, prepared.file, { upsert: true })
   if (error) throw new Error(error.message)
   return path
-}
-
-async function view2303(path: string | null, onErr: (m: string) => void) {
-  if (!path) return
-  const { data, error } = await supabase.storage.from('consignee-docs').createSignedUrl(path, 60)
-  if (error || !data) return onErr(error?.message ?? 'Could not open document.')
-  window.open(data.signedUrl, '_blank', 'noopener')
 }
 
 export default function Consignees() {
@@ -84,6 +81,7 @@ export default function Consignees() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { openFromStorage, viewerModal } = useFileViewer(setError)
   const [notice, setNotice] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
@@ -224,7 +222,7 @@ export default function Consignees() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Consignees</h1>
+        <h1 className="ktc-title">Consignees</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
           Added consignees are <b>pending</b>. A consignee needs <b>address, TIN, and an attached 2303</b> before it
           can be approved; only approved consignees are visible to customers.
@@ -288,7 +286,7 @@ export default function Consignees() {
                     <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'center' }}>
                       <button className="ktc-link" disabled={busy} onClick={saveEdit} style={{ fontSize: 13, fontWeight: 600 }}>Save</button>
                       <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }} style={{ fontSize: 13 }}>Cancel</button>
-                      {editing.doc_2303_path && <button className="ktc-link" onClick={() => view2303(editing.doc_2303_path, setError)} style={{ fontSize: 13 }}>View current 2303</button>}
+                      {editing.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', editing.doc_2303_path, `2303 — ${editing.name}`)} style={{ fontSize: 13 }}>View current 2303</button>}
                     </div>
                   </div>
                 )
@@ -299,7 +297,7 @@ export default function Consignees() {
                     <b>{c.code}</b> – {c.name}
                     {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8 }}>⚠ needs address/TIN/2303</span>}
                   </span>
-                  {c.doc_2303_path && <button className="ktc-link" onClick={() => view2303(c.doc_2303_path, setError)} style={{ fontSize: 12 }}>2303</button>}
+                  {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, `2303 — ${c.name}`)} style={{ fontSize: 12 }}>2303</button>}
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{c.status}</span>
                   {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'hsl(150 60% 32%)' }}>Approve</button>}
                   {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'rejected')} style={{ fontSize: 13 }}>Reject</button>}
@@ -311,6 +309,7 @@ export default function Consignees() {
           </div>
         )}
       </div>
+      {viewerModal}
     </AdminShell>
   )
 }

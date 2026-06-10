@@ -3,6 +3,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import type { Broker } from '../lib/types'
+import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 
 export default function Settings() {
   const { broker: me } = useBroker()
@@ -67,6 +68,8 @@ export default function Settings() {
   async function createStaff(e: FormEvent) {
     e.preventDefault()
     const u = suUser.trim().toLowerCase()
+    const pwIssue = passwordIssue(suPass)
+    if (pwIssue) { setError(pwIssue); return }
     setBusy(true); setError(null); setNotice(null)
     const { error } = await supabase.rpc('create_staff', { p_username: u, p_password: suPass, p_full_name: suName.trim() })
     setBusy(false)
@@ -108,7 +111,7 @@ export default function Settings() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Staff &amp; access</h1>
+        <h1 className="ktc-title">Staff &amp; access</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
           Internal KTC staff with admin access. Managed separately from brokers.
           {isOwner ? '' : ' Only the owner can change access.'}
@@ -128,7 +131,7 @@ export default function Settings() {
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suPass">Password</label>
-                <input id="suPass" className="ktc-input" type="text" required minLength={6} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} />
+                <input id="suPass" className="ktc-input" type="text" required minLength={8} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} title={PASSWORD_HINT} />
               </div>
               <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Create staff</button>
             </form>

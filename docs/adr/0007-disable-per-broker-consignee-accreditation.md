@@ -54,6 +54,27 @@ Chosen option: **Option A**. The New Job Order page replaces the accreditation-f
 * Good, because keeps the data-quality gate on targeting.
 * Bad, because almost no consignees are approved yet, so the picker would be nearly empty — defeats the goal.
 
+## Addendum (2026-06-11): obsolete UI surfaces removed
+
+The "kept so links don't break" surfaces sat unused for two days and were
+removed as dead ends during the 2026-06-11 review (per the new practice:
+delete obsolete code, note the deletion in the ADR):
+
+* `src/pages/Accreditation.tsx` (the notice page) **deleted**; the
+  `/accreditation` route removed from `App.tsx` (old links now fall through
+  the catch-all to `/`); breadcrumb entry removed from `Shell.tsx`.
+* The **"Accreditation approvals" section** of `/admin/approvals` and the
+  **"Accreditations pending" dashboard tile** removed — with the request page
+  gone, no new accreditation rows can be created, so they could only ever
+  show an empty list.
+* The unused `Accreditation` interface removed from `src/lib/types.ts`
+  (`AccreditationStatus` stays — it doubles as the consignee status type).
+
+The **`accreditations` DB table, its RLS policies, and migrations are
+untouched** — reversal now means restoring the UI from git history
+(tag `checkpoint-2026-06-10` or earlier) plus re-pointing the Job Order
+picker, as before.
+
 ## Related ADRs
 
 * Partially supersedes [ADR-0005](0005-admin-approval-and-consignee-accreditation-controls.md) (the per-broker accreditation gate; broker + consignee admin approval still stand). See the addendum on ADR-0005.

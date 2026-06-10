@@ -9,7 +9,7 @@ import Notice from './Notice'
 // customer. They get full access to browse and prepare job orders (submit is gated
 // server-side). Here we (1) sync consent captured at sign-up, and (2) point them to
 // the /verify-id page to upload the valid ID an admin needs before approving.
-export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
+export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }: { broker: Broker; onRefresh?: () => void; refreshCooling?: boolean }) {
   const synced = useRef(false)
 
   // Sync consent (captured in auth metadata at sign-up) onto the customer row if it
@@ -54,6 +54,21 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
           A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
           <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
           <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
+        </>
+      )}
+      {onRefresh && (
+        <>
+          {' '}
+          <button
+            type="button"
+            className="ktc-link"
+            onClick={onRefresh}
+            disabled={refreshCooling}
+            title={refreshCooling ? 'Just refreshed — try again in a few seconds' : 'Checks automatically every minute'}
+            style={{ fontSize: 13, padding: 0, opacity: refreshCooling ? 0.5 : 1 }}
+          >
+            ↻ Refresh status
+          </button>
         </>
       )}
     </Notice>

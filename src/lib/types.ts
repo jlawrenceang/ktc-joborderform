@@ -39,16 +39,9 @@ export function hasAdminAccess(b: Pick<Broker, 'is_admin' | 'is_owner'> | null |
   return !!b && (b.is_admin || b.is_owner)
 }
 
+// Also the consignee approval status (the accreditation *feature* UI was
+// removed 2026-06-11; the DB table remains — see the ADR-0007 addendum).
 export type AccreditationStatus = 'pending' | 'approved' | 'rejected'
-
-export interface Accreditation {
-  id: string
-  customer_id: string
-  consignee_id: string
-  status: AccreditationStatus
-  requested_at: string
-  consignee?: Consignee | null
-}
 
 export interface JobOrderLine {
   id: string

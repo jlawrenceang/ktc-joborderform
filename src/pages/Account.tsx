@@ -5,6 +5,7 @@ import Notice, { type NoticeTone } from '../components/Notice'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
+import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 
 type Msg = { tone: NoticeTone; text: string } | null
 
@@ -122,7 +123,8 @@ export default function Account() {
 
   async function onChangePassword(e: FormEvent) {
     e.preventDefault()
-    if (newPw.length < 6) { setPwMsg({ tone: 'error', text: 'Password must be at least 6 characters.' }); return }
+    const pwIssue = passwordIssue(newPw)
+    if (pwIssue) { setPwMsg({ tone: 'error', text: pwIssue }); return }
     if (newPw !== newPw2) { setPwMsg({ tone: 'error', text: 'Passwords don’t match.' }); return }
     setSavingPw(true)
     setPwMsg(null)
@@ -147,11 +149,11 @@ export default function Account() {
         <div className="ktc-glass" style={{ padding: 28 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>My Account</h1>
+              <h1 className="ktc-title">My Account</h1>
               <p className="ktc-label" style={{ marginTop: 6, marginBottom: 0 }}>
                 {email}
                 {broker?.customer_code && (
-                  <>{' · '}<span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600 }}>{broker.customer_code}</span></>
+                  <>{' · '}<span className="ktc-mono" style={{ fontWeight: 600 }}>{broker.customer_code}</span></>
                 )}
               </p>
             </div>
@@ -208,11 +210,12 @@ export default function Account() {
           {pwMsg && <Notice tone={pwMsg.tone}>{pwMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="acPw">New password</label>
-            <input id="acPw" className="ktc-input" type="password" minLength={6} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
+            <input id="acPw" className="ktc-input" type="password" minLength={8} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
+            <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="acPw2">Confirm new password</label>
-            <input id="acPw2" className="ktc-input" type="password" minLength={6} value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" />
+            <input id="acPw2" className="ktc-input" type="password" minLength={8} value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <button className="ktc-btn" type="submit" disabled={savingPw} style={{ width: 'auto', padding: '10px 20px' }}>

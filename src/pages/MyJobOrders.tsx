@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
+import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { JobOrder } from '../lib/types'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -14,21 +15,21 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelled',
 }
 
-// Per-status pill colours, drawn from the same palette as the shared Notice tones.
-const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
-  held: { bg: 'hsl(40 90% 86%)', ink: 'hsl(30 75% 32%)' },
-  submitted: { bg: 'hsl(210 60% 90%)', ink: 'hsl(210 55% 36%)' },
-  processing: { bg: 'hsl(265 55% 91%)', ink: 'hsl(265 45% 42%)' },
-  on_hold: { bg: 'hsl(40 90% 86%)', ink: 'hsl(30 75% 32%)' },
-  completed: { bg: 'hsl(150 50% 88%)', ink: 'hsl(150 55% 26%)' },
-  rejected: { bg: 'hsl(0 75% 92%)', ink: 'hsl(0 65% 42%)' },
-  cancelled: { bg: 'hsl(220 12% 88%)', ink: 'hsl(220 8% 40%)' },
+// Per-status semantic tone, rendered with the shared .ktc-chip classes.
+const STATUS_TONE: Record<string, string> = {
+  held: 'warning',
+  submitted: 'info',
+  processing: 'progress',
+  on_hold: 'warning',
+  completed: 'success',
+  rejected: 'danger',
+  cancelled: '',
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLE[status] ?? STATUS_STYLE.cancelled
+  const tone = STATUS_TONE[status]
   return (
-    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: s.bg, color: s.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+    <span className={tone ? `ktc-chip ktc-chip--${tone}` : 'ktc-chip'}>
       {STATUS_LABEL[status] ?? status}
     </span>
   )
@@ -47,44 +48,57 @@ export default function MyJobOrders() {
     })
   }
 
-  useEffect(() => {
-    supabase
+  async function load() {
+    const { data } = await supabase
       .from('job_orders')
       .select(
         'id, jo_number, entry_number, status, admin_note, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)',
       )
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        const rows = (data ?? []) as unknown as JobOrder[]
-        setOrders(rows)
-        setLoading(false)
-        // Auto-expand the order just filed (handed over from the New Job Order page).
-        const filedId = sessionStorage.getItem('ktc_jo_filed_id')
-        if (filedId) {
-          sessionStorage.removeItem('ktc_jo_filed_id')
-          if (rows.some((o) => o.id === filedId)) setOpen(new Set([filedId]))
-        }
-      })
-  }, [])
+    const rows = (data ?? []) as unknown as JobOrder[]
+    setOrders(rows)
+    setLoading(false)
+    // Auto-expand the order just filed (handed over from the New Job Order page).
+    const filedId = sessionStorage.getItem('ktc_jo_filed_id')
+    if (filedId) {
+      sessionStorage.removeItem('ktc_jo_filed_id')
+      if (rows.some((o) => o.id === filedId)) setOpen(new Set([filedId]))
+    }
+  }
+
+  useEffect(() => { void load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Statuses auto-refresh every 60s while the tab is visible; the manual
+  // button is rate-limited to one pull per 10s.
+  const { refresh, cooling } = useAutoRefresh(load)
 
   return (
     <Shell>
       <div className="ktc-glass" style={{ padding: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>My Job Orders</h1>
-            <p className="ktc-label" style={{ marginTop: 6, marginBottom: 0 }}>
+            <h1 className="ktc-title">My Job Orders</h1>
+            <p className="ktc-sub" style={{ marginBottom: 0 }}>
               Tap an order to see its containers and services.
             </p>
           </div>
-          <Link to="/job-order" className="ktc-btn" style={{ width: 'auto', padding: '9px 16px', fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            + New Job Order
-          </Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling} title={cooling ? 'Just refreshed — try again in a few seconds' : 'Refresh statuses (auto-refreshes every minute)'}>
+              ↻ Refresh
+            </button>
+            <Link to="/job-order" className="ktc-btn" style={{ width: 'auto', padding: '9px 16px', fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              + New Job Order
+            </Link>
+          </div>
         </div>
 
         <div style={{ marginTop: 22 }}>
           {loading ? (
-            <span className="ktc-label">Loading…</span>
+            <div style={{ display: 'grid', gap: 12 }} aria-label="Loading job orders">
+              {[64, 64, 64].map((h, i) => (
+                <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 14 }} />
+              ))}
+            </div>
           ) : orders.length === 0 ? (
             <div className="ktc-label" style={{ fontSize: 14 }}>
               No job orders yet. Create one on the{' '}
@@ -117,7 +131,7 @@ export default function MyJobOrders() {
                       </span>
                       <span style={{ minWidth: 0, flex: '1 1 auto' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                          <b style={{ fontSize: 15 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
+                          <b className={o.jo_number ? 'ktc-mono' : undefined} style={{ fontSize: o.jo_number ? 14.5 : 14 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
                           <StatusBadge status={o.status} />
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4 }}>
@@ -149,7 +163,7 @@ export default function MyJobOrders() {
                           </div>
                         )}
                         {(o.status === 'processing' || o.status === 'completed') && (
-                          <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ display: 'inline-block', marginBottom: 12, padding: '7px 14px', borderRadius: 9, fontSize: 12.5, fontWeight: 600, textDecoration: 'none', color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
+                          <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
                             Print slip ↗
                           </Link>
                         )}
@@ -162,7 +176,7 @@ export default function MyJobOrders() {
                                 key={i}
                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}
                               >
-                                <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600 }}>{l.container_number}</span>
+                                <span className="ktc-mono" style={{ fontWeight: 600 }}>{l.container_number}</span>
                                 <span className="ktc-label" style={{ fontSize: 12.5 }}>{l.service_request}</span>
                               </div>
                             ))}

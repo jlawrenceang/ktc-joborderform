@@ -1,27 +1,23 @@
 import type { ReactNode } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 
-// Path → breadcrumb label. The Dashboard cards are the primary navigation; this
-// just shows where you are and links back to the Dashboard.
-const CRUMBS: Record<string, string> = {
-  '/admin': 'Dashboard',
-  '/admin/approvals': 'Approvals',
-  '/admin/customers': 'Customers',
-  '/admin/consignees': 'Consignees',
-  '/admin/job-orders': 'Job Orders',
-  '/admin/settings': 'Settings',
-}
+// Persistent frosted admin nav — every admin surface one tap away; the active
+// pill shows where you are (replaces the old back-button + breadcrumb).
+const NAV = [
+  { to: '/admin', label: 'Dashboard', end: true },
+  { to: '/admin/approvals', label: 'Approvals' },
+  { to: '/admin/customers', label: 'Customers' },
+  { to: '/admin/consignees', label: 'Consignees' },
+  { to: '/admin/job-orders', label: 'Job Orders' },
+  { to: '/admin/settings', label: 'Settings' },
+]
 
-export default function AdminShell({ children, crumb }: { children: ReactNode; crumb?: string }) {
+export default function AdminShell({ children }: { children: ReactNode; crumb?: string }) {
   const { signOut } = useAuth()
   const { broker } = useBroker()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const isDashboard = pathname === '/admin'
-  const isCustomerDetail = pathname.startsWith('/admin/customers/')
-  const current = crumb ?? CRUMBS[pathname] ?? (isCustomerDetail ? 'Customer' : '')
 
   async function handleSignOut() {
     await signOut()
@@ -31,47 +27,39 @@ export default function AdminShell({ children, crumb }: { children: ReactNode; c
   const role = broker?.is_owner ? 'Owner' : broker?.is_admin ? 'Admin' : ''
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto', padding: '28px 24px 60px' }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link to="/admin" aria-label="Go to Dashboard" style={{ display: 'inline-flex' }}>
-            <img src="/ktc-logo.png" alt="KTC" style={{ height: 44 }} />
-          </Link>
-          <span
-            style={{
-              fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-              padding: '4px 10px', borderRadius: 999, color: '#fff',
-              background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
-            }}
-          >
-            Admin Portal
-          </span>
+    <div style={{ maxWidth: 1020, margin: '0 auto', padding: '14px 20px 60px' }}>
+      <nav className="ktc-nav" aria-label="Admin">
+        <Link to="/admin" aria-label="Go to Dashboard" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
+          <img src="/ktc-logo.png" alt="KTC" style={{ height: 34 }} />
+        </Link>
+        <span
+          title={role ? `${role}: ${broker?.email ?? ''}` : undefined}
+          style={{
+            flex: '0 0 auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+            padding: '4px 9px', borderRadius: 999, color: '#fff', marginRight: 4,
+            background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
+          }}
+        >
+          {role || 'Admin'}
+        </span>
+        <div className="ktc-nav-links">
+          {NAV.map((n) => (
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.end}
+              className={({ isActive }) => `ktc-nav-link${isActive ? ' is-active' : ''}`}
+            >
+              {n.label}
+            </NavLink>
+          ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          {role && <span className="ktc-label" style={{ fontSize: 12 }}>{role}: {broker?.email}</span>}
-          <button className="ktc-link" onClick={handleSignOut}>Sign out</button>
-        </div>
-      </header>
+        <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
+          Sign out
+        </button>
+      </nav>
 
-      {!isDashboard && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22, flexWrap: 'wrap' }}>
-          <Link to="/admin" className="ktc-glass" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 10, fontSize: 13, fontWeight: 600, textDecoration: 'none', color: 'inherit' }}>
-            <span style={{ fontSize: 15, lineHeight: 1 }}>←</span> Back to Dashboard
-          </Link>
-          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'hsl(var(--ink-2))' }}>
-            <Link to="/admin" className="ktc-link">Dashboard</Link>
-            <span style={{ opacity: 0.5 }}>›</span>
-            {isCustomerDetail && (
-              <>
-                <Link to="/admin/customers" className="ktc-link">Customers</Link>
-                <span style={{ opacity: 0.5 }}>›</span>
-              </>
-            )}
-            <span style={{ fontWeight: 600, color: 'hsl(var(--ink))' }}>{current}</span>
-          </nav>
-        </div>
-      )}
-      {children}
+      <div className="ktc-stagger">{children}</div>
     </div>
   )
 }

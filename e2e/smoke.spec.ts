@@ -53,7 +53,7 @@ test.describe('KTC portal — unauthenticated smoke', () => {
     const res = await page.goto('/agreement')
     expect(res?.status()).toBe(200)
     await expect(page).toHaveURL(/\/agreement$/) // public — not redirected to /login
-    await expect(page.getByRole('heading', { name: /KTC Broker Agreement/i }).first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: /KTC Customer Agreement/i }).first()).toBeVisible()
   })
 
   test('old legal routes redirect to /agreement', async ({ page }) => {
@@ -66,9 +66,9 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   test('registration shows the inline agreement + Terms and DPA consent ticks', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('button', { name: 'Create one' }).click()
-    await expect(page.getByRole('checkbox')).toHaveCount(2) // Terms + DPA consent
-    await expect(page.getByRole('link', { name: /View full/i })).toBeVisible() // opens /agreement
-    await expect(page.getByText(/KTC Broker Agreement/i).first()).toBeVisible() // inline doc
+    await expect(page.getByRole('checkbox')).toHaveCount(1) // one tick = Terms + NDA + DPA (consolidated)
+    await expect(page.getByRole('button', { name: /View full/i })).toBeVisible() // opens the agreement modal
+    await expect(page.getByText(/KTC Customer Agreement/i).first()).toBeVisible() // inline doc
     await expect(page.getByText(/Data Privacy Act/i).first()).toBeVisible()
   })
 

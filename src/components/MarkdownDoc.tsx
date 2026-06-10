@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 
 // Render a small, fixed subset of Markdown (headings, bullets, bold, italic,
 // rules, paragraphs) — enough for the legal docs, with no external dependency.
+//
+// SECURITY BOUNDARY: only feed this TRUSTED content checked into the repo
+// (src/content/*). All text renders through React text nodes (no innerHTML),
+// so there is no XSS — but the parser is intentionally minimal and is NOT
+// built to render arbitrary user-supplied markdown. If user content ever
+// needs markdown, use react-markdown with sanitization instead.
 function renderInline(text: string, key: string): ReactNode[] {
   const out: ReactNode[] = []
   text.split(/(\*\*[^*]+\*\*)/g).forEach((part, i) => {

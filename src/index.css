@@ -13,10 +13,145 @@
       var(--cc-canvas);
     background-attachment: fixed;
     color: hsl(var(--ink));
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    letter-spacing: -0.011em;
-    font-feature-settings: 'cv02', 'cv11', 'ss01';
+    letter-spacing: -0.008em;
+  }
+
+  /* Ambient aurora — two slow-drifting brand-tinted orbs behind everything.
+     Fixed + pointer-events:none so layout and clicks are unaffected. */
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+  }
+  body::before {
+    width: 52vmax; height: 52vmax;
+    left: -18vmax; top: -22vmax;
+    background: radial-gradient(circle at 35% 35%, rgb(var(--acc-rgb) / 0.10), rgba(63, 79, 209, 0.05) 55%, transparent 72%);
+    animation: ktc-drift-a 26s var(--ease-spring) infinite alternate;
+  }
+  body::after {
+    width: 44vmax; height: 44vmax;
+    right: -16vmax; bottom: -18vmax;
+    background: radial-gradient(circle at 60% 60%, rgba(38, 106, 175, 0.08), rgb(var(--acc-rgb) / 0.05) 55%, transparent 72%);
+    animation: ktc-drift-b 32s var(--ease-spring) infinite alternate;
+  }
+  @keyframes ktc-drift-a {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(6vmax, 4vmax) scale(1.08); }
+  }
+  @keyframes ktc-drift-b {
+    from { transform: translate(0, 0) scale(1.05); }
+    to { transform: translate(-5vmax, -4vmax) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body::before, body::after { animation: none; }
+  }
+  @media print {
+    body::before, body::after { display: none; }
+  }
+
+  /* Keyboard focus — one consistent visionOS-style ring everywhere. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--acc-rgb) / 0.65);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  /* ---- Typography helpers ---- */
+  .ktc-title {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+  }
+  .ktc-sub {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: hsl(var(--ink-2));
+    font-weight: 450;
+    line-height: 1.55;
+  }
+  .ktc-mono {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    letter-spacing: 0;
+  }
+
+  /* ---- Page reveal — one orchestrated stagger on load ---- */
+  .ktc-rise {
+    animation: ktc-rise var(--dur-slow) var(--ease-spring) both;
+  }
+  .ktc-stagger > * {
+    animation: ktc-rise var(--dur-slow) var(--ease-spring) both;
+  }
+  .ktc-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+  .ktc-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+  .ktc-stagger > *:nth-child(3) { animation-delay: 0.13s; }
+  .ktc-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+  .ktc-stagger > *:nth-child(5) { animation-delay: 0.23s; }
+  .ktc-stagger > *:nth-child(6) { animation-delay: 0.28s; }
+  @keyframes ktc-rise {
+    from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ktc-rise, .ktc-stagger > * { animation: none; }
+  }
+
+  /* ---- Frosted top navigation ---- */
+  .ktc-nav {
+    position: sticky;
+    top: 12px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    margin-bottom: 26px;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    border: 1px solid var(--glass-brd);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md), var(--edge);
+  }
+  .ktc-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ktc-nav-links::-webkit-scrollbar { display: none; }
+  .ktc-nav-link {
+    flex: 0 0 auto;
+    padding: 7px 13px;
+    border-radius: 11px;
+    font-size: 13.5px;
+    font-weight: 550;
+    color: hsl(var(--ink-2));
+    text-decoration: none;
+    white-space: nowrap;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+  }
+  .ktc-nav-link:hover { color: hsl(var(--ink)); background: rgba(255, 255, 255, 0.55); }
+  .ktc-nav-link.is-active {
+    color: var(--acc-2);
+    font-weight: 650;
+    background: rgb(var(--acc-rgb) / 0.12);
   }
 }
 
@@ -76,5 +211,161 @@
     cursor: pointer;
     background: none;
     border: 0;
+  }
+
+  /* Glass material tiers — additive variants of .ktc-glass */
+  .ktc-glass-thin {
+    background: var(--glass-thin);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm), var(--edge);
+  }
+  .ktc-glass-thick {
+    background: var(--glass-thick);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thick)) saturate(1.7);
+    backdrop-filter: blur(var(--glass-blur-thick)) saturate(1.7);
+    border: 1px solid var(--glass-brd-strong);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), var(--edge);
+  }
+
+  /* Interactive card physics — add to any .ktc-glass that's a link/button.
+     Gentle lift on hover, settle on press; the visionOS "hover then push" feel. */
+  .ktc-card {
+    transition:
+      transform var(--dur) var(--ease-spring),
+      box-shadow var(--dur) var(--ease-spring),
+      border-color var(--dur) var(--ease-spring);
+  }
+  .ktc-card:hover {
+    transform: translateY(-2px) scale(1.01);
+    border-color: var(--glass-brd-strong);
+    box-shadow:
+      var(--shadow-lg),
+      0 18px 44px -14px rgb(var(--acc-rgb) / 0.16),
+      var(--edge);
+  }
+  .ktc-card:active {
+    transform: translateY(0) scale(0.995);
+    transition-duration: var(--dur-fast);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ktc-card, .ktc-card:hover, .ktc-card:active { transform: none; }
+  }
+
+  /* Secondary button — frosted pill, pairs with the gradient .ktc-btn */
+  .ktc-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    backdrop-filter: blur(var(--glass-blur-thin)) saturate(1.5);
+    color: hsl(var(--ink));
+    border: 1px solid var(--glass-brd);
+    border-radius: var(--radius-sm);
+    padding: 11px 22px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm), var(--edge);
+    transition: transform var(--dur-fast) ease, box-shadow var(--dur) ease, border-color var(--dur) ease;
+  }
+  .ktc-btn-secondary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: var(--glass-brd-strong);
+    box-shadow: var(--shadow-md), var(--edge);
+  }
+  .ktc-btn-secondary:active { transform: translateY(0); }
+  .ktc-btn-secondary:disabled { opacity: 0.6; cursor: default; }
+
+  /* Compact button size — for inline actions ("Print slip", row actions) */
+  .ktc-btn--sm {
+    width: auto;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    border-radius: 9px;
+  }
+
+  /* Status chips — one semantic tone per state, dot + label */
+  .ktc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    background: var(--tone-neutral-bg);
+    color: var(--tone-neutral-ink);
+  }
+  .ktc-chip::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.75;
+  }
+  .ktc-chip--success { background: var(--tone-success-bg); color: var(--tone-success-ink); }
+  .ktc-chip--info { background: var(--tone-info-bg); color: var(--tone-info-ink); }
+  .ktc-chip--progress { background: var(--tone-progress-bg); color: var(--tone-progress-ink); }
+  .ktc-chip--warning { background: var(--tone-warning-bg); color: var(--tone-warning-ink); }
+  .ktc-chip--danger { background: var(--tone-danger-bg); color: var(--tone-danger-ink); }
+  .ktc-chip--accent { background: var(--tone-accent-bg); color: var(--tone-accent-ink); }
+
+  /* Modal system — dimmed blurred backdrop + spring scale-in panel */
+  .ktc-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 18, 30, 0.42);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    animation: ktc-fade-in var(--dur-fast) ease;
+  }
+  .ktc-modal-panel {
+    animation: ktc-pop-in var(--dur) var(--ease-spring);
+  }
+  @keyframes ktc-fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes ktc-pop-in {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ktc-modal-backdrop, .ktc-modal-panel { animation: none; }
+  }
+
+  /* Skeleton shimmer — frosted placeholder while content loads */
+  .ktc-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-brd);
+    min-height: 14px;
+  }
+  .ktc-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+    transform: translateX(-100%);
+    animation: ktc-shimmer 1.6s ease infinite;
+  }
+  @keyframes ktc-shimmer {
+    to { transform: translateX(100%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ktc-skeleton::after { animation: none; }
   }
 }

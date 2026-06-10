@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
+import { prepareUpload } from '../lib/validation'
 
 // Shown to customers gated out of the portal:
 //  - rejected  → recoverable: fix details + re-upload ID → resubmit for review.
@@ -42,7 +43,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
   if (suspended) {
     return (
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Account suspended</h1>
+        <h1 className="ktc-title">Account suspended</h1>
         <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
           Your account has been suspended. Please contact KTC customer service for assistance.
         </p>
@@ -91,7 +92,14 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
           </label>
           {!file ? (
             <input id="rsId" className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ padding: '9px 13px' }} />
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (!f) return
+                void prepareUpload(f).then((prepared) => {
+                  if ('error' in prepared) { setError(prepared.error); return }
+                  setError(null); setFile(prepared.file)
+                })
+              }} style={{ padding: '9px 13px' }} />
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 
 // Landed here from the password-reset email (the link establishes a recovery
 // session). Set the new password, then sign out and log in fresh.
@@ -15,7 +16,8 @@ export default function ResetPassword() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    if (pw.length < 6) { setError('Password must be at least 6 characters.'); return }
+    const pwIssue = passwordIssue(pw)
+    if (pwIssue) { setError(pwIssue); return }
     if (pw !== pw2) { setError('Passwords don’t match.'); return }
     setBusy(true); setError(null)
     const { error: uErr } = await supabase.auth.updateUser({ password: pw })
@@ -47,12 +49,13 @@ export default function ResetPassword() {
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="pw">New password</label>
-            <input id="pw" className="ktc-input" type="password" required minLength={6} value={pw}
+            <input id="pw" className="ktc-input" type="password" required minLength={8} value={pw}
               onChange={(e) => setPw(e.target.value)} autoComplete="new-password" />
+            <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
             <label className="ktc-label" htmlFor="pw2">Confirm new password</label>
-            <input id="pw2" className="ktc-input" type="password" required minLength={6} value={pw2}
+            <input id="pw2" className="ktc-input" type="password" required minLength={8} value={pw2}
               onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
           </div>
           <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>

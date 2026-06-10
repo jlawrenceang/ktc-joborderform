@@ -6,6 +6,7 @@ import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
 import { MarkdownBody } from '../components/MarkdownDoc'
+import { prepareUpload } from '../lib/validation'
 
 // Focused landing page for a confirmed customer who hasn't uploaded a valid ID yet.
 // They attach a file, can view/remove it, then deliberately submit. After submit
@@ -25,10 +26,12 @@ export default function VerifyId() {
   // Clean up the object URL when it changes or the page unmounts.
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }, [previewUrl])
 
-  function pickFile(f: File) {
+  async function pickFile(f: File) {
+    const prepared = await prepareUpload(f) // oversized images auto-compress
+    if ('error' in prepared) { setError(prepared.error); return }
     if (previewUrl) URL.revokeObjectURL(previewUrl)
-    setFile(f)
-    setPreviewUrl(URL.createObjectURL(f))
+    setFile(prepared.file)
+    setPreviewUrl(URL.createObjectURL(prepared.file))
     setError(null)
   }
   function removeFile() {
@@ -108,7 +111,7 @@ export default function VerifyId() {
           {!file ? (
             <>
               <input id="verifyId" className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f) }} style={{ padding: '9px 13px' }} />
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) void pickFile(f) }} style={{ padding: '9px 13px' }} />
               <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>Choose a clear photo or PDF — you can review it before submitting.</span>
             </>
           ) : (

@@ -4,7 +4,7 @@ import Shell from '../components/Shell'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 
-const iconProps = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
 const NewOrderIcon = () => (
   <svg {...iconProps}><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M12 11v6M9 14h6" /></svg>
@@ -17,48 +17,52 @@ const AccountIcon = () => (
 )
 
 const cards: { to: string; title: string; desc: string; icon: ReactNode }[] = [
-  { to: '/job-order', title: 'New Job Order', desc: 'File for terminal services', icon: <NewOrderIcon /> },
-  { to: '/job-orders', title: 'My Job Orders', desc: 'Track your job order status', icon: <OrdersIcon /> },
-  { to: '/account', title: 'My Account', desc: 'Profile & settings', icon: <AccountIcon /> },
+  { to: '/job-order', title: 'New Job Order', desc: 'File for X-ray, DEA or OOG stripping services', icon: <NewOrderIcon /> },
+  { to: '/job-orders', title: 'My Job Orders', desc: 'Track statuses and print approved slips', icon: <OrdersIcon /> },
+  { to: '/account', title: 'My Account', desc: 'Profile, email & password', icon: <AccountIcon /> },
 ]
 
 export default function Home() {
   const { session } = useAuth()
   const { broker } = useBroker()
-  const name = broker?.full_name || session?.user.email
+  const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
   return (
     <Shell>
-      <div style={{ marginBottom: 22 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
-          Welcome{name ? `, ${name}` : ''}
-        </h1>
-        <p className="ktc-label" style={{ marginTop: 6, fontSize: 14 }}>
-          KTC Online Portal — file job orders for terminal services and track their status.
+      <div style={{ margin: '18px 4px 26px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, letterSpacing: '-0.028em', lineHeight: 1.15 }}>
+            Welcome{firstName ? `, ${firstName}` : ''}
+          </h1>
           {broker?.customer_code && (
-            <>
-              {' · '}<span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600 }}>{broker.customer_code}</span>
-            </>
+            <span className="ktc-mono" style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', color: 'hsl(var(--ink-2))' }}>
+              {broker.customer_code}
+            </span>
           )}
+        </div>
+        <p className="ktc-sub" style={{ maxWidth: 480 }}>
+          File job orders for terminal services and track them through processing.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
         {cards.map((c) => (
           <Link
             key={c.to}
             to={c.to}
-            className="ktc-glass"
-            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, textDecoration: 'none', color: 'inherit' }}
+            className="ktc-glass ktc-card"
+            style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 20px 18px', borderRadius: 20, textDecoration: 'none', color: 'inherit', minHeight: 130 }}
           >
-            <span style={{ flex: '0 0 auto', width: 42, height: 42, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, rgb(var(--acc-rgb) / 0.16), rgb(var(--acc-rgb) / 0.08))', color: 'var(--acc)' }}>
+            <span style={{ width: 44, height: 44, borderRadius: 13, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, rgb(var(--acc-rgb) / 0.16), rgb(var(--acc-rgb) / 0.07))', color: 'var(--acc)' }}>
               {c.icon}
             </span>
-            <span style={{ minWidth: 0 }}>
-              <span style={{ display: 'block', fontSize: 15, fontWeight: 600 }}>{c.title}</span>
-              <span className="ktc-label" style={{ fontSize: 12.5 }}>{c.desc}</span>
+            <span style={{ marginTop: 'auto' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 15.5, fontWeight: 650, letterSpacing: '-0.01em' }}>
+                {c.title}
+                <span aria-hidden style={{ color: 'hsl(var(--ink-3))', fontSize: 17, lineHeight: 1, transition: 'transform 0.2s' }}>›</span>
+              </span>
+              <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>{c.desc}</span>
             </span>
-            <span style={{ marginLeft: 'auto', color: 'hsl(var(--ink-3))', fontSize: 20, lineHeight: 1 }}>›</span>
           </Link>
         ))}
       </div>

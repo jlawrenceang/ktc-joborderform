@@ -1,0 +1,157 @@
+import { useEffect, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
+/**
+ * One-line integration for pages that view stored attachments:
+ *   const { openFromStorage, viewerModal } = useFileViewer(setError)
+ *   ... onClick={() => void openFromStorage('valid-ids', path, 'Valid ID — Juan')}
+ *   ... {viewerModal}
+ */
+export function useFileViewer(onError: (msg: string) => void) {
+  const [viewer, setViewer] = useState<{ title: string; fileName: string; url: string } | null>(null)
+
+  async function openFromStorage(bucket: string, path: string | null | undefined, title: string) {
+    if (!path) return
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60)
+    if (error || !data) return onError(error?.message ?? 'Could not open the file.')
+    setViewer({ title, fileName: path.split('/').pop() ?? 'attachment', url: data.signedUrl })
+  }
+
+  const viewerModal = viewer ? (
+    <FileViewerModal
+      title={viewer.title}
+      fileName={viewer.fileName}
+      url={viewer.url}
+      onClose={() => setViewer(null)}
+    />
+  ) : null
+
+  return { openFromStorage, viewerModal }
+}
+
+// In-app viewer for uploaded attachments (valid IDs, payment slips, 2303 docs).
+// Replaces "open signed URL in a new tab": shows the image/PDF in a modal with
+// Print + Save actions. The file is fetched into a blob immediately, so the
+// short-lived signed URL can't expire while the admin is looking at it.
+export default function FileViewerModal({
+  title,
+  fileName,
+  url,
+  onClose,
+}: {
+  title: string
+  fileName: string
+  url: string // signed URL (fetched once, then viewed as a local blob)
+  onClose: () => void
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [kind, setKind] = useState<'image' | 'pdf' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const printFrameRef = useRef<HTMLIFrameElement>(null)
+  const pdfFrameRef = useRef<HTMLIFrameElement>(null)
+
+  useEffect(() => {
+    let objectUrl: string | null = null
+    let active = true
+    void (async () => {
+      try {
+        const res = await fetch(url)
+        if (!res.ok) throw new Error(`fetch failed (${res.status})`)
+        const blob = await res.blob()
+        if (!active) return
+        objectUrl = URL.createObjectURL(blob)
+        setKind(blob.type === 'application/pdf' ? 'pdf' : 'image')
+        setBlobUrl(objectUrl)
+      } catch {
+        if (active) setError('Could not load the file. Please try again.')
+      }
+    })()
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [url])
+
+  // Close on Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  function save() {
+    if (!blobUrl) return
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = fileName
+    a.click()
+  }
+
+  function print() {
+    if (!blobUrl) return
+    if (kind === 'pdf') {
+      // The displayed iframe holds a same-origin blob URL — print it directly.
+      pdfFrameRef.current?.contentWindow?.print()
+      return
+    }
+    // Images: stage a minimal document in the hidden print iframe.
+    const frame = printFrameRef.current
+    const doc = frame?.contentDocument
+    if (!frame || !doc) return
+    doc.open()
+    doc.write(
+      `<!doctype html><title>${title}</title>` +
+      `<style>body{margin:0;display:grid;place-items:center}img{max-width:100%;max-height:100vh}</style>` +
+      `<img src="${blobUrl}" onload="setTimeout(function(){window.print()},50)">`,
+    )
+    doc.close()
+  }
+
+  return (
+    <div className="ktc-modal-backdrop" onClick={onClose}>
+      <div
+        className="ktc-glass-thick ktc-modal-panel"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        style={{ maxWidth: 720, width: '100%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--glass-brd)' }}>
+          <span style={{ fontWeight: 650, fontSize: 14.5, flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {title}
+          </span>
+          <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={print} disabled={!blobUrl}>
+            Print
+          </button>
+          <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={save} disabled={!blobUrl}>
+            Save
+          </button>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            style={{ fontSize: 19, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', padding: '2px 6px' }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ flex: '1 1 auto', minHeight: 240, overflow: 'auto', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.35)', padding: kind === 'pdf' ? 0 : 16 }}>
+          {error ? (
+            <span style={{ fontSize: 13.5, color: 'var(--acc-2)', fontWeight: 500 }}>{error}</span>
+          ) : !blobUrl ? (
+            <div className="ktc-skeleton" style={{ width: '70%', height: 220 }} />
+          ) : kind === 'pdf' ? (
+            <iframe ref={pdfFrameRef} src={blobUrl} title={title} style={{ width: '100%', height: '70vh', border: 0 }} />
+          ) : (
+            <img src={blobUrl} alt={title} style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 10, boxShadow: 'var(--shadow-md)' }} />
+          )}
+        </div>
+      </div>
+
+      {/* Hidden staging frame for printing images */}
+      <iframe ref={printFrameRef} title="print" style={{ position: 'fixed', width: 0, height: 0, border: 0, visibility: 'hidden' }} />
+    </div>
+  )
+}

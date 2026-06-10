@@ -98,7 +98,7 @@ export default function AllJobOrders() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Job Orders</h1>
+        <h1 className="ktc-title">Job Orders</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review and process job orders from verified customers.</p>
 
         {loading ? <span className="ktc-label">Loading…</span> : orders.length === 0 ? (

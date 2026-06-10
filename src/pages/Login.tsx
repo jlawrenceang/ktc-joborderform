@@ -7,6 +7,7 @@ import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../c
 import { APP_VERSION } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
+import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 
 // Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
 // email, disable sign-in for LOCK_MS. (Supabase's server-side auth rate limits
@@ -152,6 +153,10 @@ export default function Login() {
       setError('Please accept the KTC Customer Agreement (Terms & Data Privacy consent) to continue.')
       return
     }
+    if (mode === 'signup') {
+      const pwIssue = passwordIssue(password)
+      if (pwIssue) { setError(pwIssue); return }
+    }
     if (captchaEnabled && !captchaToken) {
       setError('Please complete the CAPTCHA.')
       return
@@ -213,7 +218,7 @@ export default function Login() {
 
   return (
     <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
-      <div className="ktc-glass" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
+      <div className="ktc-glass ktc-rise" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 64, marginBottom: 20 }} />
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
@@ -272,9 +277,10 @@ export default function Login() {
               <label className="ktc-label" htmlFor="password">Password</label>
               {!isSignup && <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 12 }}>Forgot password?</Link>}
             </div>
-            <input id="password" className="ktc-input" type="password" required minLength={6} value={password}
+            <input id="password" className="ktc-input" type="password" required minLength={isSignup ? 8 : undefined} value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={isSignup ? 'new-password' : 'current-password'} />
+            {isSignup && <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>}
           </div>
 
           {isSignup && (

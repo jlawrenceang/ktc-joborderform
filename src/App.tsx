@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -12,18 +12,20 @@ import Agreement from './pages/Agreement'
 import Home from './pages/Home'
 import Account from './pages/Account'
 import JobOrder from './pages/JobOrder'
-import JobOrderPrint from './pages/JobOrderPrint'
 import VerifyId from './pages/VerifyId'
-import Accreditation from './pages/Accreditation'
 import MyJobOrders from './pages/MyJobOrders'
 import AdminRoute from './admin/AdminRoute'
-import Dashboard from './admin/Dashboard'
-import Approvals from './admin/Approvals'
-import Brokers from './admin/Brokers'
-import CustomerDetail from './admin/CustomerDetail'
-import Consignees from './admin/Consignees'
-import AllJobOrders from './admin/AllJobOrders'
-import Settings from './admin/Settings'
+
+// Code-split: customers never download the admin portal (and vice versa for
+// the rarely-visited print view) — keeps the first paint lean.
+const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
+const Dashboard = lazy(() => import('./admin/Dashboard'))
+const Approvals = lazy(() => import('./admin/Approvals'))
+const Brokers = lazy(() => import('./admin/Brokers'))
+const CustomerDetail = lazy(() => import('./admin/CustomerDetail'))
+const Consignees = lazy(() => import('./admin/Consignees'))
+const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
+const Settings = lazy(() => import('./admin/Settings'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -55,6 +57,13 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Suspense
+          fallback={
+            <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+              <span className="ktc-label">Loading…</span>
+            </div>
+          }
+        >
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/confirmed" element={<Confirmed />} />
@@ -73,7 +82,8 @@ export default function App() {
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
           <Route path="/job-order/:id/print" element={<Protected><JobOrderPrint /></Protected>} />
-          <Route path="/accreditation" element={<Protected><Accreditation /></Protected>} />
+          {/* /accreditation removed 2026-06-11 (page deleted; consignee accreditation
+              disabled per ADR-0007) — old links fall through to the catch-all → / */}
           <Route path="/job-orders" element={<Protected><MyJobOrders /></Protected>} />
 
           {/* Admin portal */}
@@ -87,6 +97,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   )

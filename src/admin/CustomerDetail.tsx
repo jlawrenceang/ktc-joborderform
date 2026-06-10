@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import type { Broker, JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
+import { useFileViewer } from '../components/FileViewerModal'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
@@ -42,12 +43,7 @@ export default function CustomerDetail() {
     })()
   }, [id])
 
-  async function viewId(path: string | null) {
-    if (!path) return
-    const { data, error } = await supabase.storage.from('valid-ids').createSignedUrl(path, 60)
-    if (error || !data) return setError(error?.message ?? 'Could not open ID.')
-    window.open(data.signedUrl, '_blank', 'noopener')
-  }
+  const { openFromStorage, viewerModal } = useFileViewer(setError)
 
   if (loading) return <AdminShell><span className="ktc-label">Loading…</span></AdminShell>
   if (!cust) return (
@@ -65,14 +61,14 @@ export default function CustomerDetail() {
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          {cust.customer_code && <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{cust.customer_code}</span>}
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>{cust.full_name || cust.email || 'Customer'}</h1>
+          {cust.customer_code && <span className="ktc-mono" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{cust.customer_code}</span>}
+          <h1 className="ktc-title">{cust.full_name || cust.email || 'Customer'}</h1>
           <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{cust.status}</span>
         </div>
         <div className="ktc-label" style={{ marginTop: 10, fontSize: 14, display: 'grid', gap: 4 }}>
           <div>Email: {cust.email}</div>
           <div>Contact: {cust.contact_number || '—'}</div>
-          {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => viewId(cust.valid_id_path)}>View</button></div>}
+          {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, `Valid ID — ${cust.full_name || cust.email || 'customer'}`)}>View</button></div>}
           {cust.decided_at && <div>Decided: {new Date(cust.decided_at).toLocaleString()}</div>}
           {cust.decision_reason && <div>Note to customer: {cust.decision_reason}</div>}
         </div>
@@ -105,6 +101,7 @@ export default function CustomerDetail() {
           </div>
         )}
       </div>
+      {viewerModal}
     </AdminShell>
   )
 }

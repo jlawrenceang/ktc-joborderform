@@ -4,6 +4,10 @@
    to the KTC brand (logo orange/red). Light theme.
    ============================================================ */
 :root {
+  /* type — precise grotesk for UI, technical mono for codes (JO/container nos) */
+  --font-sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
   /* canvas + ink ramp */
   --cc-canvas: #f1f2f5;
   --cc-canvas-strong: #e8e9ee;
@@ -14,10 +18,15 @@
   --line: 220 14% 89%;
   --line-soft: 220 16% 93%;
 
-  /* glass material */
+  /* glass materials — visionOS-style tiers (thin → thick) */
+  --glass-thin: rgba(255, 255, 255, 0.42);
   --glass: rgba(255, 255, 255, 0.6);
+  --glass-thick: rgba(255, 255, 255, 0.78);
   --glass-brd: rgba(255, 255, 255, 0.62);
+  --glass-brd-strong: rgba(255, 255, 255, 0.85);
   --glass-blur: 20px;
+  --glass-blur-thin: 12px;
+  --glass-blur-thick: 28px;
 
   /* radii + depth */
   --radius-sm: 11px;
@@ -29,8 +38,30 @@
   --shadow-lg: 0 28px 60px -20px rgba(18, 22, 38, 0.3), 0 6px 16px rgba(18, 22, 38, 0.07);
   --edge: inset 0 1px 0 0 hsl(0 0% 100% / 0.65);
 
+  /* motion — visionOS spring-ish easing */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0.32, 1);
+  --dur-fast: 0.14s;
+  --dur: 0.22s;
+  --dur-slow: 0.4s;
+
   /* accent = KTC brand */
   --acc: #f26a21;
   --acc-2: #d6321e;
   --acc-rgb: 242 106 33;
+
+  /* status tones (chips, notices) — one hue per semantic state */
+  --tone-success-bg: hsl(150 50% 88%);
+  --tone-success-ink: hsl(150 55% 26%);
+  --tone-info-bg: hsl(210 60% 90%);
+  --tone-info-ink: hsl(210 55% 36%);
+  --tone-progress-bg: hsl(265 55% 91%);
+  --tone-progress-ink: hsl(265 45% 42%);
+  --tone-warning-bg: hsl(40 90% 86%);
+  --tone-warning-ink: hsl(30 75% 32%);
+  --tone-danger-bg: hsl(0 75% 92%);
+  --tone-danger-ink: hsl(0 65% 42%);
+  --tone-neutral-bg: hsl(220 12% 88%);
+  --tone-neutral-ink: hsl(220 8% 40%);
+  --tone-accent-bg: rgb(var(--acc-rgb) / 0.14);
+  --tone-accent-ink: var(--acc-2);
 }

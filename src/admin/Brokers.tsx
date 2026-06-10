@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
+import { useFileViewer } from '../components/FileViewerModal'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
@@ -52,17 +53,12 @@ export default function Brokers() {
     void load()
   }
 
-  async function viewId(path: string | null) {
-    if (!path) return
-    const { data, error } = await supabase.storage.from('valid-ids').createSignedUrl(path, 60)
-    if (error || !data) return setError(error?.message ?? 'Could not open ID.')
-    window.open(data.signedUrl, '_blank', 'noopener')
-  }
+  const { openFromStorage, viewerModal } = useFileViewer(setError)
 
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Customers</h1>
+        <h1 className="ktc-title">Customers</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
           All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.
         </p>
@@ -83,14 +79,14 @@ export default function Brokers() {
                     <div style={{ fontSize: 14, lineHeight: 1.5, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                         {b.customer_code && (
-                          <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{b.customer_code}</span>
+                          <span className="ktc-mono" style={{ fontSize: 12, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{b.customer_code}</span>
                         )}
                         <Link to={`/admin/customers/${b.id}`} className="ktc-link" style={{ fontWeight: 600, color: 'inherit' }}>{b.full_name || b.email || 'Unknown'}</Link>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{b.status}</span>
                       </div>
                       <div className="ktc-label" style={{ fontSize: 13 }}>
                         {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
-                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => viewId(b.valid_id_path)}>View ID</button></>)}
+                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`)}>View ID</button></>)}
                       </div>
                       <BrokerReview b={b} />
                     </div>
@@ -124,6 +120,7 @@ export default function Brokers() {
           </div>
         )}
       </div>
+      {viewerModal}
     </AdminShell>
   )
 }

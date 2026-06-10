@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
@@ -34,6 +34,9 @@ export default function JobOrder() {
   const [bulkNote, setBulkNote] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Ref guard: state updates are async, so a rapid double-click can pass a
+  // `busy` check twice and file the order twice.
+  const submittingRef = useRef(false)
 
   // Debounced server-side search (the master list has thousands of rows, past
   // the 1000-row select cap — so we query as the broker types).
@@ -105,6 +108,7 @@ export default function JobOrder() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
     setError(null)
     if (!broker) {
       setError('Customer profile not found.')
@@ -119,6 +123,7 @@ export default function JobOrder() {
       setError('Add at least one container.')
       return
     }
+    submittingRef.current = true
     setBusy(true)
     const { data: jo, error: joErr } = await supabase
       .from('job_orders')
@@ -134,6 +139,7 @@ export default function JobOrder() {
       .single()
 
     if (joErr || !jo) {
+      submittingRef.current = false
       setBusy(false)
       setError(joErr?.message ?? 'Could not create job order.')
       return
@@ -147,6 +153,7 @@ export default function JobOrder() {
     )
     setBusy(false)
     if (lineErr) {
+      submittingRef.current = false
       setError(lineErr.message)
       return
     }
@@ -158,7 +165,7 @@ export default function JobOrder() {
   return (
     <Shell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>New Job Order</h1>
+        <h1 className="ktc-title">New Job Order</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
           For X-ray / DEA / OOG stripping service orders.
         </p>
@@ -312,7 +319,7 @@ export default function JobOrder() {
                   placeholder={'One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321'}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  style={{ resize: 'vertical', minHeight: 110, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 13 }}
+                  style={{ resize: 'vertical', minHeight: 110, fontFamily: 'var(--font-mono)', fontSize: 13 }}
                 />
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>Service for all:</label>
