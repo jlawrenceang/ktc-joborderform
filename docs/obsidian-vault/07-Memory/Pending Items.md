@@ -31,6 +31,7 @@ Detailed backlog. For sequencing, see [[Roadmap]].
 - [x] **Printable job-order slip** — A6 invoice-style at `/job-order/:id/print`, ON PROCESS watermark (2026-06-10).
 - [x] **My Account self-service** — `/account` (name/contact/email/password; approved name change → re-verify), migration `0028`.
 - [ ] **Pricing on job orders** — add rate/amount fields + totals; the printable slip already reserves the Amount column + totals slot.
+- [ ] **Online payment (non-gated)** — optional "Pay online" to settle a JO (skip the counter); JO stays processable without payment. Depends on pricing. Decide gateway (PayMongo / Xendit / Maya / DragonPay — GCash + Maya + cards), Official Receipt issuance (BIR `OR-INV-…`), `payment_status` / `paid_at` / reference on `job_orders`, admin reconciliation.
 - [ ] Per-customer accredited-consignee scoping — restrict job-order targets to a customer's accredited consignees.
 - [ ] Job-order draft persistence; document attachments; customer edit/cancel of own order.
 
