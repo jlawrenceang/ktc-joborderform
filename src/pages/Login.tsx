@@ -104,7 +104,7 @@ export default function Login() {
           {isSignup ? 'Create account' : 'Sign in'}
         </h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 24 }}>
-          KTC Job Order portal — for accredited brokers.
+          KTC Online Portal — for accredited customers.
         </p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>

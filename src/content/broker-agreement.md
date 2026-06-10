@@ -2,7 +2,7 @@
 
 **Version 1.0 — Effective [DATE TO BE SET BY KTC]**
 
-This Agreement governs your use of the KTC Container Terminal Corp. ("KTC", "we") broker portal (the "Portal"). It covers the **terms of use**, your **confidentiality / non-disclosure** obligations, and your **data-privacy consent** under the **Data Privacy Act of 2012 (R.A. 10173)**. By ticking the acceptance box at registration, you ("Broker", "you") agree to all of it. *[Working template for KTC + counsel review; bracketed items are placeholders. Not legal advice.]*
+This Agreement governs your use of the KTC Container Terminal Corp. ("KTC", "we") online portal (the "Portal"). It covers the **terms of use**, your **confidentiality / non-disclosure** obligations, and your **data-privacy consent** under the **Data Privacy Act of 2012 (R.A. 10173)**. By ticking the acceptance box at registration, you ("Broker", "you") agree to all of it. *[Working template for KTC + counsel review; bracketed items are placeholders. Not legal advice.]*
 
 ## 1. Acceptance and Eligibility
 

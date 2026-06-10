@@ -25,8 +25,7 @@ export default function Home() {
           </p>
         )}
         <p className="ktc-label" style={{ marginTop: 8 }}>
-          This is the KTC Job Order portal. Create job orders against your accredited consignees,
-          and manage your accreditation requests.
+          This is the KTC Online Portal. File job orders for terminal services and track their status.
         </p>
       </div>
 
