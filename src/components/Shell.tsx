@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
@@ -10,17 +10,21 @@ import BrokerStatusBanner from './BrokerStatusBanner'
 
 const IDLE_LOGOUT_MS = 10 * 60 * 1000 // auto sign-out after 10 min of inactivity
 
-const baseLinks = [
-  { to: '/', label: 'Home', end: true },
-  { to: '/job-order', label: 'New Job Order' },
-  { to: '/job-orders', label: 'My Job Orders' },
-]
+// Path → breadcrumb label. The Home cards are the primary navigation.
+const CRUMBS: Record<string, string> = {
+  '/': 'Home',
+  '/job-order': 'New Job Order',
+  '/job-orders': 'My Job Orders',
+  '/accreditation': 'Accreditation',
+}
 
 export default function Shell({ children }: { children: ReactNode }) {
   const { signOut } = useAuth()
   const { broker } = useBroker()
   const navigate = useNavigate()
-  const links = baseLinks
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+  const current = CRUMBS[pathname] ?? ''
 
   // Locked out entirely: rejected / suspended (non-admin) brokers get a message only.
   const locked = !!broker && !hasAdminAccess(broker) && (broker.status === 'rejected' || broker.status === 'suspended')
@@ -51,26 +55,16 @@ export default function Shell({ children }: { children: ReactNode }) {
       ) : (
         <>
           {pending && <BrokerStatusBanner broker={broker!} />}
-          <nav style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.end}
-                style={({ isActive }) => ({
-                  padding: '7px 14px',
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  color: isActive ? '#fff' : 'hsl(var(--ink-2))',
-                  background: isActive ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : 'rgba(255,255,255,0.6)',
-                  border: '1px solid var(--glass-brd)',
-                })}
-              >
-                {l.label}
-              </NavLink>
-            ))}
+          <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 22, fontSize: 14 }}>
+            {isHome ? (
+              <span style={{ fontWeight: 600 }}>Home</span>
+            ) : (
+              <>
+                <Link to="/" className="ktc-link">Home</Link>
+                <span style={{ color: 'hsl(var(--ink-2))', opacity: 0.5 }}>›</span>
+                <span style={{ fontWeight: 600 }}>{current}</span>
+              </>
+            )}
           </nav>
           {children}
         </>
