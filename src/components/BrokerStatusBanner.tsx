@@ -1,20 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from '../lib/contact'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
-// broker. They get full access to browse and prepare job orders; the actual submit
-// is gated server-side (job_orders insert requires broker_is_approved()). Here we
-// (1) sync consent captured at sign-up, and (2) let them upload the valid ID an
-// admin needs to review before approving.
+// customer. They get full access to browse and prepare job orders (submit is gated
+// server-side). Here we (1) sync consent captured at sign-up, and (2) point them to
+// the /verify-id page to upload the valid ID an admin needs before approving.
 export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [uploaded, setUploaded] = useState(false)
   const synced = useRef(false)
 
-  // Sync consent (captured in auth metadata at sign-up) onto the broker row if it
+  // Sync consent (captured in auth metadata at sign-up) onto the customer row if it
   // wasn't written then (the email-confirmation-on path has no session at sign-up).
   useEffect(() => {
     if (synced.current || broker.terms_version) return
@@ -29,20 +26,7 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
     })()
   }, [broker.terms_version, broker.user_id])
 
-  async function uploadId(file: File) {
-    setBusy(true); setError(null)
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'dat'
-    const path = `${broker.user_id}/valid-id.${ext}`
-    const { error: upErr } = await supabase.storage.from('valid-ids').upload(path, file, { upsert: true })
-    if (upErr) { setBusy(false); return setError(upErr.message) }
-    const { error: updErr } = await supabase.from('customers').update({ valid_id_path: path }).eq('id', broker.id)
-    setBusy(false)
-    if (updErr) return setError(updErr.message)
-    setUploaded(true)
-  }
-
-  const hasId = !!broker.valid_id_path || uploaded
-  const needsId = !hasId
+  const needsId = !broker.valid_id_path
 
   return (
     <div
@@ -65,7 +49,7 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
       </div>
       <p className="ktc-label" style={{ marginTop: 8, marginBottom: 0, lineHeight: 1.6, fontSize: 13 }}>
         {needsId ? (
-          'You can already file job orders — they’re held pending verification. Upload your valid ID below to get verified; once approved, your held orders are sent to KTC automatically.'
+          'You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.'
         ) : (
           <>
             A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
@@ -75,20 +59,14 @@ export default function BrokerStatusBanner({ broker }: { broker: Broker }) {
       </p>
 
       {needsId && (
-        <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-          <label className="ktc-label" htmlFor="bannerId" style={{ fontSize: 12, fontWeight: 600 }}>Valid ID (image or PDF)</label>
-          <input id="bannerId" className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadId(f) }} style={{ padding: '9px 13px', maxWidth: 360 }} />
-          <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>Uploaded securely; only KTC admins can view it.</span>
-        </div>
+        <Link to="/verify-id" style={{
+          display: 'inline-block', marginTop: 14, padding: '9px 16px', borderRadius: 10,
+          fontWeight: 600, fontSize: 13, textDecoration: 'none', color: '#fff',
+          background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
+        }}>
+          Upload your valid ID →
+        </Link>
       )}
-
-      {uploaded && (
-        <p className="ktc-label" style={{ marginTop: 12, marginBottom: 0, fontSize: 13 }}>
-          ✅ Valid ID uploaded — your application is complete and pending review.
-        </p>
-      )}
-      {error && <div style={{ color: 'var(--acc-2)', fontSize: 13, marginTop: 10 }}>{error}</div>}
     </div>
   )
 }
