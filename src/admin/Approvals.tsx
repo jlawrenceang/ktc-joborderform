@@ -51,6 +51,40 @@ function ReasonBox({ reason, onChange, busy, onCancel, onConfirm }: {
   )
 }
 
+const REJECT_PRESETS: { status: 'rejected' | 'suspended'; label: string; reason: string }[] = [
+  { status: 'rejected', label: 'ID unreadable — ask to re-upload', reason: 'We couldn’t read your valid ID clearly. Please re-upload a clear photo or PDF of a valid government-issued ID.' },
+  { status: 'rejected', label: 'Needs updated info — ask to resubmit', reason: 'Please review and update your details, then resubmit so we can complete your verification.' },
+  { status: 'suspended', label: 'Suspend account (contact admin)', reason: 'Your account has been suspended. Please contact KTC customer service.' },
+]
+
+// Customer rejection: pick one of the three outcomes; rejected = recoverable
+// (resubmit), suspended = terminal. Optional note is appended to the reason.
+function RejectChoices({ busy, note, onNote, onChoose, onCancel }: {
+  busy: boolean; note: string; onNote: (v: string) => void
+  onChoose: (status: 'rejected' | 'suspended', reason: string) => void; onCancel: () => void
+}) {
+  return (
+    <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(0 70% 98%)', border: '1px solid hsl(0 60% 88%)', display: 'grid', gap: 8 }}>
+      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Choose an outcome (the customer is told why):</label>
+      <textarea className="ktc-input" rows={2} value={note} onChange={(e) => onNote(e.target.value)}
+        placeholder="Optional note to append (e.g. which field to fix)…" />
+      <div style={{ display: 'grid', gap: 6 }}>
+        {REJECT_PRESETS.map((p) => (
+          <button key={p.label} type="button" disabled={busy}
+            onClick={() => onChoose(p.status, p.reason + (note.trim() ? ' — ' + note.trim() : ''))}
+            style={{ textAlign: 'left', border: '1px solid hsl(0 60% 85%)', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: p.status === 'suspended' ? 'hsl(0 65% 40%)' : 'hsl(30 70% 38%)', background: 'rgba(255,255,255,0.8)' }}>
+            {p.label}
+          </button>
+        ))}
+        <button type="button" disabled={busy} onClick={onCancel}
+          style={{ justifySelf: 'start', border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))' }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Approvals() {
   const [brokers, setBrokers] = useState<PendingBroker[]>([])
   const [accreditations, setAccreditations] = useState<PendingAccreditation[]>([])
@@ -74,11 +108,11 @@ export default function Approvals() {
 
   function resetReject() { setRejectId(null); setRejectReason('') }
 
-  async function decideBroker(id: string, status: 'approved' | 'rejected', reason?: string) {
+  async function decideBroker(id: string, status: 'approved' | 'rejected' | 'suspended', reason?: string) {
     setActing(id); setError(null)
     const { error } = await supabase.from('customers').update({
       status, decided_at: new Date().toISOString(),
-      decision_reason: status === 'rejected' ? (reason?.trim() || null) : null,
+      decision_reason: (status === 'rejected' || status === 'suspended') ? (reason?.trim() || null) : null,
     }).eq('id', id)
     setActing(null)
     if (error) return setError(error.message)
@@ -123,8 +157,8 @@ export default function Approvals() {
                   busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved')}
                   onReject={() => { setRejectId(b.id); setRejectReason('') }} />
                 {rejectId === b.id && (
-                  <ReasonBox reason={rejectReason} onChange={setRejectReason} busy={acting === b.id}
-                    onCancel={resetReject} onConfirm={() => decideBroker(b.id, 'rejected', rejectReason)} />
+                  <RejectChoices busy={acting === b.id} note={rejectReason} onNote={setRejectReason}
+                    onChoose={(status, reason) => decideBroker(b.id, status, reason)} onCancel={resetReject} />
                 )}
               </div>
             ))}
