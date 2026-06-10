@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
-import { AGREEMENT_VERSION } from '../content/legal'
+import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
+import { MarkdownBody } from '../components/MarkdownDoc'
 
 // Focused landing page for a confirmed broker who hasn't uploaded a valid ID yet.
 // After upload they're sent to the portal (where they can file held orders while a
@@ -16,6 +17,7 @@ export default function VerifyId() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [agreed, setAgreed] = useState(false) // DPA consent at the point of ID submission
+  const [showAgreement, setShowAgreement] = useState(false) // full-agreement modal
 
   async function uploadId(file: File) {
     if (!broker) return
@@ -74,7 +76,8 @@ export default function VerifyId() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
           <span className="ktc-label" style={{ fontSize: 13 }}>
             I have read and agree to the{' '}
-            <a href="/agreement" target="_blank" rel="noopener noreferrer" className="ktc-link">KTC Customer Agreement (Terms &amp; Conditions)</a>
+            <button type="button" className="ktc-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAgreement(true) }}
+              style={{ border: 0, background: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}>KTC Customer Agreement (Terms &amp; Conditions)</button>
             {' '}and consent to KTC collecting and processing my valid ID for verification under the Data Privacy Act (R.A. 10173).
           </span>
         </label>
@@ -97,6 +100,23 @@ export default function VerifyId() {
           <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>You can upload your ID later from the banner.</span>
         </div>
       </div>
+
+      {showAgreement && (
+        <div onClick={() => setShowAgreement(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass"
+            style={{ maxWidth: 640, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+              <span style={{ fontWeight: 600, fontSize: 15 }}>KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})</span>
+              <button type="button" aria-label="Close" onClick={() => setShowAgreement(false)}
+                style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
+              <MarkdownBody body={AGREEMENT_BODY} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
