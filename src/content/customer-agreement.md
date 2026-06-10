@@ -1,16 +1,16 @@
-# KTC Broker Agreement
+# KTC Customer Agreement
 
 **Version 1.0 — Effective [DATE TO BE SET BY KTC]**
 
-This Agreement governs your use of the KTC Container Terminal Corp. ("KTC", "we") online portal (the "Portal"). It covers the **terms of use**, your **confidentiality / non-disclosure** obligations, and your **data-privacy consent** under the **Data Privacy Act of 2012 (R.A. 10173)**. By ticking the acceptance box at registration, you ("Broker", "you") agree to all of it. *[Working template for KTC + counsel review; bracketed items are placeholders. Not legal advice.]*
+This Agreement governs your use of the KTC Container Terminal Corp. ("KTC", "we") online portal (the "Portal"). It covers the **terms of use**, your **confidentiality / non-disclosure** obligations, and your **data-privacy consent** under the **Data Privacy Act of 2012 (R.A. 10173)**. By ticking the acceptance box at registration, you ("Customer", "you") agree to all of it. *[Working template for KTC + counsel review; bracketed items are placeholders. Not legal advice.]*
 
 ## 1. Acceptance and Eligibility
 
-- The Portal is for KTC-accredited customs brokers and their authorized representatives.
+- The Portal is for KTC-accredited customers (including customs brokers) and their authorized representatives.
 - You must give true, accurate information and upload a valid government-issued ID. KTC may approve, defer, suspend, or reject any registration at its discretion.
 - Your credentials are personal — do not share, sell, or transfer them. You are responsible for all activity under your account and must report any compromise immediately.
 
-## 2. Broker Conduct and Acceptable Use
+## 2. Customer Conduct and Acceptable Use
 
 You agree to:
 
@@ -36,7 +36,7 @@ You must not:
 KTC processes your personal data as Personal Information Controller in accordance with the Data Privacy Act of 2012, its IRR, and National Privacy Commission (NPC) issuances.
 
 - **Data Protection Officer (DPO):** [NAME · EMAIL · PHONE · ADDRESS].
-- **Data we collect:** your name, email, account credentials, **a valid government-issued ID you upload**, broker/company details, and the job-order data you submit.
+- **Data we collect:** your name, email, account credentials, **a valid government-issued ID you upload**, customer/company details, and the job-order data you submit.
 - **Purposes:** to register and **verify your identity**, decide accreditation, process job orders and provide terminal services, communicate with you, maintain security and prevent fraud, and comply with legal and lawful government requirements.
 - **Legal basis:** your **consent** (for identity verification using your uploaded ID and related processing), performance of this Agreement, and compliance with legal obligations.
 - **Storage and processors:** data is stored in our managed cloud backend (**Supabase**), with hosting by **Vercel** and anti-abuse by **Cloudflare Turnstile**, acting as our processors. Uploaded IDs are kept in restricted storage accessible only to **authorized KTC personnel** via expiring secure links; data is encrypted in transit.
@@ -61,6 +61,6 @@ KTC processes your personal data as Personal Information Controller in accordanc
 
 ---
 
-*By ticking the acceptance box at registration, you confirm that you have read and agree to this KTC Broker Agreement — including the confidentiality / non-disclosure obligations — and that you consent to the processing of your personal data (including your valid ID) under the Data Privacy Act of 2012.*
+*By ticking the acceptance box at registration, you confirm that you have read and agree to this KTC Customer Agreement — including the confidentiality / non-disclosure obligations — and that you consent to the processing of your personal data (including your valid ID) under the Data Privacy Act of 2012.*
 
 *This is a working template prepared for KTC review and is not legal advice. KTC's DPO and counsel should finalize the bracketed items, retention periods, venue, and provider list, and confirm NPC registration obligations before public release.*

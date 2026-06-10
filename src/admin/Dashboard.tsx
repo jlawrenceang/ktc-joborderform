@@ -23,7 +23,7 @@ const cards: { key: keyof Stats; label: string; to: string }[] = [
   { key: 'pendingAccounts', label: 'Accounts awaiting approval', to: '/admin/approvals' },
   { key: 'pendingAccreditations', label: 'Accreditations pending', to: '/admin/approvals' },
   { key: 'pendingConsignees', label: 'Consignees pending', to: '/admin/consignees' },
-  { key: 'brokers', label: 'Customers', to: '/admin/brokers' },
+  { key: 'brokers', label: 'Customers', to: '/admin/customers' },
   { key: 'consignees', label: 'Consignees', to: '/admin/consignees' },
   { key: 'jobOrders', label: 'Job orders', to: '/admin/job-orders' },
 ]

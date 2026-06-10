@@ -1,8 +1,8 @@
-import agreementBody from './broker-agreement.md?raw'
+import agreementBody from './customer-agreement.md?raw'
 
-// One master document: the KTC Broker Agreement (terms of use + broker conduct +
+// One master document: the KTC Customer Agreement (terms of use + customer conduct +
 // confidentiality/NDA + Data Privacy Act consent). Bump AGREEMENT_VERSION on any
-// material change; the version a broker accepted is recorded at registration so a
+// material change; the version a customer accepted is recorded at registration so a
 // new version can later require re-acceptance.
 export const AGREEMENT_VERSION = 'v1'
 export const AGREEMENT_VERSION_LABEL = 'Version 1.0'

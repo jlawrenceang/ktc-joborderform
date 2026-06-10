@@ -74,7 +74,7 @@ export default function VerifyId() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
           <span className="ktc-label" style={{ fontSize: 13 }}>
             I have read and agree to the{' '}
-            <a href="/agreement" target="_blank" rel="noopener noreferrer" className="ktc-link">KTC Broker Agreement (Terms &amp; Conditions)</a>
+            <a href="/agreement" target="_blank" rel="noopener noreferrer" className="ktc-link">KTC Customer Agreement (Terms &amp; Conditions)</a>
             {' '}and consent to KTC collecting and processing my valid ID for verification under the Data Privacy Act (R.A. 10173).
           </span>
         </label>

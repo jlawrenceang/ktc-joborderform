@@ -16,7 +16,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [agreedTerms, setAgreedTerms] = useState(false) // KTC Broker Agreement — Terms & Conditions + NDA
+  const [agreedTerms, setAgreedTerms] = useState(false) // KTC Customer Agreement — Terms & Conditions + NDA
   const [consentDpa, setConsentDpa] = useState(false) // Data Privacy Act consent
   const [scrolledAgreement, setScrolledAgreement] = useState(false) // must read to the end to tick
   const agreementRef = useRef<HTMLDivElement>(null)
@@ -51,7 +51,7 @@ export default function Login() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (mode === 'signup' && !agreedTerms) {
-      setError('Please accept the KTC Broker Agreement (Terms & Conditions) to continue.')
+      setError('Please accept the KTC Customer Agreement (Terms & Conditions) to continue.')
       return
     }
     if (mode === 'signup' && !consentDpa) {
@@ -133,7 +133,7 @@ export default function Login() {
             <div style={{ display: 'grid', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>
-                  KTC Broker Agreement ({AGREEMENT_VERSION_LABEL})
+                  KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})
                 </span>
                 <Link to="/agreement" target="_blank" className="ktc-link" style={{ fontSize: 12 }}>
                   View full ↗
@@ -170,7 +170,7 @@ export default function Login() {
                 />
                 <span className="ktc-label" style={{ fontSize: 13 }}>
                   I have read and agree to the Terms &amp; Conditions and the confidentiality / non-disclosure
-                  obligations of the KTC Broker Agreement above.
+                  obligations of the KTC Customer Agreement above.
                 </span>
               </label>
               <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, opacity: scrolledAgreement ? 1 : 0.5 }}>
@@ -215,7 +215,7 @@ export default function Login() {
         </p>
 
         <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.85 }}>
-          <Link to="/agreement" className="ktc-link">KTC Broker Agreement</Link>
+          <Link to="/agreement" className="ktc-link">KTC Customer Agreement</Link>
         </p>
       </div>
     </div>

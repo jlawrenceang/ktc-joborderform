@@ -68,7 +68,7 @@ export default function App() {
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
           <Route path="/admin/approvals" element={<Admin><Approvals /></Admin>} />
-          <Route path="/admin/brokers" element={<Admin><Brokers /></Admin>} />
+          <Route path="/admin/customers" element={<Admin><Brokers /></Admin>} />
           <Route path="/admin/consignees" element={<Admin><Consignees /></Admin>} />
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
