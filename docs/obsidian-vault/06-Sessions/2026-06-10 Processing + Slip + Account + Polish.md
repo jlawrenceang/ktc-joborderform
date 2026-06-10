@@ -37,6 +37,7 @@ date: 2026-06-10
 8. **Service catalogue completeness.** `SERVICE_REQUESTS` = X-ray / DEA variants / OOG stripping. The sample invoice shows **electricity/reefer billing** — confirm the full list of billable services.
 9. **Consignee scoping.** Any customer can pick any consignee (accreditation disabled, ADR-0007). Final, or restrict to accredited consignees?
 10. **Go-live.** Finalize Customer Agreement with counsel; bump `AGREEMENT_VERSION`; public-launch hardening; run **ST02** end-to-end on the live domain.
+11. **Google Sheets link (decided: both view + entry).** Constraint: Supabase stays source of truth — a Sheet bypasses RLS / caps / JO-numbering / status guards, so **live two-way sync is rejected**. Recommended: (a) one-way **app→Sheet mirror** (read-only, Sheets API + service account via Edge Function/cron) for checking/reporting; (b) for "fill up", **add the missing operational fields to the in-app JO form** (validated) — container size, vessel/voyage, plug-in/plug-out timestamps (ties to #2) — and/or a **bounded admin import** (template sheet → admin "Import" → validated RPC). Not bidirectional live sync.
 
 ## Related
 - [[Current State]] · [[Job Orders]] · [[Pending Items]] · ADR-0013, ADR-0014
