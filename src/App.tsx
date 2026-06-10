@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
+import Confirmed from './pages/Confirmed'
 import Agreement from './pages/Agreement'
 import Home from './pages/Home'
 import JobOrder from './pages/JobOrder'
@@ -51,6 +52,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/confirmed" element={<Confirmed />} />
           {/* Public — readable before registering and linked from the registration consent */}
           <Route path="/agreement" element={<Agreement />} />
           {/* Old split docs now folded into the one agreement */}

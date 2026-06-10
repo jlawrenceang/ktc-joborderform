@@ -48,7 +48,7 @@ export default function Login() {
       type: 'signup',
       email: email.trim(),
       options: {
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined,
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/confirmed` : undefined,
         ...(captchaToken ? { captchaToken } : {}),
       },
     })
@@ -72,9 +72,12 @@ export default function Login() {
     if (el && el.scrollHeight <= el.clientHeight + 8) setScrolledAgreement(true)
   }, [showAgreement])
 
-  // Surface an inactivity sign-out (set by the broker portal's idle timeout).
+  // Surface one-off notices (idle sign-out, or email just confirmed).
   useEffect(() => {
-    if (sessionStorage.getItem('ktc_idle_logout')) {
+    if (sessionStorage.getItem('ktc_email_confirmed')) {
+      setNotice('✓ Your email is confirmed — please sign in to continue.')
+      sessionStorage.removeItem('ktc_email_confirmed')
+    } else if (sessionStorage.getItem('ktc_idle_logout')) {
       setNotice('You were signed out after 10 minutes of inactivity. Please sign in again.')
       sessionStorage.removeItem('ktc_idle_logout')
     }

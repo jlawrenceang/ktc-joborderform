@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        // With email confirmation ON, the confirm link lands the broker on the
-        // verify-ID page (upload valid ID; they can also skip to the portal).
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/verify-id` : undefined,
+        // With email confirmation ON, the confirm link lands on /confirmed, which
+        // signs out and asks the broker to log in with their password.
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/confirmed` : undefined,
         // Consent is recorded on the auth user immediately — works even when there
         // is no session yet (email confirmation on). The valid ID + consent columns
         // are synced after first login (see PendingPanel), since storage/RLS need a session.
