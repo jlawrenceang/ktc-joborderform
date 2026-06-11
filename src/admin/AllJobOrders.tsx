@@ -32,7 +32,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
 
 // BI-INV-… = billed on credit (not cash-paid); OR-INV-… / OR pad serial = cash.
 const isCreditInvoice = (si: string) => si.toUpperCase().startsWith('BI')
@@ -46,7 +46,7 @@ function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
 
 // Human labels for audit-trail events (G6).
 function eventLabel(e: JobOrderEvent): string {
-  const d = e.detail as { from?: string; to?: string; line?: string; si?: string; note?: string }
+  const d = e.detail as { from?: string; to?: string; line?: string; si?: string; pad?: string; note?: string }
   switch (e.event) {
     case 'filed': return 'Filed'
     case 'status_changed': return `Status: ${d.from} → ${d.to}${d.note ? ` — “${d.note}”` : ''}`
@@ -55,7 +55,7 @@ function eventLabel(e: JobOrderEvent): string {
     case 'payment_confirmed': return 'Payment confirmed'
     case 'payment_rejected': return `Payment proof rejected${d.note ? ` — “${d.note}”` : ''}`
     case 'payment_unpaid': return 'Payment reset'
-    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''} recorded (${isCreditInvoice(String(d.si ?? '')) ? 'BILLED · credit' : 'PAID'})`
+    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''}${d.pad ? ` · #${d.pad}` : ''} recorded (${isCreditInvoice(String(d.si ?? '')) ? 'BILLED · credit' : 'PAID'})`
     case 'archived': return 'Archived'
     default: return e.event
   }
@@ -139,7 +139,8 @@ export default function AllJobOrders() {
   const [busyId, setBusyId] = useState<string | null>(null)
   // ERP Service Invoice recording (cashier): JO id being recorded + the number.
   const [invoiceId, setInvoiceId] = useState<string | null>(null)
-  const [invoiceNo, setInvoiceNo] = useState('')
+  const [invoiceNo, setInvoiceNo] = useState('')   // ERP control no. (OR-INV-… / BI-INV-…)
+  const [invoicePad, setInvoicePad] = useState('') // printed OR / Billing Invoice pad serial
   // Note prompt for hold / reject (the note is shown to the customer).
   const [modal, setModal] = useState<{ id: string; jo: string; target: 'on_hold' | 'rejected' } | null>(null)
   const [note, setNote] = useState('')
@@ -275,12 +276,14 @@ export default function AllJobOrders() {
   }
 
   async function recordInvoice() {
-    if (!invoiceId || !invoiceNo.trim()) return
+    if (!invoiceId || !invoiceNo.trim() || !invoicePad.trim()) return
     setBusyId(invoiceId)
-    const { error } = await supabase.rpc('record_service_invoice', { p_id: invoiceId, p_invoice_no: invoiceNo.trim() })
+    const { error } = await supabase.rpc('record_service_invoice', {
+      p_id: invoiceId, p_invoice_no: invoiceNo.trim(), p_pad_no: invoicePad.trim(),
+    })
     setBusyId(null)
     if (error) { alert(error.message); return }
-    setInvoiceId(null); setInvoiceNo('')
+    setInvoiceId(null); setInvoiceNo(''); setInvoicePad('')
     await load()
   }
 
@@ -346,9 +349,9 @@ export default function AllJobOrders() {
                       {o.service_invoice_no && (
                         <span
                           className={`ktc-chip ${isCreditInvoice(o.service_invoice_no) ? 'ktc-chip--info' : 'ktc-chip--success'}`}
-                          title={`Service Invoice ${o.service_invoice_no}${isCreditInvoice(o.service_invoice_no) ? ' — billed on credit' : ''}`}
+                          title={`ERP ${o.service_invoice_no}${o.invoice_pad_no ? ` · printed invoice no. ${o.invoice_pad_no}` : ''}${isCreditInvoice(o.service_invoice_no) ? ' — billed on credit' : ''}`}
                         >
-                          {isCreditInvoice(o.service_invoice_no) ? 'BILLED' : 'PAID'} · SI {o.service_invoice_no}
+                          {isCreditInvoice(o.service_invoice_no) ? 'BILLED' : 'PAID'} · {o.service_invoice_no}{o.invoice_pad_no ? ` · #${o.invoice_pad_no}` : ''}
                         </span>
                       )}
                       {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
@@ -464,20 +467,29 @@ export default function AllJobOrders() {
                     )}
                     {can('record_invoice') && o.status === 'completed' && !o.service_invoice_no && (
                       invoiceId === o.id ? (
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <input
                             className="ktc-input ktc-mono"
                             value={invoiceNo}
                             onChange={(e) => setInvoiceNo(e.target.value)}
-                            placeholder="OR-INV-… / BI-INV-… or pad no."
+                            placeholder="ERP control no. (OR-INV / BI-INV)"
+                            title="The ERP record ID — OR-INV-… for cash, BI-INV-… for credit"
                             autoFocus
-                            style={{ width: 200, padding: '7px 11px', fontSize: 13 }}
+                            style={{ width: 215, padding: '7px 11px', fontSize: 13 }}
                           />
-                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim()} onClick={() => void recordInvoice()}>Save invoice</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo('') }}>Cancel</button>
+                          <input
+                            className="ktc-input ktc-mono"
+                            value={invoicePad}
+                            onChange={(e) => setInvoicePad(e.target.value)}
+                            placeholder="Invoice no. (e.g. 001323)"
+                            title="The printed OR / Billing Invoice serial from the pad"
+                            style={{ width: 170, padding: '7px 11px', fontSize: 13 }}
+                          />
+                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim() || !invoicePad.trim()} onClick={() => void recordInvoice()}>Save invoice</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo(''); setInvoicePad('') }}>Cancel</button>
                         </span>
                       ) : (
-                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo('') }} title="Record the ERP control no. (OR-INV-… cash / BI-INV-… credit) or the printed OR / Billing Invoice pad serial — an invoice on file releases the order">
+                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo(''); setInvoicePad('') }} title="Record BOTH numbers: the ERP control no. (OR-INV-… cash / BI-INV-… credit) and the printed invoice serial — an invoice on file releases the order">
                           Record invoice #
                         </button>
                       )

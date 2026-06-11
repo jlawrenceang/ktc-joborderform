@@ -107,6 +107,8 @@ export interface JobOrder {
   rejected_recoverable?: boolean
   xray_performed_at?: string | null
   service_invoice_no?: string | null
+  /** Printed OR / Billing Invoice pad serial (the paper the customer holds). */
+  invoice_pad_no?: string | null
   invoice_recorded_at?: string | null
   payment_status?: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
   payment_proof_path?: string | null

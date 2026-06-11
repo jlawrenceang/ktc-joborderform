@@ -30,7 +30,7 @@ export default function Payment() {
     if (!id) return
     const [{ data: jo }, pricing, { data: pi }] = await Promise.all([
       supabase.from('job_orders')
-        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
         .eq('id', id).maybeSingle(),
       loadPricingConfig(),
       supabase.from('payment_info').select('key, value, label'),
@@ -103,9 +103,9 @@ export default function Payment() {
       {paid && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
           {order.service_invoice_no?.toUpperCase().startsWith('BI')
-            ? `✓ Billed on account — Billing Invoice ${order.service_invoice_no}.`
+            ? `✓ Billed on account — Billing Invoice No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
             : order.service_invoice_no
-              ? `✓ Payment recorded — Service Invoice ${order.service_invoice_no}.`
+              ? `✓ Payment recorded — Official Receipt No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
               : '✓ Payment confirmed by KTC. Collect the official Service Invoice at the KTC office.'}
         </Notice>
       )}

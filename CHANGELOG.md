@@ -4,6 +4,9 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10d — recording an invoice requires BOTH numbers)
+- **Both control numbers now required (migration `0044`):** recording an invoice takes the **ERP control no.** (`OR-INV-…` / `BI-INV-…`, normalized) **and** the **printed invoice serial** (OR / Billing Invoice pad no., e.g. `001323`, leading zeros kept → new `invoice_pad_no` column) — validated separately, saved atomically, both logged in the audit event. The queue form shows two hinted inputs; the chip and history show `PAID/BILLED · OR-INV-… · #094303`; the customer's payment page now quotes the **printed** receipt/invoice number (the paper they hold).
+
 ### 2026-06-12 (session 10c — G9 invoice-number validation, real ERP formats)
 - **Invoice formats confirmed from the ERP** (erp.ktcport.com, Frappe): **OR #** = 5-digit printed Official Receipt pad serial (cash; BIR series 50001–125000) · **Billing Invoice** = 6-digit printed pad serial (credit) · **ERP control no.** = `OR-INV-########` (cash) / `BI-INV-########` (credit).
 - **Validation (G9, migration `0043`):** `record_service_invoice` now accepts an ERP control no. — tolerant of missing dashes/zeros, normalized to canonical form — or a bare printed pad serial (4–8 digits, leading zeros preserved). Anything else is rejected with a format hint. Input placeholder/tooltips updated.
