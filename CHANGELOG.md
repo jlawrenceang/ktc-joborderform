@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10h — Activity Log tab + privilege-audit lockdown)
+- **Activity Log (`/admin/logs`, new "Logs" nav tab):** one paginated place (25/page, auto-refresh) for everything the portal records — **Job orders** (full audit trail with actor names + JO numbers), **Security** (owner-only tab: escalation attempts, role-gate changes), **Client errors**, **Emails & sync** (every outbound call with its HTTP result). RLS does the real gating; shared event labels extracted to `src/lib/eventLabels.ts`.
+- **Privilege-audit lockdown (migration `0048`):** ran a live grants audit and fixed the findings — `_migrations` (migration tracker) had **no RLS** (default Supabase grants = anon-writable; now server-only), and several definer functions were anon-executable via the default PUBLIC grant (maintenance + trigger functions revoked from everyone; RLS helpers pinned to authenticated-only). Post-fix audit: **every public table has RLS; the only anon-callable definer function is `log_client_error`** (intentional, capped). All definer functions have pinned `search_path` (verified).
+
 ### 2026-06-12 (session 10g — auto-suspend + kick on escalation attempts)
 - **Migration `0047`:** a privilege-escalation attempt by a **customer on their own row** (crafted API call touching `is_admin`/`is_owner`/`status`/`staff_role` — the real UI never sends these, so no accidental triggers) now: reverts the change, **auto-suspends the account** (terminal lock — RLS blocks everything, portal shows the locked panel, held orders cancelled), **revokes their auth sessions/refresh tokens**, and logs `auto_suspended: true` → 🚨 owner email within 15 min. Attempts **by staff** (e.g. an admin touching the owner row) are alerted but NOT auto-revoked — the owner decides, so a false positive can never lock out the ops floor.
 

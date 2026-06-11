@@ -30,6 +30,7 @@ const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
 const AdminNewJobOrder = lazy(() => import('./admin/NewJobOrder'))
 const Settings = lazy(() => import('./admin/Settings'))
 const Checker = lazy(() => import('./admin/Checker'))
+const Logs = lazy(() => import('./admin/Logs'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
           <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
           <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
+          <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type JobOrderEvent, type ServiceLine, type ServingNumber } from '../lib/types'
+import { isCreditInvoice, joEventLabel } from '../lib/eventLabels'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -34,31 +35,11 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 const SELECT =
   'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
 
-// BI-INV-… = billed on credit (not cash-paid); OR-INV-… / OR pad serial = cash.
-const isCreditInvoice = (si: string) => si.toUpperCase().startsWith('BI')
-
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
   const needed = new Set<ServiceLine>((o.lines ?? []).map((l) => serviceLineOf(l.service_request)))
   const done = new Set((o.completions ?? []).map((c) => c.service_line))
   return Array.from(needed).map((line) => ({ line, done: done.has(line) }))
-}
-
-// Human labels for audit-trail events (G6).
-function eventLabel(e: JobOrderEvent): string {
-  const d = e.detail as { from?: string; to?: string; line?: string; si?: string; pad?: string; note?: string }
-  switch (e.event) {
-    case 'filed': return 'Filed'
-    case 'status_changed': return `Status: ${d.from} → ${d.to}${d.note ? ` — “${d.note}”` : ''}`
-    case 'service_done': return `${SERVICE_LINE_LABEL[(d.line as ServiceLine) ?? 'other']} done`
-    case 'payment_submitted': return 'Payment proof submitted'
-    case 'payment_confirmed': return 'Payment confirmed'
-    case 'payment_rejected': return `Payment proof rejected${d.note ? ` — “${d.note}”` : ''}`
-    case 'payment_unpaid': return 'Payment reset'
-    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''}${d.pad ? ` · #${d.pad}` : ''} recorded (${isCreditInvoice(String(d.si ?? '')) ? 'BILLED · credit' : 'PAID'})`
-    case 'archived': return 'Archived'
-    default: return e.event
-  }
 }
 
 const PAGE = 20
@@ -516,7 +497,7 @@ export default function AllJobOrders() {
                               <span className="ktc-mono ktc-label" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
                                 {new Date(e.created_at).toLocaleString()}
                               </span>
-                              <span style={{ fontWeight: 550 }}>{eventLabel(e)}</span>
+                              <span style={{ fontWeight: 550 }}>{joEventLabel(e)}</span>
                               <span className="ktc-label" style={{ fontSize: 11.5 }}>by {e.actorName}</span>
                             </div>
                           ))}
