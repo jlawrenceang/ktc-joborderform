@@ -4,7 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
-import { SERVICE_LINE_LABEL, type JobOrder, type ServingNumber } from '../lib/types'
+import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type JobOrderEvent, type ServiceLine, type ServingNumber } from '../lib/types'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -32,7 +32,31 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, payment_status, payment_proof_path, payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
+
+// Lines this order needs, with their per-service completion state (G1).
+function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
+  const needed = new Set<ServiceLine>((o.lines ?? []).map((l) => serviceLineOf(l.service_request)))
+  const done = new Set((o.completions ?? []).map((c) => c.service_line))
+  return Array.from(needed).map((line) => ({ line, done: done.has(line) }))
+}
+
+// Human labels for audit-trail events (G6).
+function eventLabel(e: JobOrderEvent): string {
+  const d = e.detail as { from?: string; to?: string; line?: string; si?: string; note?: string }
+  switch (e.event) {
+    case 'filed': return 'Filed'
+    case 'status_changed': return `Status: ${d.from} → ${d.to}${d.note ? ` — “${d.note}”` : ''}`
+    case 'service_done': return `${SERVICE_LINE_LABEL[(d.line as ServiceLine) ?? 'other']} done`
+    case 'payment_submitted': return 'Payment proof submitted'
+    case 'payment_confirmed': return 'Payment confirmed'
+    case 'payment_rejected': return `Payment proof rejected${d.note ? ` — “${d.note}”` : ''}`
+    case 'payment_unpaid': return 'Payment reset'
+    case 'invoice_recorded': return `Service Invoice ${d.si ?? ''} recorded (PAID)`
+    case 'archived': return 'Archived'
+    default: return e.event
+  }
+}
 
 const PAGE = 50
 
@@ -129,6 +153,9 @@ export default function AllJobOrders() {
   const [total, setTotal] = useState(0)
   const [archiving, setArchiving] = useState(false)
   const [archiveMsg, setArchiveMsg] = useState<string | null>(null)
+  // Audit trail (G6): expanded order id + its events (+ actor display names).
+  const [historyId, setHistoryId] = useState<string | null>(null)
+  const [history, setHistory] = useState<(JobOrderEvent & { actorName?: string })[]>([])
 
   function load(f: Filter = filter, p: number = page) {
     let q = supabase
@@ -199,6 +226,32 @@ export default function AllJobOrders() {
     setModal(null)
     await apply(id, target, note.trim(), target === 'rejected' ? recoverable : undefined)
     setNote('')
+  }
+
+  async function toggleHistory(id: string) {
+    if (historyId === id) { setHistoryId(null); return }
+    setHistoryId(id); setHistory([])
+    const { data } = await supabase
+      .from('job_order_events')
+      .select('id, event, detail, actor, created_at')
+      .eq('job_order_id', id)
+      .order('created_at', { ascending: true })
+    const events = (data ?? []) as JobOrderEvent[]
+    const actorIds = Array.from(new Set(events.map((e) => e.actor).filter(Boolean))) as string[]
+    let names = new Map<string, string>()
+    if (actorIds.length) {
+      const { data: people } = await supabase.from('customers').select('user_id, full_name, email').in('user_id', actorIds)
+      names = new Map((people ?? []).map((p) => [p.user_id as string, (p.full_name || p.email || '') as string]))
+    }
+    setHistory(events.map((e) => ({ ...e, actorName: e.actor ? names.get(e.actor) || 'staff' : 'system' })))
+  }
+
+  async function markServiceDone(id: string, line: ServiceLine) {
+    setBusyId(id)
+    const { error } = await supabase.rpc('record_service_done', { p_id: id, p_line: line })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    await load()
   }
 
   async function restoreNumber(id: string, line: string) {
@@ -310,6 +363,12 @@ export default function AllJobOrders() {
                         </span>
                       )}
                       {o.archived_at && <span className="ktc-chip" title={new Date(o.archived_at).toLocaleString()}>Archived</span>}
+                      {['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
+                        serviceProgress(o).map((p) => (
+                          <span key={p.line} className={`ktc-chip ${p.done ? 'ktc-chip--success' : ''}`}>
+                            {SERVICE_LINE_LABEL[p.line]} {p.done ? '✓' : 'pending'}
+                          </span>
+                        ))}
                       {o.xray_performed_at && !o.service_invoice_no && (
                         <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
                           X-ray done
@@ -354,9 +413,17 @@ export default function AllJobOrders() {
                         {(o.status === 'submitted' || o.status === 'on_hold') && (
                           <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>Approve &amp; process</button>
                         )}
-                        {o.status === 'processing' && (
+                        {o.status === 'processing' && serviceProgress(o).filter((p) => !p.done).length <= 1 && (
                           <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>Mark completed</button>
                         )}
+                        {['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
+                          serviceProgress(o).filter((p) => !p.done).map((p) => (
+                            <button key={p.line} style={btn('solid')} disabled={isBusy}
+                              title={`Marks the ${SERVICE_LINE_LABEL[p.line]} service done — the order completes when every service is done`}
+                              onClick={() => void markServiceDone(o.id, p.line)}>
+                              ✓ {SERVICE_LINE_LABEL[p.line]} done
+                            </button>
+                          ))}
                         {(o.status === 'submitted' || o.status === 'processing') && (
                           <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>Hold for info</button>
                         )}
@@ -415,7 +482,30 @@ export default function AllJobOrders() {
                     <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title="Compose a status message for Viber / SMS / Messenger">
                       💬 Message
                     </button>
+                    <button style={btn('ghost')} onClick={() => void toggleHistory(o.id)} title="Who did what, when">
+                      🕘 History
+                    </button>
                   </div>
+
+                  {historyId === o.id && (
+                    <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', fontSize: 12.5 }}>
+                      {history.length === 0 ? (
+                        <span className="ktc-label">Loading history…</span>
+                      ) : (
+                        <div style={{ display: 'grid', gap: 5 }}>
+                          {history.map((e) => (
+                            <div key={e.id} style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                              <span className="ktc-mono ktc-label" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
+                                {new Date(e.created_at).toLocaleString()}
+                              </span>
+                              <span style={{ fontWeight: 550 }}>{eventLabel(e)}</span>
+                              <span className="ktc-label" style={{ fontSize: 11.5 }}>by {e.actorName}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}

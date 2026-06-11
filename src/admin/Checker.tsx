@@ -70,7 +70,9 @@ export default function Checker() {
       .order('created_at', { ascending: true })
     const rows = ((data ?? []) as unknown as CheckerOrder[])
       .map((o) => ({ ...o, broker: one(o.broker), consignee: one(o.consignee) }))
-      .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request)))
+      // X-ray still pending (a JO with other services can stay open after its
+      // X-ray is done — it leaves this queue but remains findable via lookup)
+      .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request)) && !o.xray_performed_at)
       .sort((a, b) => (xrayNo(a) ?? Infinity) - (xrayNo(b) ?? Infinity)) // serve in line order
     setQueue(rows)
     setLoading(false)

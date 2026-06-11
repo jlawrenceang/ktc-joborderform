@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-11 (session 9 — gap fixes G1 + G2 + G6)
+- **Per-service completion (G1, migration `0040`):** new `service_completions` table (per JO per service line) + `record_service_done(jo, line)` RPC — X-ray confirmable by checker or admin, DEA/OOG by admin. The JO flips to **`completed` only when EVERY service line it carries is done** (first completion moves `submitted → processing`); the admin force-complete (direct status set) auto-syncs the per-line rows so views can't disagree. `record_xray` is now a thin wrapper (checker app unchanged); the **checker queue drops an order once its X-ray is done** even if OOG/DEA keep it open. Admin queue shows per-line **✓ / pending chips** and per-line **"✓ {service} done"** buttons on mixed-service orders; existing completed orders backfilled.
+- **Weekly carry-over (G2):** policy = **carry-overs keep priority**. A Monday 00:15 PH pg_cron run (`requeue_carryovers`, also manually callable by admins) moves still-open orders holding last week's numbers to the **front of the new week's line in their old order**; old numbers are burned. Runs before the archive job and before anyone files.
+- **Audit trail (G6):** append-only **`job_order_events`** — filed, status changes (with the admin note), per-service completions, payment submitted/confirmed/rejected, invoice recorded, archived; `actor` = the signed-in user (null = system/cron). Written only by triggers + definer functions (no client INSERT); readable by staff via the `view_job_orders` gate. New **🕘 History** expander on every admin queue card showing the timeline with actor display names.
+
 ### 2026-06-11 (session 8 — gap fixes G7 + G4/G5 + weekly archive)
 - **Staff password reset (G7, migration `0039`):** owner-only `reset_staff_password` RPC (staff `@ktc-staff.local` accounts can't use the email reset flow); inline "Reset password" on the Settings staff list. Same 8+/letter/digit policy.
 - **Admin queue views + pagination (G5):** segmented filters — **Open** (default) · **Unpaid · completed** · Completed · Rejected/cancelled · Archived · All — now filtered server-side with **50-per-page pagination** and skeleton loading. Scales past 50–60 JO/day.

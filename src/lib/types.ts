@@ -56,12 +56,35 @@ export const SERVICE_LINE_LABEL: Record<ServiceLine, string> = {
   xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other',
 }
 
+/** Which queue/line a service label belongs to (mirrors SQL service_line_of). */
+export function serviceLineOf(service: string): ServiceLine {
+  const s = service.toLowerCase()
+  if (s.includes('x-ray')) return 'xray'
+  if (s.includes('dea')) return 'dea'
+  if (s.includes('oog')) return 'oog'
+  return 'other'
+}
+
 /** Weekly per-service-line queue number (separate from the permanent JO number). */
 export interface ServingNumber {
   service_line: ServiceLine
   serving_no: number
   week_start: string
   vacated_at: string | null
+}
+
+/** Per-service-line completion (a JO completes only when all its lines are done). */
+export interface ServiceCompletion {
+  service_line: ServiceLine
+  completed_at: string
+}
+
+export interface JobOrderEvent {
+  id: string
+  event: string
+  detail: Record<string, unknown>
+  actor: string | null // auth user id; null = system
+  created_at: string
 }
 
 export interface JobOrderLine {
@@ -95,6 +118,7 @@ export interface JobOrder {
   consignee?: Consignee | null
   lines?: JobOrderLine[]
   serving?: ServingNumber[]
+  completions?: ServiceCompletion[]
 }
 
 export const SERVICE_REQUESTS = [
