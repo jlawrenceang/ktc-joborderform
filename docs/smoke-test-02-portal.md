@@ -29,17 +29,17 @@ PASS / AMBER / FAIL / BLOCKED / N/A (per `docs/smoke-test-template-canonical.md`
 
 | Check | Expected | Result |
 |---|---|---|
-| P1 TypeScript (`npx tsc --noEmit`) | 0 errors | ✅ PASS (2026-06-12) |
-| P2 Smoke suite vs prod (`BASE_URL=https://portal.ktcterminal.com npx playwright test smoke`) | 11/11 | ✅ PASS — 11 passed (2026-06-12) |
-| P3 Deploy health (`curl` root) | `200` | ✅ PASS |
-| P4 Bundle target | prod ref `mdlnfhyylvapzdubhyic` present; test ref + jta-sys ref ABSENT | ✅ PASS (`index-C8KaRoxp.js`) |
-| P5 Turnstile site key inlined | present | ✅ PASS |
-| P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS |
-| P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS |
-| P8 Playwright Phase 2 (test project) | 16/16 | ✅ PASS (2026-06-12) |
-| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** — re-verified live 2026-06-12 (post-10q): all 6 rates ₱0, admin/print fees ₱0, bank/account/GCash empty. Fill via step **5.0** before Lane 5. |
+| P1 TypeScript (`npx tsc --noEmit`) | 0 errors | ✅ PASS (2026-06-13, v1.1.0) |
+| P2 Smoke suite vs prod (`BASE_URL=https://portal.ktcterminal.com npx playwright test smoke`) | 11/11 | ✅ PASS — 11 passed against the live **v1.1.0** deploy (2026-06-13; CSP active) |
+| P3 Deploy health (`curl` root) | `200` | ✅ PASS (2026-06-13) |
+| P4 Bundle target | prod ref `mdlnfhyylvapzdubhyic` present; test ref + jta-sys ref ABSENT | ✅ PASS (`index-CmVyn4l-.js`, v1.1.0 label confirmed in bundle) |
+| P5 Turnstile site key inlined | present | ✅ PASS (2026-06-13) |
+| P6 SPA rewrite (deep link `/admin/job-orders`) | `200` | ✅ PASS (2026-06-13) |
+| P7 CAPTCHA server-enforced (tokenless password grant) | `captcha_failed` | ✅ PASS (2026-06-13) |
+| P8 Playwright Phase 2 (test project) | 16/16 | 🚧 **BLOCKED 2026-06-13** — the test project (`zwvzadkgeyhkhyshkwhc`) rejects BOTH its API keys (`Invalid API key`; DB itself reachable, schema synced to 0055). Not a leak — keys stopped working, nothing exposed. **Action: regenerate keys in the test project's dashboard → update `E2E_SERVICE_ROLE_KEY` / `E2E_PUBLISHABLE_KEY` in `.env.local`.** Coverage gap mitigated by P2 passing on live. |
+| P9 Lane-5 pre-reqs: service rates + payment details configured | non-zero rates; bank/GCash/QR filled | ⚠️ **NOT READY** — re-verified 2026-06-13: 0 rates set, 0 fees set, payment details empty. Fill via step **5.0** before Lane 5. |
 
-**Preflight: PASS** (P1–P8 green; P9 is a data-entry to-do, not a defect). The lanes below are manual.
+**Preflight (2026-06-13, v1.1.0): GO for manual lanes** — P1–P7 green on the live deploy; P8 blocked on test-project keys (environmental, mitigated by P2); P9 is the Lane-5 data entry (step 5.0). Security telemetry at start: 0 security events (7d), 0 client errors (24h), 0 outbound failures (7d).
 
 ---
 
