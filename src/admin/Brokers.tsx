@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
-import type { Broker } from '../lib/types'
+import { idDeletable, type Broker } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
 
@@ -86,7 +86,15 @@ export default function Brokers() {
                       </div>
                       <div className="ktc-label" style={{ fontSize: 13 }}>
                         {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
-                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`)}>View ID</button></>)}
+                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`, {
+                          // 🗑 appears only past the 7-day minimum retention
+                          // (unknown age = legacy = deletable); the storage
+                          // policy re-checks server-side either way.
+                          onDeleted: idDeletable(b) ? async () => {
+                            await supabase.from('customers').update({ valid_id_path: null }).eq('id', b.id)
+                            await load()
+                          } : undefined,
+                        })}>View ID</button></>)}
                       </div>
                       <BrokerReview b={b} />
                     </div>

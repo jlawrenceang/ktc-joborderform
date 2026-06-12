@@ -20,6 +20,8 @@ export interface Broker {
   email: string | null
   contact_number: string | null
   valid_id_path: string | null
+  /** Stamped on upload; the ID becomes deletable 7 days later (0052). */
+  valid_id_uploaded_at?: string | null
   status: BrokerStatus
   decided_at: string | null
   decision_reason: string | null
@@ -34,6 +36,14 @@ export interface Broker {
   terms_accepted_at: string | null
   privacy_consent_version: string | null
   privacy_consented_at: string | null
+}
+
+/** Minimum days an uploaded valid ID is retained before it can be deleted
+ *  (mirrors the storage policy in migration 0052). */
+export const ID_RETENTION_DAYS = 7
+export function idDeletable(b: Pick<Broker, 'valid_id_uploaded_at'>): boolean {
+  if (!b.valid_id_uploaded_at) return true // legacy file, age unknown
+  return Date.now() - new Date(b.valid_id_uploaded_at).getTime() >= ID_RETENTION_DAYS * 86_400_000
 }
 
 /** Owner is a superset of admin — treat both as admin in the UI. */

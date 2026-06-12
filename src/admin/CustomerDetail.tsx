@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
-import type { Broker, JobOrder } from '../lib/types'
+import { idDeletable, type Broker, type JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
 
@@ -68,7 +68,14 @@ export default function CustomerDetail() {
         <div className="ktc-label" style={{ marginTop: 10, fontSize: 14, display: 'grid', gap: 4 }}>
           <div>Email: {cust.email}</div>
           <div>Contact: {cust.contact_number || '—'}</div>
-          {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, `Valid ID — ${cust.full_name || cust.email || 'customer'}`)}>View</button></div>}
+          {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, `Valid ID — ${cust.full_name || cust.email || 'customer'}`, {
+            // 🗑 appears only past the 7-day minimum retention; the storage
+            // policy re-checks server-side either way.
+            onDeleted: idDeletable(cust) ? async () => {
+              await supabase.from('customers').update({ valid_id_path: null }).eq('id', cust.id)
+              setCust({ ...cust, valid_id_path: null })
+            } : undefined,
+          })}>View</button></div>}
           {cust.decided_at && <div>Decided: {new Date(cust.decided_at).toLocaleString()}</div>}
           {cust.decision_reason && <div>Note to customer: {cust.decision_reason}</div>}
         </div>

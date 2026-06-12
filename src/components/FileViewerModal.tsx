@@ -6,15 +6,31 @@ import { supabase } from '../lib/supabase'
  *   const { openFromStorage, viewerModal } = useFileViewer(setError)
  *   ... onClick={() => void openFromStorage('valid-ids', path, 'Valid ID — Juan')}
  *   ... {viewerModal}
+ *
+ * Pass { onDeleted } as the 4th arg to also offer a 🗑 Delete action in the
+ * viewer (removes the file from storage, then lets the caller clear its
+ * DB reference) — used for valid-ID cleanup after printing/review.
  */
 export function useFileViewer(onError: (msg: string) => void) {
-  const [viewer, setViewer] = useState<{ title: string; fileName: string; url: string } | null>(null)
+  const [viewer, setViewer] = useState<{
+    title: string
+    fileName: string
+    url: string
+    bucket: string
+    path: string
+    onDeleted?: () => void | Promise<void>
+  } | null>(null)
 
-  async function openFromStorage(bucket: string, path: string | null | undefined, title: string) {
+  async function openFromStorage(
+    bucket: string,
+    path: string | null | undefined,
+    title: string,
+    opts?: { onDeleted?: () => void | Promise<void> },
+  ) {
     if (!path) return
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60)
     if (error || !data) return onError(error?.message ?? 'Could not open the file.')
-    setViewer({ title, fileName: path.split('/').pop() ?? 'attachment', url: data.signedUrl })
+    setViewer({ title, fileName: path.split('/').pop() ?? 'attachment', url: data.signedUrl, bucket, path, onDeleted: opts?.onDeleted })
   }
 
   const viewerModal = viewer ? (
@@ -23,6 +39,17 @@ export function useFileViewer(onError: (msg: string) => void) {
       fileName={viewer.fileName}
       url={viewer.url}
       onClose={() => setViewer(null)}
+      onDelete={
+        viewer.onDeleted
+          ? async () => {
+              const { error } = await supabase.storage.from(viewer.bucket).remove([viewer.path])
+              if (error) { onError(error.message); return false }
+              await viewer.onDeleted?.()
+              setViewer(null)
+              return true
+            }
+          : undefined
+      }
     />
   ) : null
 
@@ -31,22 +58,27 @@ export function useFileViewer(onError: (msg: string) => void) {
 
 // In-app viewer for uploaded attachments (valid IDs, payment slips, 2303 docs).
 // Replaces "open signed URL in a new tab": shows the image/PDF in a modal with
-// Print + Save actions. The file is fetched into a blob immediately, so the
-// short-lived signed URL can't expire while the admin is looking at it.
+// Print + Save actions (+ optional Delete). The file is fetched into a blob
+// immediately, so the short-lived signed URL can't expire while the admin is
+// looking at it.
 export default function FileViewerModal({
   title,
   fileName,
   url,
   onClose,
+  onDelete,
 }: {
   title: string
   fileName: string
   url: string // signed URL (fetched once, then viewed as a local blob)
   onClose: () => void
+  onDelete?: () => Promise<boolean> // returns false if the delete failed
 }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [kind, setKind] = useState<'image' | 'pdf' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmDel, setConfirmDel] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const printFrameRef = useRef<HTMLIFrameElement>(null)
   const pdfFrameRef = useRef<HTMLIFrameElement>(null)
 
@@ -107,6 +139,14 @@ export default function FileViewerModal({
     doc.close()
   }
 
+  async function doDelete() {
+    if (!onDelete || deleting) return
+    setDeleting(true)
+    const ok = await onDelete()
+    setDeleting(false)
+    if (!ok) setConfirmDel(false) // error surfaced by the caller; keep viewing
+  }
+
   return (
     <div className="ktc-modal-backdrop" onClick={onClose}>
       <div
@@ -121,6 +161,22 @@ export default function FileViewerModal({
           <span style={{ fontWeight: 650, fontSize: 14.5, flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {title}
           </span>
+          {onDelete && (
+            confirmDel ? (
+              <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 12.5 }}>
+                <span style={{ fontWeight: 600, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>Delete permanently?</span>
+                <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={deleting} onClick={() => void doDelete()}>
+                  {deleting ? 'Deleting…' : 'Yes'}
+                </button>
+                <button type="button" className="ktc-link" onClick={() => setConfirmDel(false)}>No</button>
+              </span>
+            ) : (
+              <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ color: 'var(--acc-2)' }} onClick={() => setConfirmDel(true)}
+                title="Permanently delete this file from storage (DPA cleanup)">
+                🗑 Delete
+              </button>
+            )
+          )}
           <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={print} disabled={!blobUrl}>
             Print
           </button>

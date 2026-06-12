@@ -79,30 +79,18 @@ export default function Approvals() {
     }
     const who = brokers.find((r) => r.id === id)
     setActing(id); setError(null)
-    // On a final decision (approve/suspend) the ID has been reviewed — delete it
-    // (DPA data-minimisation). Only clear valid_id_path if the file actually deleted.
-    let clearId = false
-    let rmFailed: string | null = null
-    if ((status === 'approved' || status === 'suspended') && path) {
-      const { error: rmErr } = await supabase.storage.from('valid-ids').remove([path])
-      if (!rmErr) clearId = true
-      else rmFailed = rmErr.message
-    }
-    const patch: Record<string, unknown> = {
+    // Retention policy (2026-06-12): the ID is KEPT for a minimum of 7 days
+    // from upload (verification + dispute window) — deletable afterwards via
+    // the file viewer's 🗑 Delete on the Customers page (storage policy
+    // enforces the window server-side).
+    const { error } = await supabase.from('customers').update({
       status, decided_at: new Date().toISOString(),
       decision_reason: (status === 'rejected' || status === 'suspended') ? (reason?.trim() || null) : null,
-    }
-    if (clearId) patch.valid_id_path = null
-    const { error } = await supabase.from('customers').update(patch).eq('id', id)
+    }).eq('id', id)
     setActing(null)
     if (error) return setError(error.message)
     resetReject()
     setBrokers((x) => x.filter((r) => r.id !== id))
-    if (rmFailed) {
-      // The decision stands, but DPA deletion didn't happen — tell the admin so
-      // the file isn't silently left in storage.
-      setError(`Decision saved, but the valid ID could NOT be deleted from storage (${rmFailed}). It is still on file — retry the deletion from the customer's page.`)
-    }
     if (status === 'approved') setApprovedName(who?.full_name || who?.email || 'The customer')
   }
   // In-app attachment viewer (modal with Print + Save — no new tabs).

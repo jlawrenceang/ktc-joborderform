@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## [Unreleased]
 
+### 2026-06-12 (session 10p — clean slate; valid-ID delete + 7-day retention window)
+- **Production wiped for go-live** (owner request): all job orders (+ lines, serving numbers, completions, events) and all non-staff users deleted; `jo_number_seq` reset — the first real order will be `JO-000001`. Remaining accounts: owner + admin fallback. Ops/monitoring logs kept. (One leftover stored ID file flagged for dashboard deletion — SQL can't delete storage objects.)
+- **Valid-ID retention policy changed (migration `0052`):** IDs are **no longer deleted instantly on approval** — they're kept a **minimum of 7 days from upload** (verification + dispute window), then deletable. New `valid_id_uploaded_at` stamp (trigger); the storage DELETE policy enforces the window **server-side** (legacy/orphaned files stay deletable). Agreement §4 retention wording updated to match.
+- **🗑 Delete in the file viewer:** the attachment modal (Print / Save) gains an optional two-step **Delete** — wired on the Customers list + customer detail "View ID" (appears only once the window has passed; clears `valid_id_path` after removing the file).
+
 ### 2026-06-12 (session 10o — catalogue ordering, safe delete, renames)
 - **Drag & drop ordering (migration `0051`):** new `sort_order` drives the service order everywhere (JO form, bulk paste, calculator, Settings). Unlock the pricing card and drag rows by the ⠿ handle; order persists on Save.
 - **Safe delete:** inactive services get a ✕ (two-step confirm). A DB trigger only permits deleting a service that is **inactive AND never used by any order line** — otherwise it tells you to keep it deactivated so history keeps its pricing.
