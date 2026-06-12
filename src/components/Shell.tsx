@@ -6,7 +6,7 @@ import { hasAdminAccess } from '../lib/types'
 import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import { APP_VERSION } from '../version'
+import { VERSION_LABEL } from '../version'
 import PendingPanel from './PendingPanel'
 import BrokerStatusBanner from './BrokerStatusBanner'
 import IdleWarning from './IdleWarning'
@@ -93,7 +93,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <span aria-hidden style={{ margin: '0 8px', opacity: 0.5 }}>·</span>
         <Link to="/agreement" className="ktc-link" style={{ fontSize: 12 }}>Customer Agreement (Terms &amp; Conditions)</Link>
         <div style={{ marginTop: 6, opacity: 0.75 }}>
-          KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
+          KTC Online Portal {VERSION_LABEL} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </div>
       </footer>
 

@@ -7,6 +7,7 @@ import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import AdminTour, { staffTourRole, staffTourSeen } from './AdminTour'
+import { VERSION_LABEL } from '../version'
 
 // All staff sessions time out — on a longer leash than the 15-min customer
 // rule because back-office work happens in bursts (review, step away, come
@@ -112,6 +113,10 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
       </nav>
 
       <div className="ktc-stagger">{children}</div>
+
+      <footer style={{ marginTop: 40, paddingTop: 14, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 11.5, color: 'hsl(var(--ink-2))', opacity: 0.8 }}>
+        KTC Online Portal {VERSION_LABEL}
+      </footer>
 
       {tourOpen && tourRole && <AdminTour role={tourRole} onClose={() => setTourOpen(false)} />}
       {idleWarning && <IdleWarning />}

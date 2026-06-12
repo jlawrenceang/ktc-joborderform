@@ -2,7 +2,14 @@
 
 All notable changes to the KTC broker portal. Newest first. Dates are absolute (YYYY-MM-DD).
 
+**Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
+
 ## [Unreleased]
+
+## v1.1.0 — 2026-06-13 (trial-run release)
+
+### 2026-06-13 (session 10s — version provenance in the footers)
+- `APP_VERSION` bumped to **v1.1.0**; build now auto-stamps the **git commit + build date** (`vite.config.ts` define → `VERSION_LABEL`), shown in the login + customer footers and a new slim admin footer. Release ritual documented in `src/version.ts`.
 
 ### 2026-06-13 (session 10s — user manual + demo tour, per role)
 - **User manuals for all 5 roles**, written as repo markdown (`src/content/manual-{customer,admin,cashier,checker}.md`) and rendered by the existing `MarkdownDoc` renderer:
@@ -28,6 +35,8 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **"Are you still there?" prompt one minute before sign-out** (new `IdleWarning` modal in both shells): any click, keypress or mouse movement — including pressing the prompt's button — resets the timer and dismisses it. The hook now returns the warning state.
 - Login inactivity notice now states the actual window (the sessionStorage flag carries the minutes: `15` customer / `60` staff).
 - ST02 refreshed to current behavior (covers `0050`–`0053`): new checks for the pricing lock + payment-details entry (5.0), catalogue add/deactivate/delete (5.0b), idle timeouts + warning prompt (7.3/7.3b), ID retention windows (8.4); teardown notes the `JO-000001`/`BR-000001` sequence reset for go-live.
+
+## v1.0 — everything below shipped before versioned releases (≤ 2026-06-12)
 
 ### 2026-06-12 (session 10q — ID retention finalized: 24h guaranteed · 3-day auto-purge)
 - **Final policy (migration `0053`, supersedes 0052's 7-day window):** uploaded IDs are guaranteed kept **24 hours** (storage policy blocks any deletion — review/print/save window) → **manually deletable 24h–3 days** (🗑 in the viewer) → **auto-deleted at 3 days** so storage never bloats.

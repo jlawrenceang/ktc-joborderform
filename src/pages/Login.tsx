@@ -4,7 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { AGREEMENT_VERSION, AGREEMENT_VERSION_LABEL, AGREEMENT_BODY } from '../content/legal'
-import { APP_VERSION } from '../version'
+import { VERSION_LABEL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
@@ -366,7 +366,7 @@ export default function Login() {
         </p>
 
         <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
-          KTC Online Portal {APP_VERSION} · © {new Date().getFullYear()} KTC Container Terminal Corp.
+          KTC Online Portal {VERSION_LABEL} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>
       </div>
 
