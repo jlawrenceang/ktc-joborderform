@@ -1,4 +1,19 @@
 import { defineConfig, devices } from '@playwright/test'
+import { readFileSync, existsSync } from 'node:fs'
+
+// Load .env.local / .env so the E2E_* secrets (Phase 2) and BASE_URL can live
+// in the gitignored env file instead of the shell. Same lightweight parser as
+// scripts/run-migrations.mjs; real shell env always wins.
+for (const f of ['.env.local', '.env']) {
+  if (!existsSync(f)) continue
+  for (const line of readFileSync(f, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$/)
+    if (!m || process.env[m[1]] !== undefined) continue
+    let v = m[2].trim()
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1)
+    process.env[m[1]] = v
+  }
+}
 
 // Default target is the deployed prod-testing site. Override with BASE_URL to
 // run against a local preview (e.g. BASE_URL=http://localhost:4173 after
