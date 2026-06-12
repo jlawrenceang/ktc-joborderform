@@ -38,7 +38,7 @@ You must not:
 
 KTC processes your personal data as Personal Information Controller in accordance with the Data Privacy Act of 2012, its IRR, and National Privacy Commission ("NPC") issuances.
 
-- **Data Protection Officer (DPO):** [NAME], reachable at **jla.ktcport@gmail.com** *(KTC to confirm designation)*.
+- **Data Protection Officer (DPO):** **Jan Lawrence Ang**, reachable at **jla.ktcport@gmail.com**.
 - **Data we collect:** your name, contact number, email, account credentials, **a valid government-issued ID you upload**, customer/company details, and the job-order and payment data you submit.
 - **Purposes:** to register and **verify your identity**, decide accreditation, process job orders and provide terminal services, compute and record charges, communicate with you, maintain security and prevent fraud, and comply with legal and lawful government requirements.
 - **Legal basis:** your **consent** (for identity verification using your uploaded ID and related processing), performance of this Agreement, and compliance with legal obligations.
