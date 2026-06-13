@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { idDeletable, type Broker, type JobOrder } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
+import { useT } from '../lib/i18n'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
@@ -21,6 +22,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 export default function CustomerDetail() {
+  const { t } = useT()
   const { id } = useParams()
   const [cust, setCust] = useState<Broker | null>(null)
   const [orders, setOrders] = useState<JobOrder[]>([])
@@ -45,58 +47,58 @@ export default function CustomerDetail() {
 
   const { openFromStorage, viewerModal } = useFileViewer(setError)
 
-  if (loading) return <AdminShell><span className="ktc-label">Loading…</span></AdminShell>
+  if (loading) return <AdminShell><span className="ktc-label">{t('Loading…')}</span></AdminShell>
   if (!cust) return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <p className="ktc-label">Customer not found. <Link to="/admin/customers" className="ktc-link">Back to Customers</Link></p>
+        <p className="ktc-label">{t('Customer not found.')} <Link to="/admin/customers" className="ktc-link">{t('Back to Customers')}</Link></p>
       </div>
     </AdminShell>
   )
 
   const ss = STATUS_STYLE[cust.status] ?? STATUS_STYLE.pending
   return (
-    <AdminShell crumb={cust.full_name || cust.email || 'Customer'}>
+    <AdminShell crumb={cust.full_name || cust.email || t('Customer')}>
       {error && <div className="ktc-glass" style={{ padding: 14, marginBottom: 16, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {cust.customer_code && <span className="ktc-mono" style={{ fontSize: 13, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{cust.customer_code}</span>}
-          <h1 className="ktc-title">{cust.full_name || cust.email || 'Customer'}</h1>
-          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{cust.status}</span>
+          <h1 className="ktc-title">{cust.full_name || cust.email || t('Customer')}</h1>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(cust.status)}</span>
         </div>
         <div className="ktc-label" style={{ marginTop: 10, fontSize: 14, display: 'grid', gap: 4 }}>
-          <div>Email: {cust.email}</div>
-          <div>Contact: {cust.contact_number || '—'}</div>
-          {cust.valid_id_path && <div>Valid ID: <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, `Valid ID — ${cust.full_name || cust.email || 'customer'}`, {
+          <div>{t('Email:')} {cust.email}</div>
+          <div>{t('Contact:')} {cust.contact_number || '—'}</div>
+          {cust.valid_id_path && <div>{t('Valid ID:')} <button className="ktc-link" style={{ fontSize: 13 }} onClick={() => void openFromStorage('valid-ids', cust.valid_id_path, t('Valid ID — {name}', { name: cust.full_name || cust.email || t('customer') }), {
             // 🗑 appears only past the 24h guaranteed window (auto-purge at
             // 3 days); the storage policy re-checks server-side either way.
             onDeleted: idDeletable(cust) ? async () => {
               await supabase.from('customers').update({ valid_id_path: null }).eq('id', cust.id)
               setCust({ ...cust, valid_id_path: null })
             } : undefined,
-          })}>View</button></div>}
-          {cust.decided_at && <div>Decided: {new Date(cust.decided_at).toLocaleString()}</div>}
-          {cust.decision_reason && <div>Note to customer: {cust.decision_reason}</div>}
+          })}>{t('View')}</button></div>}
+          {cust.decided_at && <div>{t('Decided:')} {new Date(cust.decided_at).toLocaleString()}</div>}
+          {cust.decision_reason && <div>{t('Note to customer:')} {cust.decision_reason}</div>}
         </div>
         <BrokerReview b={cust} />
       </div>
 
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Job order history</h2>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{orders.length} order{orders.length === 1 ? '' : 's'}.</p>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Job order history')}</h2>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 16 }}>{t('{n} order(s).', { n: orders.length })}</p>
         {orders.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No job orders yet.</div>
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No job orders yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {orders.map((o) => (
               <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                  <b style={{ fontSize: 15 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
-                  <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()} · {JO_STATUS[o.status] ?? o.status}</span>
+                  <b style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()} · {t(JO_STATUS[o.status] ?? o.status)}</span>
                 </div>
                 <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
-                  {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'No consignee'}{o.entry_number ? ` · Entry ${o.entry_number}` : ''}
+                  {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}{o.entry_number ? ` · ${t('Entry {n}', { n: o.entry_number })}` : ''}
                 </div>
                 {o.lines && o.lines.length > 0 && (
                   <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13 }}>

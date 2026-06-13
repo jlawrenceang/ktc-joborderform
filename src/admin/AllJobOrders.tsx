@@ -6,6 +6,7 @@ import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type JobOrderEvent, type ServiceLine, type ServingNumber } from '../lib/types'
 import { isCreditInvoice, joEventLabel } from '../lib/eventLabels'
+import { useT } from '../lib/i18n'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -114,6 +115,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 })
 
 export default function AllJobOrders() {
+  const { t } = useT()
   const { can } = usePermissions()
   const [orders, setOrders] = useState<AdminJobOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -184,7 +186,7 @@ export default function AllJobOrders() {
     const { data, error } = await supabase.rpc('archive_done_orders')
     setArchiving(false)
     if (error) { setArchiveMsg(error.message); return }
-    setArchiveMsg(`✓ Archived ${data ?? 0} paid & completed order${data === 1 ? '' : 's'}.`)
+    setArchiveMsg(t('✓ Archived {n} paid & completed order(s).', { n: data ?? 0 }))
     await load()
   }
 
@@ -207,7 +209,7 @@ export default function AllJobOrders() {
 
   async function confirmNote() {
     if (!modal) return
-    if (!note.trim()) { alert('Please add a note for the customer.'); return }
+    if (!note.trim()) { alert(t('Please add a note for the customer.')); return }
     const id = modal.id, target = modal.target
     setModal(null)
     await apply(id, target, note.trim(), target === 'rejected' ? recoverable : undefined)
@@ -281,8 +283,8 @@ export default function AllJobOrders() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 className="ktc-title">Job Orders</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 14 }}>Review and process job orders from verified customers.</p>
+        <h1 className="ktc-title">{t('Job Orders')}</h1>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 14 }}>{t('Review and process job orders from verified customers.')}</p>
 
         {/* Views + archive */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 18 }}>
@@ -293,14 +295,14 @@ export default function AllJobOrders() {
               className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`}
               onClick={() => changeFilter(f.key)}
             >
-              {f.label}
+              {t(f.label)}
             </button>
           ))}
           {can('process_job_orders') && (filter === 'completed' || filter === 'all') && (
             <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto' }} disabled={archiving}
-              title="Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday."
+              title={t('Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday.')}
               onClick={() => void archiveDone()}>
-              {archiving ? 'Archiving…' : '🗄 Archive paid & completed'}
+              {archiving ? t('Archiving…') : t('🗄 Archive paid & completed')}
             </button>
           )}
         </div>
@@ -312,7 +314,7 @@ export default function AllJobOrders() {
           </div>
         ) : orders.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>
-            {filter === 'unpaid' ? 'Nothing waiting for payment — every completed order has an invoice. 🎉' : 'No job orders in this view.'}
+            {filter === 'unpaid' ? t('Nothing waiting for payment — every completed order has an invoice. 🎉') : t('No job orders in this view.')}
           </div>
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
@@ -326,55 +328,55 @@ export default function AllJobOrders() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <b className="ktc-mono" style={{ fontSize: 14.5 }}>{o.jo_number ?? '—'}</b>
                       <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: sp.bg, color: sp.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-                        {STATUS_LABEL[o.status] ?? o.status}
+                        {t(STATUS_LABEL[o.status] ?? o.status)}
                       </span>
                       {o.service_invoice_no && (
                         <span
                           className={`ktc-chip ${isCreditInvoice(o.service_invoice_no) ? 'ktc-chip--info' : 'ktc-chip--success'}`}
-                          title={`ERP ${o.service_invoice_no}${o.invoice_pad_no ? ` · printed invoice no. ${o.invoice_pad_no}` : ''}${isCreditInvoice(o.service_invoice_no) ? ' — billed on credit' : ''}`}
+                          title={`${t('ERP')} ${o.service_invoice_no}${o.invoice_pad_no ? ` · ${t('printed invoice no.')} ${o.invoice_pad_no}` : ''}${isCreditInvoice(o.service_invoice_no) ? ` — ${t('billed on credit')}` : ''}`}
                         >
-                          {isCreditInvoice(o.service_invoice_no) ? 'BILLED' : 'PAID'} · {o.service_invoice_no}{o.invoice_pad_no ? ` · #${o.invoice_pad_no}` : ''}
+                          {isCreditInvoice(o.service_invoice_no) ? t('BILLED') : t('PAID')} · {o.service_invoice_no}{o.invoice_pad_no ? ` · #${o.invoice_pad_no}` : ''}
                         </span>
                       )}
                       {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
-                        <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={`This week's ${SERVICE_LINE_LABEL[s.service_line]} line number`}>
-                          {SERVICE_LINE_LABEL[s.service_line]} #{s.serving_no}
+                        <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={t("This week's {line} line number", { line: t(SERVICE_LINE_LABEL[s.service_line]) })}>
+                          {t(SERVICE_LINE_LABEL[s.service_line])} #{s.serving_no}
                         </span>
                       ))}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
-                        <span className="ktc-chip ktc-chip--warning">X-ray payment to review</span>
+                        <span className="ktc-chip ktc-chip--warning">{t('X-ray payment to review')}</span>
                       )}
                       {!o.service_invoice_no && o.payment_status === 'confirmed' && (
-                        <span className="ktc-chip ktc-chip--success">X-ray payment confirmed</span>
+                        <span className="ktc-chip ktc-chip--success">{t('X-ray payment confirmed')}</span>
                       )}
                       {o.rps_payment_status === 'submitted' && (
-                        <span className="ktc-chip ktc-chip--warning">RPS payment to review</span>
+                        <span className="ktc-chip ktc-chip--warning">{t('RPS payment to review')}</span>
                       )}
                       {o.status === 'completed' && !o.service_invoice_no && agingDays(o.completed_at) != null && (
                         <span className={`ktc-chip ${agingDays(o.completed_at)! >= 3 ? 'ktc-chip--danger' : 'ktc-chip--warning'}`}
-                          title="Days since completion without a Service Invoice on file">
-                          unpaid {agingDays(o.completed_at)}d
+                          title={t('Days since completion without a Service Invoice on file')}>
+                          {t('unpaid {d}d', { d: agingDays(o.completed_at) ?? 0 })}
                         </span>
                       )}
-                      {o.archived_at && <span className="ktc-chip" title={new Date(o.archived_at).toLocaleString()}>Archived</span>}
+                      {o.archived_at && <span className="ktc-chip" title={new Date(o.archived_at).toLocaleString()}>{t('Archived')}</span>}
                       {['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
                         serviceProgress(o).map((p) => (
                           <span key={p.line} className={`ktc-chip ${p.done ? 'ktc-chip--success' : ''}`}>
-                            {SERVICE_LINE_LABEL[p.line]} {p.done ? '✓' : 'pending'}
+                            {t(SERVICE_LINE_LABEL[p.line])} {p.done ? '✓' : t('pending')}
                           </span>
                         ))}
                       {o.xray_performed_at && !o.service_invoice_no && (
                         <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
-                          X-ray done
+                          {t('X-ray done')}
                         </span>
                       )}
                     </span>
                     <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()}</span>
                   </div>
                   <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
-                    {o.broker?.full_name || o.broker?.email || 'Unknown customer'}
-                    {' · '}{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'no consignee'}
-                    {o.entry_number ? ` · Entry ${o.entry_number}` : ''}
+                    {o.broker?.full_name || o.broker?.email || t('Unknown customer')}
+                    {' · '}{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
+                    {o.entry_number ? ` · ${t('Entry')} ${o.entry_number}` : ''}
                   </div>
                   {o.lines && o.lines.length > 0 && (
                     <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13 }}>
@@ -383,13 +385,13 @@ export default function AllJobOrders() {
                   )}
                   {o.admin_note && (o.status === 'on_hold' || o.status === 'rejected') && (
                     <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 84%)', color: 'hsl(30 60% 32%)' }}>
-                      <b>Note to customer:</b> {o.admin_note}
-                      {o.status === 'rejected' && o.rejected_recoverable === false && <> · <b>terminal</b> (customer can’t resubmit)</>}
+                      <b>{t('Note to customer:')}</b> {o.admin_note}
+                      {o.status === 'rejected' && o.rejected_recoverable === false && <> · <b>{t('terminal')}</b> {t('(customer can’t resubmit)')}</>}
                     </div>
                   )}
                   {o.customer_note && (
                     <div style={{ marginTop: 8, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(210 60% 96%)', border: '1px solid hsl(210 55% 86%)', color: 'hsl(210 55% 32%)' }}>
-                      <b>Customer reply:</b> {o.customer_note}
+                      <b>{t('Customer reply:')}</b> {o.customer_note}
                     </div>
                   )}
 
@@ -397,66 +399,66 @@ export default function AllJobOrders() {
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                     {can('process_job_orders') && restorable(o).map((r) => (
                       <button key={r.line} style={btn('ghost')} disabled={isBusy}
-                        title="This order was resubmitted and went to the back of the line — restore its original number"
+                        title={t('This order was resubmitted and went to the back of the line — restore its original number')}
                         onClick={() => void restoreNumber(o.id, r.line)}>
-                        ↩ Restore {SERVICE_LINE_LABEL[r.line]} #{r.no}
+                        ↩ {t('Restore {line} #{no}', { line: t(SERVICE_LINE_LABEL[r.line]), no: r.no })}
                       </button>
                     ))}
                     {can('process_job_orders') && (
                       <>
                         {(o.status === 'submitted' || o.status === 'on_hold') && (
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>Approve &amp; process</button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>{t('Approve & process')}</button>
                         )}
                         {o.status === 'processing' && serviceProgress(o).filter((p) => !p.done).length <= 1 && (
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>Mark completed</button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>{t('Mark completed')}</button>
                         )}
                         {['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
                           serviceProgress(o).filter((p) => !p.done).map((p) => (
                             <button key={p.line} style={btn('solid')} disabled={isBusy}
-                              title={`Marks the ${SERVICE_LINE_LABEL[p.line]} service done — the order completes when every service is done`}
+                              title={t('Marks the {line} service done — the order completes when every service is done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
                               onClick={() => void markServiceDone(o.id, p.line)}>
-                              ✓ {SERVICE_LINE_LABEL[p.line]} done
+                              ✓ {t('{line} done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
                             </button>
                           ))}
                         {(o.status === 'submitted' || o.status === 'processing') && (
-                          <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>Hold for info</button>
+                          <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>{t('Hold for info')}</button>
                         )}
                         {(o.status === 'submitted' || o.status === 'processing' || o.status === 'on_hold') && (
-                          <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>Reject</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>{t('Reject')}</button>
                         )}
                       </>
                     )}
                     {can('review_payments') && o.payment_status === 'submitted' && (
                       payReject?.id === o.id && payRejectKind === 'base' ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Why? (shown to the customer)" autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
-                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'base')}>Reject proof</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>Cancel</button>
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'base')}>{t('Reject proof')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>{t('Cancel')}</button>
                         </span>
                       ) : (
                         <>
-                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.payment_proof_path, `X-ray payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
-                            View X-ray payment
+                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.payment_proof_path, `${t('X-ray payment slip')} — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
+                            {t('View X-ray payment')}
                           </button>
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'base')}>Confirm X-ray payment</button>
-                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('base'); setPayNote('') }}>Reject</button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'base')}>{t('Confirm X-ray payment')}</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('base'); setPayNote('') }}>{t('Reject')}</button>
                         </>
                       )
                     )}
                     {can('review_payments') && o.rps_payment_status === 'submitted' && (
                       payReject?.id === o.id && payRejectKind === 'rps' ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Why? (shown to the customer)" autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
-                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'rps')}>Reject proof</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>Cancel</button>
+                          <input className="ktc-input" value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ width: 230, padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('danger')} disabled={isBusy || !payNote.trim()} onClick={() => void reviewPayment(o.id, false, payNote.trim(), 'rps')}>{t('Reject proof')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setPayReject(null); setPayNote('') }}>{t('Cancel')}</button>
                         </span>
                       ) : (
                         <>
-                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.rps_payment_proof_path, `RPS payment slip — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
-                            View RPS payment
+                          <button style={btn('ghost')} onClick={() => void openFromStorage('payment-slips', o.rps_payment_proof_path, `${t('RPS payment slip')} — ${o.jo_number ?? ''} (${o.broker?.full_name ?? ''})`)}>
+                            {t('View RPS payment')}
                           </button>
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'rps')}>Confirm RPS payment</button>
-                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('rps'); setPayNote('') }}>Reject</button>
+                          <button style={btn('solid')} disabled={isBusy} onClick={() => void reviewPayment(o.id, true, undefined, 'rps')}>{t('Confirm RPS payment')}</button>
+                          <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayReject(o); setPayRejectKind('rps'); setPayNote('') }}>{t('Reject')}</button>
                         </>
                       )
                     )}
@@ -467,8 +469,8 @@ export default function AllJobOrders() {
                             className="ktc-input ktc-mono"
                             value={invoiceNo}
                             onChange={(e) => setInvoiceNo(e.target.value)}
-                            placeholder="ERP control no. (OR-INV / BI-INV)"
-                            title="The ERP record ID — OR-INV-… for cash, BI-INV-… for credit"
+                            placeholder={t('ERP control no. (OR-INV / BI-INV)')}
+                            title={t('The ERP record ID — OR-INV-… for cash, BI-INV-… for credit')}
                             autoFocus
                             style={{ width: 215, padding: '7px 11px', fontSize: 13 }}
                           />
@@ -476,34 +478,34 @@ export default function AllJobOrders() {
                             className="ktc-input ktc-mono"
                             value={invoicePad}
                             onChange={(e) => setInvoicePad(e.target.value)}
-                            placeholder="Invoice no. (e.g. 001323)"
-                            title="The printed OR / Billing Invoice serial from the pad"
+                            placeholder={t('Invoice no. (e.g. 001323)')}
+                            title={t('The printed OR / Billing Invoice serial from the pad')}
                             style={{ width: 170, padding: '7px 11px', fontSize: 13 }}
                           />
-                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim() || !invoicePad.trim()} onClick={() => void recordInvoice()}>Save invoice</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo(''); setInvoicePad('') }}>Cancel</button>
+                          <button style={btn('solid')} disabled={isBusy || !invoiceNo.trim() || !invoicePad.trim()} onClick={() => void recordInvoice()}>{t('Save invoice')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvoiceId(null); setInvoiceNo(''); setInvoicePad('') }}>{t('Cancel')}</button>
                         </span>
                       ) : (
-                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo(''); setInvoicePad('') }} title="Record BOTH numbers: the ERP control no. (OR-INV-… cash / BI-INV-… credit) and the printed invoice serial — an invoice on file releases the order">
-                          Record invoice #
+                        <button style={btn('ghost')} onClick={() => { setInvoiceId(o.id); setInvoiceNo(''); setInvoicePad('') }} title={t('Record BOTH numbers: the ERP control no. (OR-INV-… cash / BI-INV-… credit) and the printed invoice serial — an invoice on file releases the order')}>
+                          {t('Record invoice #')}
                         </button>
                       )
                     )}
                     {printable && (
-                      <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>Print slip ↗</Link>
+                      <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>{t('Print slip ↗')}</Link>
                     )}
-                    <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title="Compose a status message for Viber / SMS / Messenger">
-                      💬 Message
+                    <button style={btn('ghost')} onClick={() => { setMsgOrder(o); setCopied(false) }} title={t('Compose a status message for Viber / SMS / Messenger')}>
+                      💬 {t('Message')}
                     </button>
-                    <button style={btn('ghost')} onClick={() => void toggleHistory(o.id)} title="Who did what, when">
-                      🕘 History
+                    <button style={btn('ghost')} onClick={() => void toggleHistory(o.id)} title={t('Who did what, when')}>
+                      🕘 {t('History')}
                     </button>
                   </div>
 
                   {historyId === o.id && (
                     <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', fontSize: 12.5 }}>
                       {history.length === 0 ? (
-                        <span className="ktc-label">Loading history…</span>
+                        <span className="ktc-label">{t('Loading history…')}</span>
                       ) : (
                         <div style={{ display: 'grid', gap: 5 }}>
                           {history.map((e) => (
@@ -512,7 +514,7 @@ export default function AllJobOrders() {
                                 {new Date(e.created_at).toLocaleString()}
                               </span>
                               <span style={{ fontWeight: 550 }}>{joEventLabel(e)}</span>
-                              <span className="ktc-label" style={{ fontSize: 11.5 }}>by {e.actorName}</span>
+                              <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('by {name}', { name: e.actorName ?? '' })}</span>
                             </div>
                           ))}
                         </div>
@@ -528,11 +530,11 @@ export default function AllJobOrders() {
         {/* Pagination */}
         {total > PAGE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, justifyContent: 'center' }}>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← Prev</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>{t('← Prev')}</button>
             <span className="ktc-label" style={{ fontSize: 12.5 }}>
-              {page * PAGE + 1}–{Math.min((page + 1) * PAGE, total)} of {total}
+              {t('{from}–{to} of {total}', { from: page * PAGE + 1, to: Math.min((page + 1) * PAGE, total), total })}
             </span>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>Next →</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>{t('Next →')}</button>
           </div>
         )}
       </div>
@@ -543,34 +545,34 @@ export default function AllJobOrders() {
         <div onClick={() => setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
           <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 26 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
-              {modal.target === 'on_hold' ? 'Hold for information' : 'Reject job order'} · {modal.jo}
+              {modal.target === 'on_hold' ? t('Hold for information') : t('Reject job order')} · {modal.jo}
             </h2>
             <p className="ktc-label" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55 }}>
               {modal.target === 'on_hold'
-                ? 'Tell the customer what information or update you need. They’ll see this note on the order.'
-                : 'Tell the customer why this order is being rejected. They’ll see this note on the order.'}
+                ? t('Tell the customer what information or update you need. They’ll see this note on the order.')
+                : t('Tell the customer why this order is being rejected. They’ll see this note on the order.')}
             </p>
             <textarea
               className="ktc-input"
               rows={4}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder={modal.target === 'on_hold' ? 'e.g. Please confirm the entry number — it doesn’t match the consignee.' : 'e.g. Duplicate of JO-000123.'}
+              placeholder={modal.target === 'on_hold' ? t('e.g. Please confirm the entry number — it doesn’t match the consignee.') : t('e.g. Duplicate of JO-000123.')}
               style={{ marginTop: 12, resize: 'vertical', minHeight: 90 }}
             />
             {modal.target === 'rejected' && (
               <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginTop: 12, fontSize: 13, lineHeight: 1.5, cursor: 'pointer' }}>
                 <input type="checkbox" checked={recoverable} onChange={(e) => setRecoverable(e.target.checked)} style={{ marginTop: 2 }} />
                 <span className="ktc-label" style={{ fontSize: 13 }}>
-                  Allow the customer to <b>fix &amp; resubmit</b> this order (untick to close it permanently — they’d have to file a new one)
+                  {t('Allow the customer to')} <b>{t('fix & resubmit')}</b> {t('this order (untick to close it permanently — they’d have to file a new one)')}
                 </span>
               </label>
             )}
             <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
               <button style={btn(modal.target === 'rejected' ? 'danger' : 'solid')} onClick={() => void confirmNote()}>
-                {modal.target === 'on_hold' ? 'Put on hold' : 'Reject order'}
+                {modal.target === 'on_hold' ? t('Put on hold') : t('Reject order')}
               </button>
-              <button type="button" className="ktc-link" onClick={() => setModal(null)}>Cancel</button>
+              <button type="button" className="ktc-link" onClick={() => setModal(null)}>{t('Cancel')}</button>
             </div>
           </div>
         </div>
@@ -582,11 +584,11 @@ export default function AllJobOrders() {
         <div className="ktc-modal-backdrop" onClick={() => setMsgOrder(null)}>
           <div className="ktc-glass-thick ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: '100%', padding: 24 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>
-              Status message · <span className="ktc-mono">{msgOrder.jo_number ?? '—'}</span>
+              {t('Status message')} · <span className="ktc-mono">{msgOrder.jo_number ?? '—'}</span>
             </h2>
             <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.5 }}>
-              To {msgOrder.broker?.full_name || msgOrder.broker?.email || 'customer'}
-              {msgOrder.broker?.contact_number ? <> · <span className="ktc-mono">{msgOrder.broker.contact_number}</span></> : ' · no contact number on file'}
+              {t('To')} {msgOrder.broker?.full_name || msgOrder.broker?.email || t('customer')}
+              {msgOrder.broker?.contact_number ? <> · <span className="ktc-mono">{msgOrder.broker.contact_number}</span></> : ` · ${t('no contact number on file')}`}
             </p>
             <textarea
               className="ktc-input"
@@ -598,31 +600,31 @@ export default function AllJobOrders() {
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap', alignItems: 'center' }}>
               <button className="ktc-btn ktc-btn--sm" type="button" onClick={() => void copyMessage()}>
-                {copied ? '✓ Copied' : 'Copy message'}
+                {copied ? t('✓ Copied') : t('Copy message')}
               </button>
               <a
                 className="ktc-btn-secondary ktc-btn--sm"
                 href={`viber://forward?text=${encodeURIComponent(chatMessage(msgOrder))}`}
                 onClick={() => void copyMessage()} // also copy, so paste works if the prefill doesn't carry over
                 style={{ textDecoration: 'none' }}
-                title="Copies the message and opens Viber's forward screen — pick the customer's chat (paste if the text doesn't carry over)"
+                title={t("Copies the message and opens Viber's forward screen — pick the customer's chat (paste if the text doesn't carry over)")}
               >
-                Send via Viber
+                {t('Send via Viber')}
               </a>
               {msgOrder.broker?.contact_number && (
                 <a
                   className="ktc-btn-secondary ktc-btn--sm"
                   href={`sms:${msgOrder.broker.contact_number.replace(/[^+0-9]/g, '')}?body=${encodeURIComponent(chatMessage(msgOrder))}`}
                   style={{ textDecoration: 'none' }}
-                  title="Opens your SMS app with the message pre-filled (mobile)"
+                  title={t('Opens your SMS app with the message pre-filled (mobile)')}
                 >
-                  SMS
+                  {t('SMS')}
                 </a>
               )}
-              <button type="button" className="ktc-link" onClick={() => setMsgOrder(null)} style={{ marginLeft: 'auto' }}>Close</button>
+              <button type="button" className="ktc-link" onClick={() => setMsgOrder(null)} style={{ marginLeft: 'auto' }}>{t('Close')}</button>
             </div>
             <p className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.8, lineHeight: 1.5 }}>
-              Messenger doesn’t allow pre-filled messages — use Copy, then paste into the chat. Viber/SMS buttons work on devices with those apps installed.
+              {t('Messenger doesn’t allow pre-filled messages — use Copy, then paste into the chat. Viber/SMS buttons work on devices with those apps installed.')}
             </p>
           </div>
         </div>

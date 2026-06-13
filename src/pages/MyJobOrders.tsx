@@ -7,6 +7,7 @@ import NowServing from '../components/NowServing'
 import { SERVICE_LINE_LABEL, type JobOrder } from '../lib/types'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
+import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
   held: 'Pending approval',
@@ -49,10 +50,11 @@ const EMPTY_HINT: Record<Filter, string> = {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useT()
   const tone = STATUS_TONE[status]
   return (
     <span className={tone ? `ktc-chip ktc-chip--${tone}` : 'ktc-chip'}>
-      {STATUS_LABEL[status] ?? status}
+      {STATUS_LABEL[status] ? t(STATUS_LABEL[status]) : status}
     </span>
   )
 }
@@ -67,12 +69,13 @@ function ResubmitForm({ order, kind, onDone, onError }: {
   onDone: () => void
   onError: (msg: string) => void
 }) {
+  const { t } = useT()
   const [note, setNote] = useState('')
   const [entry, setEntry] = useState('')
   const [busy, setBusy] = useState(false)
 
   async function submit() {
-    if (kind === 'on_hold' && !note.trim()) { onError('Please describe what you updated or clarified.'); return }
+    if (kind === 'on_hold' && !note.trim()) { onError(t('Please describe what you updated or clarified.')); return }
     setBusy(true)
     const { error } = kind === 'on_hold'
       ? await supabase.rpc('respond_to_hold', { p_id: order.id, p_note: note.trim(), p_entry_number: entry.trim() || null })
@@ -85,22 +88,23 @@ function ResubmitForm({ order, kind, onDone, onError }: {
   return (
     <div style={{ display: 'grid', gap: 8, marginBottom: 12, padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)' }}>
       <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>
-        {kind === 'on_hold' ? 'Your reply to KTC (what did you update or clarify?)' : 'What did you fix? (optional note to KTC)'}
+        {kind === 'on_hold' ? t('Your reply to KTC (what did you update or clarify?)') : t('What did you fix? (optional note to KTC)')}
       </label>
       <textarea className="ktc-input" rows={2} value={note} onChange={(e) => setNote(e.target.value)}
-        placeholder={kind === 'on_hold' ? 'e.g. Corrected the entry number — see below.' : 'e.g. Re-checked the container numbers with the shipping line.'} />
+        placeholder={kind === 'on_hold' ? t('e.g. Corrected the entry number — see below.') : t('e.g. Re-checked the container numbers with the shipping line.')} />
       {kind === 'on_hold' && (
         <input className="ktc-input" value={entry} onChange={(e) => setEntry(e.target.value)}
-          placeholder={`Corrected entry number (optional${order.entry_number ? ` — currently ${order.entry_number}` : ''})`} />
+          placeholder={order.entry_number ? t('Corrected entry number (optional — currently {entry})', { entry: order.entry_number }) : t('Corrected entry number (optional)')} />
       )}
       <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void submit()} style={{ justifySelf: 'start' }}>
-        {busy ? 'Resubmitting…' : 'Resubmit to KTC'}
+        {busy ? t('Resubmitting…') : t('Resubmit to KTC')}
       </button>
     </div>
   )
 }
 
 export default function MyJobOrders() {
+  const { t } = useT()
   usePageTour('job-orders', myJobOrdersSteps)
   const [orders, setOrders] = useState<JobOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -177,17 +181,17 @@ export default function MyJobOrders() {
       <div className="ktc-glass" style={{ padding: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 className="ktc-title">My Job Orders</h1>
+            <h1 className="ktc-title">{t('My Job Orders')}</h1>
             <p className="ktc-sub" style={{ marginBottom: 0 }}>
-              Tap an order to see its containers and services.
+              {t('Tap an order to see its containers and services.')}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling} title={cooling ? 'Just refreshed — try again in a few seconds' : 'Refresh statuses (auto-refreshes every minute)'}>
-              ↻ Refresh
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling} title={cooling ? t('Just refreshed — try again in a few seconds') : t('Refresh statuses (auto-refreshes every minute)')}>
+              ↻ {t('Refresh')}
             </button>
             <Link to="/job-order" className="ktc-btn" style={{ width: 'auto', padding: '9px 16px', fontSize: 13, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              + New Job Order
+              + {t('New Job Order')}
             </Link>
           </div>
         </div>
@@ -212,30 +216,30 @@ export default function MyJobOrders() {
               onClick={() => changeFilter(f.key)}
               style={{ fontSize: 12.5 }}
             >
-              {f.label}
+              {t(f.label)}
             </button>
           ))}
           {!loading && total > 0 && (
             <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
-              {total} order{total === 1 ? '' : 's'}
+              {t('{total} order(s)', { total })}
             </span>
           )}
         </div>
 
         <div style={{ marginTop: 4 }}>
           {loading ? (
-            <div style={{ display: 'grid', gap: 12 }} aria-label="Loading job orders">
+            <div style={{ display: 'grid', gap: 12 }} aria-label={t('Loading job orders')}>
               {[64, 64, 64].map((h, i) => (
                 <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 14 }} />
               ))}
             </div>
           ) : orders.length === 0 ? (
             <div className="ktc-label" style={{ fontSize: 14 }}>
-              {EMPTY_HINT[filter]}{' '}
+              {t(EMPTY_HINT[filter])}{' '}
               {filter === 'all' || filter === 'active' ? (
-                <>Create one on the <Link to="/job-order" className="ktc-link">New Job Order</Link> page.</>
+                <>{t('Create one on the')} <Link to="/job-order" className="ktc-link">{t('New Job Order')}</Link> {t('page.')}</>
               ) : (
-                <button type="button" className="ktc-link" onClick={() => changeFilter('all')}>Show all orders</button>
+                <button type="button" className="ktc-link" onClick={() => changeFilter('all')}>{t('Show all orders')}</button>
               )}
             </div>
           ) : (
@@ -265,21 +269,21 @@ export default function MyJobOrders() {
                       </span>
                       <span style={{ minWidth: 0, flex: '1 1 auto' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                          <b className={o.jo_number ? 'ktc-mono' : undefined} style={{ fontSize: o.jo_number ? 14.5 : 14 }}>{o.jo_number ?? 'Draft (no number yet)'}</b>
+                          <b className={o.jo_number ? 'ktc-mono' : undefined} style={{ fontSize: o.jo_number ? 14.5 : 14 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                           <StatusBadge status={o.status} />
                           {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
-                            <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={`Your number in this week's ${SERVICE_LINE_LABEL[s.service_line]} line`}>
-                              {SERVICE_LINE_LABEL[s.service_line]} #{s.serving_no}
+                            <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={t("Your number in this week's {line} line", { line: t(SERVICE_LINE_LABEL[s.service_line]) })}>
+                              {t(SERVICE_LINE_LABEL[s.service_line])} #{s.serving_no}
                             </span>
                           ))}
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12.5, marginTop: 4 }}>
-                          {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : 'No consignee'}
-                          {o.entry_number ? ` · Entry ${o.entry_number}` : ''}
+                          {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
+                          {o.entry_number ? ` · ${t('Entry {entry}', { entry: o.entry_number })}` : ''}
                         </span>
                       </span>
                       <span className="ktc-label" style={{ flex: '0 0 auto', fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        {count} container{count === 1 ? '' : 's'}
+                        {t('{count} container(s)', { count })}
                         <span style={{ display: 'block', opacity: 0.7 }}>{new Date(o.created_at).toLocaleDateString()}</span>
                       </span>
                     </button>
@@ -288,14 +292,14 @@ export default function MyJobOrders() {
                       <div style={{ padding: '0 16px 16px 40px' }}>
                         {o.status === 'held' && (
                           <div style={{ fontSize: 12, color: 'hsl(30 60% 38%)', marginBottom: 12, lineHeight: 1.5 }}>
-                            Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.
+                            {t('Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.')}
                           </div>
                         )}
                         {o.status === 'on_hold' && (
                           <>
                             {o.admin_note && (
                               <div style={{ fontSize: 12.5, marginBottom: 10, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 84%)', color: 'hsl(30 60% 32%)' }}>
-                                <b>Information needed:</b> {o.admin_note}
+                                <b>{t('Information needed:')}</b> {o.admin_note}
                               </div>
                             )}
                             {respondingId === o.id ? (
@@ -304,7 +308,7 @@ export default function MyJobOrders() {
                             ) : (
                               <button type="button" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12 }}
                                 onClick={() => { setRespondingId(o.id); setError(null) }}>
-                                Respond &amp; resubmit
+                                {t('Respond & resubmit')}
                               </button>
                             )}
                           </>
@@ -313,12 +317,12 @@ export default function MyJobOrders() {
                           <>
                             {o.admin_note && (
                               <div style={{ fontSize: 12.5, marginBottom: 10, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'hsl(0 75% 97%)', border: '1px solid hsl(0 70% 88%)', color: 'hsl(0 60% 40%)' }}>
-                                <b>Rejected:</b> {o.admin_note}
+                                <b>{t('Rejected:')}</b> {o.admin_note}
                               </div>
                             )}
                             {o.rejected_recoverable === false ? (
                               <div className="ktc-label" style={{ fontSize: 12.5, marginBottom: 12 }}>
-                                This order is closed. If needed, please <Link to="/job-order" className="ktc-link">file a new job order</Link>.
+                                {t('This order is closed. If needed, please')} <Link to="/job-order" className="ktc-link">{t('file a new job order')}</Link>.
                               </div>
                             ) : respondingId === o.id ? (
                               <ResubmitForm order={o} kind="rejected" onError={setError}
@@ -326,34 +330,34 @@ export default function MyJobOrders() {
                             ) : (
                               <button type="button" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12 }}
                                 onClick={() => { setRespondingId(o.id); setError(null) }}>
-                                Fix &amp; resubmit
+                                {t('Fix & resubmit')}
                               </button>
                             )}
                           </>
                         )}
                         {o.customer_note && (o.status === 'submitted' || o.status === 'processing') && (
                           <div className="ktc-label" style={{ fontSize: 12.5, marginBottom: 10 }}>
-                            Your note to KTC: “{o.customer_note}”
+                            {t('Your note to KTC:')} “{o.customer_note}”
                           </div>
                         )}
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                           {(o.status === 'processing' || o.status === 'completed') && (
                             <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
-                              Print slip ↗
+                              {t('Print slip')} ↗
                             </Link>
                           )}
                           {!['held', 'cancelled', 'rejected'].includes(o.status) && (
                             <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', marginBottom: 12, textDecoration: 'none' }}>
-                              {o.service_invoice_no?.toUpperCase().startsWith('BI') ? '✓ Billed · view charges'
-                                : o.payment_status === 'confirmed' || o.service_invoice_no ? '✓ Paid · view charges'
-                                : o.payment_status === 'submitted' ? 'Payment under review'
-                                : o.payment_status === 'rejected' ? 'Payment issue — fix'
-                                : 'View charges & pay'}
+                              {o.service_invoice_no?.toUpperCase().startsWith('BI') ? t('✓ Billed · view charges')
+                                : o.payment_status === 'confirmed' || o.service_invoice_no ? t('✓ Paid · view charges')
+                                : o.payment_status === 'submitted' ? t('Payment under review')
+                                : o.payment_status === 'rejected' ? t('Payment issue — fix')
+                                : t('View charges & pay')}
                             </Link>
                           )}
                         </div>
                         {count === 0 ? (
-                          <div className="ktc-label" style={{ fontSize: 13 }}>No containers on this order.</div>
+                          <div className="ktc-label" style={{ fontSize: 13 }}>{t('No containers on this order.')}</div>
                         ) : (
                           <div style={{ display: 'grid', gap: 6 }}>
                             {o.lines!.map((l, i) => (
@@ -362,7 +366,7 @@ export default function MyJobOrders() {
                                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}
                               >
                                 <span className="ktc-mono" style={{ fontWeight: 600 }}>{l.container_number}</span>
-                                <span className="ktc-label" style={{ fontSize: 12.5 }}>{l.service_request}</span>
+                                <span className="ktc-label" style={{ fontSize: 12.5 }}>{t(l.service_request)}</span>
                               </div>
                             ))}
                           </div>
@@ -373,16 +377,16 @@ export default function MyJobOrders() {
                           <div style={{ marginTop: 12 }}>
                             {cancelId === o.id ? (
                               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 13 }}>
-                                <span style={{ fontWeight: 600, color: 'var(--acc-2)' }}>Cancel this order? This can’t be undone.</span>
+                                <span style={{ fontWeight: 600, color: 'var(--acc-2)' }}>{t('Cancel this order? This can’t be undone.')}</span>
                                 <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={busyId === o.id}
                                   onClick={() => void cancelOrder(o.id)}>
-                                  {busyId === o.id ? 'Cancelling…' : 'Yes, cancel it'}
+                                  {busyId === o.id ? t('Cancelling…') : t('Yes, cancel it')}
                                 </button>
-                                <button type="button" className="ktc-link" onClick={() => setCancelId(null)}>Keep it</button>
+                                <button type="button" className="ktc-link" onClick={() => setCancelId(null)}>{t('Keep it')}</button>
                               </div>
                             ) : (
                               <button type="button" className="ktc-link" style={{ fontSize: 12.5, opacity: 0.85 }} onClick={() => setCancelId(o.id)}>
-                                Cancel this order
+                                {t('Cancel this order')}
                               </button>
                             )}
                           </div>
@@ -399,11 +403,11 @@ export default function MyJobOrders() {
         {/* Pagination */}
         {total > PAGE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, justifyContent: 'center' }}>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← Prev</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← {t('Prev')}</button>
             <span className="ktc-label" style={{ fontSize: 12.5 }}>
-              {page * PAGE + 1}–{Math.min((page + 1) * PAGE, total)} of {total}
+              {t('{from}–{to} of {total}', { from: page * PAGE + 1, to: Math.min((page + 1) * PAGE, total), total })}
             </span>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>Next →</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>{t('Next')} →</button>
           </div>
         )}
       </div>

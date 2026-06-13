@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useT } from '../lib/i18n'
 
 /**
  * One-line integration for pages that view stored attachments:
@@ -12,6 +13,7 @@ import { supabase } from '../lib/supabase'
  * DB reference) — used for valid-ID cleanup after printing/review.
  */
 export function useFileViewer(onError: (msg: string) => void) {
+  const { t } = useT()
   const [viewer, setViewer] = useState<{
     title: string
     fileName: string
@@ -29,7 +31,7 @@ export function useFileViewer(onError: (msg: string) => void) {
   ) {
     if (!path) return
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60)
-    if (error || !data) return onError(error?.message ?? 'Could not open the file.')
+    if (error || !data) return onError(error?.message ?? t('Could not open the file.'))
     setViewer({ title, fileName: path.split('/').pop() ?? 'attachment', url: data.signedUrl, bucket, path, onDeleted: opts?.onDeleted })
   }
 
@@ -74,6 +76,7 @@ export default function FileViewerModal({
   onClose: () => void
   onDelete?: () => Promise<boolean> // returns false if the delete failed
 }) {
+  const { t } = useT()
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [kind, setKind] = useState<'image' | 'pdf' | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -95,7 +98,7 @@ export default function FileViewerModal({
         setKind(blob.type === 'application/pdf' ? 'pdf' : 'image')
         setBlobUrl(objectUrl)
       } catch {
-        if (active) setError('Could not load the file. Please try again.')
+        if (active) setError(t('Could not load the file. Please try again.'))
       }
     })()
     return () => {
@@ -164,28 +167,28 @@ export default function FileViewerModal({
           {onDelete && (
             confirmDel ? (
               <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 12.5 }}>
-                <span style={{ fontWeight: 600, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>Delete permanently?</span>
+                <span style={{ fontWeight: 600, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>{t('Delete permanently?')}</span>
                 <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={deleting} onClick={() => void doDelete()}>
-                  {deleting ? 'Deleting…' : 'Yes'}
+                  {deleting ? t('Deleting…') : t('Yes')}
                 </button>
-                <button type="button" className="ktc-link" onClick={() => setConfirmDel(false)}>No</button>
+                <button type="button" className="ktc-link" onClick={() => setConfirmDel(false)}>{t('No')}</button>
               </span>
             ) : (
               <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ color: 'var(--acc-2)' }} onClick={() => setConfirmDel(true)}
-                title="Permanently delete this file from storage (DPA cleanup)">
-                🗑 Delete
+                title={t('Permanently delete this file from storage (DPA cleanup)')}>
+                🗑 {t('Delete')}
               </button>
             )
           )}
           <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={print} disabled={!blobUrl}>
-            Print
+            {t('Print')}
           </button>
           <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={save} disabled={!blobUrl}>
-            Save
+            {t('Save')}
           </button>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('Close')}
             onClick={onClose}
             style={{ fontSize: 19, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', padding: '2px 6px' }}
           >

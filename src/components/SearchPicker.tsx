@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useT } from '../lib/i18n'
 
 export interface PickerItem {
   id: string
@@ -29,6 +30,7 @@ export default function SearchPicker({
   search: (q: string) => Promise<PickerItem[]>
   minChars?: number
 }) {
+  const { t } = useT()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<PickerItem[]>([])
   const [searching, setSearching] = useState(false)
@@ -86,7 +88,7 @@ export default function SearchPicker({
           onClick={clear}
           style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12 }}
         >
-          Change
+          {t('Change')}
         </button>
       )}
       {open && !selected && (
@@ -109,13 +111,13 @@ export default function SearchPicker({
           }}
         >
           {searching ? (
-            <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>Searching…</div>
+            <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>{t('Searching…')}</div>
           ) : query.trim().length < minChars ? (
             <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>
-              Type at least {minChars} characters to search.
+              {t('Type at least {minChars} characters to search.', { minChars })}
             </div>
           ) : results.length === 0 ? (
-            <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>No matches.</div>
+            <div className="ktc-label" style={{ padding: '8px 10px', fontSize: 13 }}>{t('No matches.')}</div>
           ) : (
             results.map((item) => (
               <button

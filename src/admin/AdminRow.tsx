@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useT } from '../lib/i18n'
 
 interface Props {
   title: string
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function AdminRow(props: Props) {
+  const { t } = useT()
   return (
     <div
       style={{
@@ -28,27 +30,27 @@ export function AdminRow(props: Props) {
         {props.extra}
         {props.onViewId && (
           <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
-            <button className="ktc-link" style={{ fontSize: 12 }} onClick={props.onViewId}>View valid ID</button>
+            <button className="ktc-link" style={{ fontSize: 12 }} onClick={props.onViewId}>{t('View valid ID')}</button>
           </div>
         )}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" onClick={props.onApprove} disabled={props.busy || props.canApprove === false}
-          title={props.canApprove === false ? 'A valid ID is required before you can approve' : undefined}
+          title={props.canApprove === false ? t('A valid ID is required before you can approve') : undefined}
           style={{
             border: 0, borderRadius: 10, padding: '8px 14px', fontWeight: 600, fontSize: 13,
             cursor: props.busy || props.canApprove === false ? 'not-allowed' : 'pointer', color: '#fff',
             background: 'linear-gradient(135deg, hsl(150 55% 42%), hsl(150 60% 34%))',
             opacity: props.canApprove === false ? 0.5 : 1,
           }}>
-          {props.approveLabel ?? 'Approve'}
+          {props.approveLabel ?? t('Approve')}
         </button>
         <button type="button" onClick={props.onReject} disabled={props.busy}
           style={{
             border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 14px',
             fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))',
           }}>
-          {props.rejectLabel ?? 'Reject'}
+          {props.rejectLabel ?? t('Reject')}
         </button>
       </div>
     </div>

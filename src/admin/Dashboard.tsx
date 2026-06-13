@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePageTour } from '../components/TourProvider'
 import { dashboardSteps } from './AdminTour'
+import { useT } from '../lib/i18n'
 
 // External customers only — staff/admin/owner accounts are not "customers".
 function customers() {
@@ -36,6 +37,7 @@ const cards: { key: keyof Stats; label: string; to: string; icon: ReactNode; acc
 ]
 
 export default function Dashboard() {
+  const { t } = useT()
   const [stats, setStats] = useState<Stats | null>(null)
   usePageTour('dashboard', dashboardSteps)
 
@@ -56,8 +58,8 @@ export default function Dashboard() {
   return (
     <AdminShell>
       <div style={{ margin: '18px 4px 24px' }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.026em' }}>Dashboard</h1>
-        <p className="ktc-sub">Overview of the KTC Online Portal.</p>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.026em' }}>{t('Dashboard')}</h1>
+        <p className="ktc-sub">{t('Overview of the KTC Online Portal.')}</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16 }}>
@@ -104,7 +106,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1, color: active ? 'var(--acc)' : 'hsl(var(--ink))' }}>
                   {val ?? '—'}
                 </div>
-                <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.35 }}>{c.label}</div>
+                <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.35 }}>{t(c.label)}</div>
               </div>
             </Link>
           )

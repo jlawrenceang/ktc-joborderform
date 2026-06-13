@@ -8,6 +8,7 @@ import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import { useTour } from '../components/TourProvider'
 import LangToggle from '../components/LangToggle'
+import { useT } from '../lib/i18n'
 import { VERSION_LABEL } from '../version'
 
 // All staff sessions time out — on a longer leash than the 15-min customer
@@ -46,6 +47,7 @@ const NAV: NavNode[] = [
 ]
 
 function AdminNav({ can }: { can: (p: Permission) => boolean }) {
+  const { t } = useT()
   const [open, setOpen] = useState<string | null>(null)
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
@@ -63,19 +65,19 @@ function AdminNav({ can }: { can: (p: Permission) => boolean }) {
         if ('items' in node) {
           const items = node.items.filter((i) => !i.perm || can(i.perm))
           if (items.length === 0) return null
-          if (items.length === 1) return <NavLink key={node.label} to={items[0].to} className={linkClass}>{node.label}</NavLink>
+          if (items.length === 1) return <NavLink key={node.label} to={items[0].to} className={linkClass}>{t(node.label)}</NavLink>
           const groupActive = items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + '/'))
           const isOpen = open === node.label
           return (
             <div key={node.label} style={{ position: 'relative', display: 'inline-flex' }}>
               <button type="button" data-tour={node.tour} aria-haspopup="true" aria-expanded={isOpen}
                 className={`ktc-nav-link${groupActive ? ' is-active' : ''}`} onClick={() => setOpen(isOpen ? null : node.label)}>
-                {node.label} <span aria-hidden style={{ fontSize: 9, marginLeft: 2, opacity: 0.7 }}>▾</span>
+                {t(node.label)} <span aria-hidden style={{ fontSize: 9, marginLeft: 2, opacity: 0.7 }}>▾</span>
               </button>
               {isOpen && (
                 <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'rgba(255,255,255,0.97)' }}>
                   {items.map((i) => (
-                    <NavLink key={i.to} to={i.to} role="menuitem" className={linkClass} style={{ textAlign: 'left' }}>{i.label}</NavLink>
+                    <NavLink key={i.to} to={i.to} role="menuitem" className={linkClass} style={{ textAlign: 'left' }}>{t(i.label)}</NavLink>
                   ))}
                 </div>
               )}
@@ -83,13 +85,14 @@ function AdminNav({ can }: { can: (p: Permission) => boolean }) {
           )
         }
         if (node.perm && !can(node.perm)) return null
-        return <NavLink key={node.to} to={node.to} end={node.end} className={linkClass}>{node.label}</NavLink>
+        return <NavLink key={node.to} to={node.to} end={node.end} className={linkClass}>{t(node.label)}</NavLink>
       })}
     </div>
   )
 }
 
 export default function AdminShell({ children }: { children: ReactNode; crumb?: string }) {
+  const { t } = useT()
   const { signOut } = useAuth()
   const { can, broker } = usePermissions()
   const navigate = useNavigate()
@@ -132,36 +135,36 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
 
   return (
     <div style={{ maxWidth: 1020, margin: '0 auto', padding: '14px 20px 60px' }}>
-      <nav className="ktc-nav" aria-label="Admin">
-        <Link to={home} aria-label="Go to start page" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
+      <nav className="ktc-nav" aria-label={t('Admin')}>
+        <Link to={home} aria-label={t('Go to start page')} style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img src="/ktc-logo.png" alt="KTC" style={{ height: 34 }} />
         </Link>
         <span
-          title={role ? `${role}: ${broker?.email ?? ''}` : undefined}
+          title={role ? `${t(role)}: ${broker?.email ?? ''}` : undefined}
           style={{
             flex: '0 0 auto', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
             padding: '4px 9px', borderRadius: 999, color: '#fff', marginRight: 4,
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
           }}
         >
-          {role || 'Admin'}
+          {role ? t(role) : t('Admin')}
         </span>
         <AdminNav can={can} />
         <LangToggle />
         {hasPageTour && (
-          <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title="Show this page's walkthrough" aria-label="Show this page's walkthrough">
+          <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
             ?
           </button>
         )}
         <button className="ktc-nav-link" onClick={handleSignOut} style={{ flex: '0 0 auto' }}>
-          Sign out
+          {t('Sign out')}
         </button>
       </nav>
 
       <div className="ktc-stagger">{children}</div>
 
       <footer style={{ marginTop: 40, paddingTop: 14, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 11.5, color: 'hsl(var(--ink-2))', opacity: 0.8 }}>
-        KTC Online Portal {VERSION_LABEL}
+        {t('KTC Online Portal')} {VERSION_LABEL}
       </footer>
 
       {idleWarning && <IdleWarning />}

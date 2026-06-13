@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { idDeletable, type Broker } from '../lib/types'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
+import { useT } from '../lib/i18n'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
@@ -23,6 +24,7 @@ const btn = (kind: 'danger' | 'ok' | 'muted'): CSSProperties => ({
 })
 
 export default function Brokers() {
+  const { t } = useT()
   const [rows, setRows] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,14 +60,14 @@ export default function Brokers() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 className="ktc-title">Customers</h1>
+        <h1 className="ktc-title">{t('Customers')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
-          All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.
+          {t('All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.')}
         </p>
         {error && <div style={{ color: 'var(--acc-2)', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
-        {loading ? <span className="ktc-label">Loading…</span> : rows.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No customer accounts yet.</div>
+        {loading ? <span className="ktc-label">{t('Loading…')}</span> : rows.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No customer accounts yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {rows.map((b) => {
@@ -81,12 +83,12 @@ export default function Brokers() {
                         {b.customer_code && (
                           <span className="ktc-mono" style={{ fontSize: 12, fontWeight: 600, color: 'hsl(var(--ink-2))' }}>{b.customer_code}</span>
                         )}
-                        <Link to={`/admin/customers/${b.id}`} className="ktc-link" style={{ fontWeight: 600, color: 'inherit' }}>{b.full_name || b.email || 'Unknown'}</Link>
-                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{b.status}</span>
+                        <Link to={`/admin/customers/${b.id}`} className="ktc-link" style={{ fontWeight: 600, color: 'inherit' }}>{b.full_name || b.email || t('Unknown')}</Link>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(b.status)}</span>
                       </div>
                       <div className="ktc-label" style={{ fontSize: 13 }}>
                         {b.email}{b.customer_id ? ` · #${b.customer_id}` : ''}
-                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`, {
+                        {b.valid_id_path && (<> · <button className="ktc-link" style={{ fontSize: 12 }} onClick={() => void openFromStorage('valid-ids', b.valid_id_path, t('Valid ID — {name}', { name: b.full_name || b.email || t('customer') }), {
                           // 🗑 appears only past the 24h guaranteed window
                           // (auto-purge at 3 days); the storage policy
                           // re-checks server-side either way.
@@ -94,31 +96,31 @@ export default function Brokers() {
                             await supabase.from('customers').update({ valid_id_path: null }).eq('id', b.id)
                             await load()
                           } : undefined,
-                        })}>View ID</button></>)}
+                        })}>{t('View ID')}</button></>)}
                       </div>
                       <BrokerReview b={b} />
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                       {b.status === 'approved' && (
                         <button type="button" disabled={acting === b.id} style={btn('danger')}
-                          onClick={() => { setSuspendId(b.id); setSuspendReason('') }}>Suspend</button>
+                          onClick={() => { setSuspendId(b.id); setSuspendReason('') }}>{t('Suspend')}</button>
                       )}
                       {b.status === 'suspended' && (
                         <button type="button" disabled={acting === b.id} style={btn('ok')}
-                          onClick={() => setStatus(b.id, 'approved')}>Reactivate</button>
+                          onClick={() => setStatus(b.id, 'approved')}>{t('Reactivate')}</button>
                       )}
                     </div>
                   </div>
                   {suspendId === b.id && (
                     <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(28 85% 97%)', border: '1px solid hsl(28 70% 88%)', display: 'grid', gap: 8 }}>
-                      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Reason for suspension (shown to the customer)</label>
+                      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Reason for suspension (shown to the customer)')}</label>
                       <textarea className="ktc-input" rows={2} value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
-                        placeholder="e.g. Pending document re-verification." />
+                        placeholder={t('e.g. Pending document re-verification.')} />
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button type="button" disabled={acting === b.id || !suspendReason.trim()} style={btn('danger')}
-                          onClick={() => setStatus(b.id, 'suspended', suspendReason)}>Confirm suspension</button>
+                          onClick={() => setStatus(b.id, 'suspended', suspendReason)}>{t('Confirm suspension')}</button>
                         <button type="button" disabled={acting === b.id} style={btn('muted')}
-                          onClick={() => { setSuspendId(null); setSuspendReason('') }}>Cancel</button>
+                          onClick={() => { setSuspendId(null); setSuspendReason('') }}>{t('Cancel')}</button>
                       </div>
                     </div>
                   )}

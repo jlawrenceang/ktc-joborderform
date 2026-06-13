@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { usePageTour } from '../components/TourProvider'
 import { vesselSteps } from './AdminTour'
 import { MonthCalendar, Badge, fmt, type VesselRow } from '../components/VesselCalendar'
+import { useT } from '../lib/i18n'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
@@ -57,6 +58,7 @@ function friendly(err: unknown): string {
 }
 
 export default function VesselSchedule() {
+  const { t } = useT()
   usePageTour('vessels', vesselSteps)
   const [rows, setRows] = useState<VesselRow[]>([])
   const [lines, setLines] = useState<string[]>([])
@@ -101,10 +103,10 @@ export default function VesselSchedule() {
     e.preventDefault()
     setErr(null); setMsg(null)
     if (!form.vessel_visit.trim() || !form.vessel_name.trim() || !form.voyage_number.trim()) {
-      setErr('Vessel Visit, Vessel Name and Voyage Number are required.'); return
+      setErr(t('Vessel Visit, Vessel Name and Voyage Number are required.')); return
     }
     const aa = normDate(form.actual_arrival), fd = normDate(form.finish_discharging)
-    if (aa === undefined || fd === undefined) { setErr('Dates must be YYYY-MM-DD or M/D/YYYY.'); return }
+    if (aa === undefined || fd === undefined) { setErr(t('Dates must be YYYY-MM-DD or M/D/YYYY.')); return }
     setSaving(true)
     const payload = {
       vessel_visit: form.vessel_visit.trim(), vessel_name: form.vessel_name.trim(),
@@ -115,7 +117,7 @@ export default function VesselSchedule() {
     const { error } = await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
     setSaving(false)
     if (error) { setErr(friendly(error)); return }
-    setMsg(editing ? 'Call updated.' : 'Call added.')
+    setMsg(editing ? t('Call updated.') : t('Call added.'))
     resetForm(); void load()
   }
 
@@ -138,11 +140,11 @@ export default function VesselSchedule() {
   async function onImport(file: File) {
     setErr(null); setMsg(null); setImportReport(null)
     const grid = parseCsv(await file.text())
-    if (grid.length < 2) { setErr('That file has no data rows.'); return }
+    if (grid.length < 2) { setErr(t('That file has no data rows.')); return }
     const header = grid[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'))
     const idx = (c: Col) => header.indexOf(c)
     if (idx('vessel_visit') < 0 || idx('vessel_name') < 0 || idx('voyage_number') < 0) {
-      setErr('Missing required columns. Download the template for the exact headers.'); return
+      setErr(t('Missing required columns. Download the template for the exact headers.')); return
     }
     const payload: Record<string, unknown>[] = []
     const errors: string[] = []
@@ -150,23 +152,23 @@ export default function VesselSchedule() {
       const get = (c: Col) => (idx(c) >= 0 ? (r[idx(c)] ?? '').trim() : '')
       const visit = get('vessel_visit')
       if (!visit && r.every((c) => !c.trim())) return // skip blank lines
-      if (!visit || !get('vessel_name') || !get('voyage_number')) { errors.push(`Row ${n + 2}: missing vessel_visit / vessel_name / voyage_number`); return }
+      if (!visit || !get('vessel_name') || !get('voyage_number')) { errors.push(t('Row {row}: missing vessel_visit / vessel_name / voyage_number', { row: n + 2 })); return }
       const aa = normDate(get('actual_arrival')), fd = normDate(get('finish_discharging'))
-      if (aa === undefined || fd === undefined) { errors.push(`Row ${n + 2} (${visit}): bad date — use YYYY-MM-DD`); return }
+      if (aa === undefined || fd === undefined) { errors.push(t('Row {row} ({visit}): bad date — use YYYY-MM-DD', { row: n + 2, visit })); return }
       payload.push({
         vessel_visit: visit, vessel_name: get('vessel_name'), voyage_number: get('voyage_number'),
         shipping_line: get('shipping_line') || null, actual_arrival: aa, finish_discharging: fd,
         berth: get('berth') || null, remarks: get('remarks') || null,
       })
     })
-    if (!payload.length) { setErr('No valid rows to import.\n' + errors.join('\n')); return }
+    if (!payload.length) { setErr(t('No valid rows to import.') + '\n' + errors.join('\n')); return }
     const { error } = await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
     if (error) { setErr(friendly(error)); return }
     const unknownLines = [...new Set(payload.map((p) => p.shipping_line as string | null).filter((l): l is string => !!l && !lines.includes(l)))]
     setImportReport(
-      `Imported ${payload.length} call(s).` +
-      (errors.length ? ` Skipped ${errors.length}: \n${errors.join('\n')}` : '') +
-      (unknownLines.length ? `\n\nNew lines not yet configured (set free-days in Settings): ${unknownLines.join(', ')}` : '')
+      t('Imported {count} call(s).', { count: payload.length }) +
+      (errors.length ? ' ' + t('Skipped {count}:', { count: errors.length }) + ` \n${errors.join('\n')}` : '') +
+      (unknownLines.length ? '\n\n' + t('New lines not yet configured (set free-days in Settings): {lines}', { lines: unknownLines.join(', ') }) : '')
     )
     void load()
   }
@@ -187,13 +189,13 @@ export default function VesselSchedule() {
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = '#F26A21'; ctx.fillRect(0, 0, W, headerH)
     ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px sans-serif'
-    ctx.fillText('KTC — Active Vessels', 20, 30)
+    ctx.fillText(t('KTC — Active Vessels'), 20, 30)
     ctx.font = '13px sans-serif'
     const today = new Date().toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-    ctx.fillText(`As of ${today} · ${active.length} vessel(s)`, 20, 50)
+    ctx.fillText(t('As of {date} · {count} vessel(s)', { date: today, count: active.length }), 20, 50)
     let yTop = headerH + 24
     ctx.fillStyle = '#888888'; ctx.font = 'bold 11px sans-serif'
-    cols.forEach(([t, x]) => ctx.fillText(t, x, yTop))
+    cols.forEach(([label, x]) => ctx.fillText(t(label), x, yTop))
     yTop += 12
     active.forEach((r, i) => {
       if (i % 2 === 1) { ctx.fillStyle = '#f4f5f7'; ctx.fillRect(0, yTop, W, rowH) }
@@ -215,14 +217,14 @@ export default function VesselSchedule() {
   async function snapshot() {
     setErr(null); setMsg(null)
     const blob = await new Promise<Blob | null>((res) => buildSnapshot().toBlob(res, 'image/png'))
-    if (!blob) { setErr('Could not generate the snapshot.'); return }
+    if (!blob) { setErr(t('Could not generate the snapshot.')); return }
     const file = new File([blob], 'ktc-active-vessels.png', { type: 'image/png' })
     const nav = navigator as Navigator & {
       canShare?: (d: { files: File[] }) => boolean
       share?: (d: { files?: File[]; title?: string; text?: string }) => Promise<void>
     }
     if (nav.canShare?.({ files: [file] }) && nav.share) {
-      try { await nav.share({ files: [file], title: 'KTC Active Vessels' }) } catch { /* user cancelled */ }
+      try { await nav.share({ files: [file], title: t('KTC Active Vessels') }) } catch { /* user cancelled */ }
       return
     }
     const a = document.createElement('a')
@@ -230,53 +232,52 @@ export default function VesselSchedule() {
     a.download = file.name
     a.click()
     URL.revokeObjectURL(a.href)
-    setMsg('Snapshot downloaded — attach it in your Viber group.')
+    setMsg(t('Snapshot downloaded — attach it in your Viber group.'))
   }
 
   return (
     <AdminShell>
-      <h1 className="ktc-h1">Vessel Schedule</h1>
+      <h1 className="ktc-h1">{t('Vessel Schedule')}</h1>
       <p className="ktc-label" style={{ marginTop: -4, marginBottom: 16 }}>
-        Calls available for customers to file against. <strong>Last free day</strong> is computed (finish discharging + the line's import free-days);
-        a call drops off once its last free day passes. Free-days per line are set by admin in Settings.
+        {t('Calls available for customers to file against.')} <strong>{t('Last free day')}</strong> {t("is computed (finish discharging + the line's import free-days); a call drops off once its last free day passes. Free-days per line are set by admin in Settings.")}
       </p>
 
       {/* Add / edit */}
       <form onSubmit={save} className="ktc-glass" style={{ padding: 16, marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-          <label className="ktc-label">Vessel Visit*
+          <label className="ktc-label">{t('Vessel Visit*')}
             <input className="ktc-input" value={form.vessel_visit} disabled={!!editing}
               onChange={(e) => setForm({ ...form, vessel_visit: e.target.value })} placeholder="26RUH02" />
           </label>
-          <label className="ktc-label">Vessel Name*
+          <label className="ktc-label">{t('Vessel Name*')}
             <input className="ktc-input" value={form.vessel_name} onChange={(e) => setForm({ ...form, vessel_name: e.target.value })} placeholder="SITC HUSHENG" />
           </label>
-          <label className="ktc-label">Voyage Number*
+          <label className="ktc-label">{t('Voyage Number*')}
             <input className="ktc-input" value={form.voyage_number} onChange={(e) => setForm({ ...form, voyage_number: e.target.value })} placeholder="2606S" />
           </label>
-          <label className="ktc-label">Shipping Line
+          <label className="ktc-label">{t('Shipping Line')}
             <input className="ktc-input" list="ktc-lines" value={form.shipping_line} onChange={(e) => setForm({ ...form, shipping_line: e.target.value })} placeholder="SITC" />
             <datalist id="ktc-lines">{lines.map((l) => <option key={l} value={l} />)}</datalist>
           </label>
-          <label className="ktc-label">Actual Arrival
+          <label className="ktc-label">{t('Actual Arrival')}
             <input className="ktc-input" type="date" value={form.actual_arrival} onChange={(e) => setForm({ ...form, actual_arrival: e.target.value })} />
           </label>
-          <label className="ktc-label">Finish Discharging
+          <label className="ktc-label">{t('Finish Discharging')}
             <input className="ktc-input" type="date" value={form.finish_discharging} onChange={(e) => setForm({ ...form, finish_discharging: e.target.value })} />
           </label>
-          <label className="ktc-label">Berth
+          <label className="ktc-label">{t('Berth')}
             <input className="ktc-input" value={form.berth} onChange={(e) => setForm({ ...form, berth: e.target.value })} placeholder="4" />
           </label>
-          <label className="ktc-label">Remarks
+          <label className="ktc-label">{t('Remarks')}
             <input className="ktc-input" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
           </label>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button className="ktc-btn" type="submit" disabled={saving}>{editing ? 'Update call' : 'Add call'}</button>
-          {editing && <button className="ktc-btn ktc-btn-ghost" type="button" onClick={resetForm}>Cancel edit</button>}
+          <button className="ktc-btn" type="submit" disabled={saving}>{editing ? t('Update call') : t('Add call')}</button>
+          {editing && <button className="ktc-btn ktc-btn-ghost" type="button" onClick={resetForm}>{t('Cancel edit')}</button>}
           <span style={{ flex: 1 }} />
-          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={downloadTemplate}>⬇ Template</button>
-          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={() => fileRef.current?.click()}>⬆ Import CSV</button>
+          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={downloadTemplate}>{t('⬇ Template')}</button>
+          <button className="ktc-btn ktc-btn-ghost" type="button" onClick={() => fileRef.current?.click()}>{t('⬆ Import CSV')}</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" hidden
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onImport(f); e.target.value = '' }} />
         </div>
@@ -286,27 +287,27 @@ export default function VesselSchedule() {
       </form>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
-        <strong style={{ fontSize: 14 }}>{visible.length} {showAll ? 'total' : 'current'} call(s)</strong>
-        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title="Share a snapshot of active vessels to your Viber group">📸 Snapshot</button>
+        <strong style={{ fontSize: 14 }}>{showAll ? t('{count} total call(s)', { count: visible.length }) : t('{count} current call(s)', { count: visible.length })}</strong>
+        <button className="ktc-btn ktc-btn-ghost ktc-btn--sm" type="button" onClick={() => void snapshot()} title={t('Share a snapshot of active vessels to your Viber group')}>{t('📸 Snapshot')}</button>
         <div style={{ display: 'inline-flex', gap: 4 }}>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>Table</button>
-          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>Calendar</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('table')}>{t('Table')}</button>
+          <button className={`ktc-btn ktc-btn--sm ${view === 'calendar' ? '' : 'ktc-btn-ghost'}`} type="button" onClick={() => setView('calendar')}>{t('Calendar')}</button>
         </div>
         <span style={{ flex: 1 }} />
         {view === 'table' && (
           <label className="ktc-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show past/cancelled
+            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> {t('Show past/cancelled')}
           </label>
         )}
       </div>
 
-      {loading ? <p className="ktc-label">Loading…</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
+      {loading ? <p className="ktc-label">{t('Loading…')}</p> : view === 'calendar' ? <MonthCalendar rows={rows.filter((r) => !r.cancelled)} /> : (
         <div className="ktc-glass" style={{ padding: 0, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
                 {['Visit', 'Vessel', 'Voyage', 'Line', 'Arrival', 'Finish Disch.', 'Last Free Day', 'Berth', '', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '9px 10px', borderBottom: '1px solid var(--glass-brd)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={i} style={{ padding: '9px 10px', borderBottom: '1px solid var(--glass-brd)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h ? t(h) : ''}</th>
                 ))}
               </tr>
             </thead>
@@ -320,23 +321,23 @@ export default function VesselSchedule() {
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.actual_arrival)}</td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.finish_discharging)}</td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
-                    {r.last_free_day ? fmt(r.last_free_day) : <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>set line</span>}
+                    {r.last_free_day ? fmt(r.last_free_day) : <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>{t('set line')}</span>}
                   </td>
                   <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
-                    {r.cancelled ? <Badge bg="hsl(0 70% 95%)" fg="hsl(0 65% 45%)">cancelled</Badge>
-                      : r.is_current ? <Badge bg="hsl(150 50% 93%)" fg="hsl(150 60% 30%)">current</Badge>
-                      : <Badge bg="hsl(220 16% 92%)" fg="hsl(220 10% 45%)">past</Badge>}
+                    {r.cancelled ? <Badge bg="hsl(0 70% 95%)" fg="hsl(0 65% 45%)">{t('cancelled')}</Badge>
+                      : r.is_current ? <Badge bg="hsl(150 50% 93%)" fg="hsl(150 60% 30%)">{t('current')}</Badge>
+                      : <Badge bg="hsl(220 16% 92%)" fg="hsl(220 10% 45%)">{t('past')}</Badge>}
                   </td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', textAlign: 'right' }}>
-                    <button className="ktc-link" onClick={() => startEdit(r)}>Edit</button>{' · '}
-                    <button className="ktc-link" onClick={() => void toggleCancel(r)}>{r.cancelled ? 'Restore' : 'Cancel'}</button>
+                    <button className="ktc-link" onClick={() => startEdit(r)}>{t('Edit')}</button>{' · '}
+                    <button className="ktc-link" onClick={() => void toggleCancel(r)}>{r.cancelled ? t('Restore') : t('Cancel')}</button>
                   </td>
                 </tr>
               ))}
               {visible.length === 0 && (
                 <tr><td colSpan={10} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>
-                  No {showAll ? '' : 'current '}calls. Add one above or import the template.
+                  {showAll ? t('No calls. Add one above or import the template.') : t('No current calls. Add one above or import the template.')}
                 </td></tr>
               )}
             </tbody>

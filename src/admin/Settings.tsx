@@ -5,8 +5,10 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import type { Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { useT } from '../lib/i18n'
 
 export default function Settings() {
+  const { t } = useT()
   const { broker: me } = useBroker()
   const isOwner = !!me?.is_owner
   const [staff, setStaff] = useState<Broker[]>([])
@@ -66,23 +68,23 @@ export default function Settings() {
   }
   function addLine() {
     const n = newLine.trim()
-    if (!n) { setSlMsg('Enter the shipping line name first.'); return }
-    if (shipLines.some((x) => x.name.toLowerCase() === n.toLowerCase())) { setSlMsg('That line already exists.'); return }
+    if (!n) { setSlMsg(t('Enter the shipping line name first.')); return }
+    if (shipLines.some((x) => x.name.toLowerCase() === n.toLowerCase())) { setSlMsg(t('That line already exists.')); return }
     setShipLines((xs) => [...xs, { name: n, free_days_import: 5, free_days_export: 7 }].sort((a, b) => a.name.localeCompare(b.name)))
-    setNewLine(''); setSlMsg(`"${n}" added — set its free-days and Save.`)
+    setNewLine(''); setSlMsg(t('"{n}" added — set its free-days and Save.', { n }))
   }
   async function saveLines() {
     setSlBusy(true); setSlMsg(null)
     const { error } = await supabase.from('shipping_lines').upsert(
       shipLines.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'name' })
     setSlBusy(false)
-    setSlMsg(error ? error.message : '✓ Free-days saved.')
+    setSlMsg(error ? error.message : t('✓ Free-days saved.'))
   }
   async function deleteLine(name: string) {
     const { error } = await supabase.from('shipping_lines').delete().eq('name', name)
     if (error) { setSlMsg(error.message); return }
     setShipLines((xs) => xs.filter((x) => x.name !== name))
-    setSlMsg(`"${name}" removed.`)
+    setSlMsg(t('"{name}" removed.', { name }))
   }
 
   // RPS per-move rates — admin-configured (manage_pricing). Charged when a JO
@@ -100,7 +102,7 @@ export default function Settings() {
     setMrBusy(true); setMrMsg(null)
     const { error } = await supabase.from('move_rates').upsert(moveRates.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'move_type' })
     setMrBusy(false)
-    setMrMsg(error ? error.message : '✓ Move rates saved.')
+    setMrMsg(error ? error.message : t('✓ Move rates saved.'))
   }
 
   useEffect(() => {
@@ -123,7 +125,7 @@ export default function Settings() {
     const { error } = await supabase.from('payment_info').upsert(rows, { onConflict: 'key' })
     setPayBusy(false)
     setQrFile(null)
-    setPayMsg(error ? error.message : '✓ Payment details saved.')
+    setPayMsg(error ? error.message : t('✓ Payment details saved.'))
   }
 
   // Roles & gates (owner-only editor; backend enforced via has_permission()).
@@ -148,7 +150,7 @@ export default function Settings() {
       { onConflict: 'role,permission' },
     )
     setGatesBusy(false)
-    setGatesMsg(error ? error.message : '✓ Gates saved. Staff see the change on their next page load.')
+    setGatesMsg(error ? error.message : t('✓ Gates saved. Staff see the change on their next page load.'))
   }
 
   async function loadPricing() {
@@ -187,7 +189,7 @@ export default function Settings() {
     setPricingBusy(false); setDelService(null)
     if (error) { setPricingMsg(error.message); return }
     setRates((rs) => rs.filter((r) => r.service !== name))
-    setPricingMsg(`"${name}" deleted.`)
+    setPricingMsg(t('"{name}" deleted.', { name }))
   }
 
   // Add a new service to the catalogue (saved with "Save pricing"). The name
@@ -196,14 +198,14 @@ export default function Settings() {
   const [newVatable, setNewVatable] = useState(true)
   function addService() {
     const name = newService.trim()
-    if (!name) { setPricingMsg('Enter the service name first.'); return }
+    if (!name) { setPricingMsg(t('Enter the service name first.')); return }
     if (rates.some((r) => r.service.toLowerCase() === name.toLowerCase())) {
-      setPricingMsg('That service already exists — reactivate it instead.')
+      setPricingMsg(t('That service already exists — reactivate it instead.'))
       return
     }
     setRates((rs) => [...rs, { service: name, rate: 0, unit: 'per_container', vatable: newVatable, active: true, sort_order: rs.length + 1 }])
     setNewService(''); setNewVatable(true)
-    setPricingMsg(`"${name}" added — set its rate and Save pricing.`)
+    setPricingMsg(t('"{name}" added — set its rate and Save pricing.', { name }))
   }
   function setSettingVal(key: string, value: number) {
     setSettings((ss) => ss.map((x) => (x.key === key ? { ...x, value } : x)))
@@ -218,7 +220,7 @@ export default function Settings() {
     const { error: e2 } = await supabase.from('pricing_settings').upsert(editable.map((s) => ({ ...s, updated_at: updatedAt })), { onConflict: 'key' })
     setPricingBusy(false)
     if (e1 || e2) { setPricingMsg((e1 || e2)!.message); return }
-    setPricingMsg('✓ Pricing saved.')
+    setPricingMsg(t('✓ Pricing saved.'))
     setPricingLocked(true)
   }
 
@@ -232,7 +234,7 @@ export default function Settings() {
     setBusy(false)
     if (error) { setError(error.message); return }
     setSuUser(''); setSuPass(''); setSuName(''); setSuRole('admin')
-    setNotice(`Staff account created (${suRole}). They sign in with username "${u}" and the password you set.`)
+    setNotice(t('Staff account created ({suRole}). They sign in with username "{u}" and the password you set.', { suRole, u }))
     await load()
   }
 
@@ -248,10 +250,10 @@ export default function Settings() {
     setBusy(false)
     if (error) return setError(error.message)
     if (!data || data.length === 0) {
-      setError(`No account found for "${target}". Ask them to sign up first, then grant access here.`)
+      setError(t('No account found for "{target}". Ask them to sign up first, then grant access here.', { target }))
       return
     }
-    setEmail(''); setNotice(`Admin access granted to ${target}.`)
+    setEmail(''); setNotice(t('Admin access granted to {target}.', { target }))
     await load()
   }
 
@@ -269,7 +271,7 @@ export default function Settings() {
     setBusy(false)
     if (error) return setError(error.message)
     setResetId(null); setResetPw('')
-    setNotice(`Password reset for "${username}" — hand them the new password.`)
+    setNotice(t('Password reset for "{username}" — hand them the new password.', { username }))
   }
 
   async function revoke(b: Broker) {
@@ -278,64 +280,64 @@ export default function Settings() {
     const { error } = await supabase.from('customers').update({ is_admin: false, staff_role: null }).eq('id', b.id)
     setBusy(false)
     if (error) return setError(error.message)
-    setNotice(`Staff access revoked from ${b.email}.`)
+    setNotice(t('Staff access revoked from {email}.', { email: b.email ?? '' }))
     await load()
   }
 
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 className="ktc-title">Staff &amp; access</h1>
+        <h1 className="ktc-title">{t('Staff & access')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
-          Internal KTC staff with admin access. Managed separately from brokers.
-          {isOwner ? '' : ' Only the owner can change access.'}
+          {t('Internal KTC staff with admin access. Managed separately from brokers.')}
+          {isOwner ? '' : ' ' + t('Only the owner can change access.')}
         </p>
 
         {isOwner ? (
           <>
-            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>Create staff account</h2>
+            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>{t('Create staff account')}</h2>
             <form onSubmit={createStaff} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suName">Full name</label>
+                <label className="ktc-label" htmlFor="suName">{t('Full name')}</label>
                 <input id="suName" className="ktc-input" required value={suName} onChange={(e) => setSuName(e.target.value)} style={{ width: 200 }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suUser">Username</label>
+                <label className="ktc-label" htmlFor="suUser">{t('Username')}</label>
                 <input id="suUser" className="ktc-input" required minLength={3} value={suUser} onChange={(e) => setSuUser(e.target.value)} placeholder="jdelacruz" style={{ width: 170 }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suPass">Password</label>
+                <label className="ktc-label" htmlFor="suPass">{t('Password')}</label>
                 <input id="suPass" className="ktc-input" type="text" required minLength={8} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} title={PASSWORD_HINT} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suRole">Role</label>
+                <label className="ktc-label" htmlFor="suRole">{t('Role')}</label>
                 <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations')} style={{ width: 130 }}>
-                  <option value="admin">Admin</option>
-                  <option value="operations">Operations</option>
-                  <option value="cashier">Cashier</option>
-                  <option value="checker">Checker</option>
+                  <option value="admin">{t('Admin')}</option>
+                  <option value="operations">{t('Operations')}</option>
+                  <option value="cashier">{t('Cashier')}</option>
+                  <option value="checker">{t('Checker')}</option>
                 </select>
               </div>
-              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Create staff</button>
+              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Create staff')}</button>
             </form>
             <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
-              No email needed — hand them the username + password. They sign in at the login page with the username.
+              {t('No email needed — hand them the username + password. They sign in at the login page with the username.')}
             </p>
 
             <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '18px 0' }} />
 
-            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>Or grant admin to an existing account</h2>
+            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>{t('Or grant admin to an existing account')}</h2>
             <form onSubmit={grant} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="email">Email of a signed-up user</label>
+                <label className="ktc-label" htmlFor="email">{t('Email of a signed-up user')}</label>
                 <input id="email" className="ktc-input" type="email" required value={email}
                   onChange={(e) => setEmail(e.target.value)} placeholder="someone@email.com" style={{ width: 280 }} />
               </div>
-              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Grant access</button>
+              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Grant access')}</button>
             </form>
           </>
         ) : (
-          <p className="ktc-label" style={{ fontSize: 13 }}>Only the owner can add or change staff access.</p>
+          <p className="ktc-label" style={{ fontSize: 13 }}>{t('Only the owner can add or change staff access.')}</p>
         )}
 
         {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 13 }}>{notice}</div>}
@@ -345,18 +347,18 @@ export default function Settings() {
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Service rates &amp; fees</h2>
+            <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Service rates & fees')}</h2>
             <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-              Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱.
+              {t('Used for the online-payment computation (the official Service Invoice + receipt come from the ERP). Amounts in ₱.')}
             </p>
           </div>
           <button
             type="button"
             className="ktc-btn-secondary ktc-btn--sm"
             onClick={() => { setPricingLocked((v) => !v); setPricingMsg(null) }}
-            title={pricingLocked ? 'Prices are locked against accidental edits — unlock to change them' : 'Lock editing again'}
+            title={pricingLocked ? t('Prices are locked against accidental edits — unlock to change them') : t('Lock editing again')}
           >
-            {pricingLocked ? '🔒 Locked — unlock to edit' : '🔓 Editing · tap to lock'}
+            {pricingLocked ? t('🔒 Locked — unlock to edit') : t('🔓 Editing · tap to lock')}
           </button>
         </div>
 
@@ -378,9 +380,9 @@ export default function Settings() {
               }}
             >
               <span style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                {!pricingLocked && <span aria-hidden title="Drag to reorder" style={{ color: 'hsl(var(--ink-3))', fontSize: 14 }}>⠿</span>}
+                {!pricingLocked && <span aria-hidden title={t('Drag to reorder')} style={{ color: 'hsl(var(--ink-3))', fontSize: 14 }}>⠿</span>}
                 {r.service}
-                {!r.active && <span className="ktc-chip" style={{ fontSize: 10 }}>inactive</span>}
+                {!r.active && <span className="ktc-chip" style={{ fontSize: 10 }}>{t('inactive')}</span>}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
@@ -388,20 +390,20 @@ export default function Settings() {
                   onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 110, padding: '7px 10px' }} />
                 <span className="ktc-label" style={{ fontSize: 11, width: 72 }}>{r.unit.replace('per_', '/ ')}</span>
                 <label className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: pricingLocked ? 'default' : 'pointer' }}
-                  title={r.active ? 'Untick to remove from the New Job Order form and calculator (existing orders unaffected)' : 'Tick to offer this service again'}>
+                  title={r.active ? t('Untick to remove from the New Job Order form and calculator (existing orders unaffected)') : t('Tick to offer this service again')}>
                   <input type="checkbox" checked={r.active} disabled={pricingLocked}
                     onChange={(e) => setRateActive(r.service, e.target.checked)} />
-                  active
+                  {t('active')}
                 </label>
                 {!pricingLocked && !r.active && (
                   delService === r.service ? (
                     <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
                       <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={pricingBusy}
-                        onClick={() => void deleteService(r.service)}>delete?</button>
-                      <button type="button" className="ktc-link" onClick={() => setDelService(null)}>no</button>
+                        onClick={() => void deleteService(r.service)}>{t('delete?')}</button>
+                      <button type="button" className="ktc-link" onClick={() => setDelService(null)}>{t('no')}</button>
                     </span>
                   ) : (
-                    <button type="button" className="ktc-link" aria-label={`Delete ${r.service}`} title="Delete (only possible while unused by any order)"
+                    <button type="button" className="ktc-link" aria-label={t('Delete {service}', { service: r.service })} title={t('Delete (only possible while unused by any order)')}
                       style={{ fontSize: 14, color: 'var(--acc-2)', opacity: 0.8 }} onClick={() => setDelService(r.service)}>✕</button>
                   )
                 )}
@@ -411,14 +413,14 @@ export default function Settings() {
 
           {!pricingLocked && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
-              <input className="ktc-input" placeholder="New service name (can't be renamed later)" value={newService}
+              <input className="ktc-input" placeholder={t("New service name (can't be renamed later)")} value={newService}
                 onChange={(e) => setNewService(e.target.value)} style={{ flex: '1 1 220px', padding: '7px 10px', fontSize: 13 }} />
               <label className="ktc-label" style={{ fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <input type="checkbox" checked={newVatable} onChange={(e) => setNewVatable(e.target.checked)} /> VATable
+                <input type="checkbox" checked={newVatable} onChange={(e) => setNewVatable(e.target.checked)} /> {t('VATable')}
               </label>
-              <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addService}>+ Add service</button>
+              <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addService}>{t('+ Add service')}</button>
               <span className="ktc-label" style={{ flexBasis: '100%', fontSize: 11, lineHeight: 1.5, opacity: 0.8 }}>
-                Names containing “X-Ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Drag ⠿ to arrange the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete is only possible while no order has ever used it.
+                {t('Names containing “X-Ray”, “DEA”, or “OOG” join those serving-number queues; anything else queues under “Other”. Drag ⠿ to arrange the display order. Deactivate to retire a service (past orders keep their pricing); ✕ delete is only possible while no order has ever used it.')}
               </span>
             </div>
           )}
@@ -431,10 +433,10 @@ export default function Settings() {
             s.key === 'vat_rate' ? (
               // Statutory — read-only here, server-guarded (migration 0050).
               <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.35)', border: '1px dashed var(--glass-brd)' }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || 'VAT rate'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || t('VAT rate')}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <b className="ktc-mono" style={{ fontSize: 14 }}>{(s.value * 100).toFixed(0)}%</b>
-                  <span className="ktc-chip" title="Philippine statutory VAT — changeable only server-side if the law changes">statutory · fixed</span>
+                  <span className="ktc-chip" title={t('Philippine statutory VAT — changeable only server-side if the law changes')}>{t('statutory · fixed')}</span>
                 </span>
               </div>
             ) : (
@@ -452,18 +454,18 @@ export default function Settings() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={pricingBusy || pricingLocked} onClick={() => void savePricing()} style={{ width: 'auto', padding: '10px 20px' }}
-            title={pricingLocked ? 'Unlock editing first' : undefined}>
-            {pricingBusy ? 'Saving…' : 'Save pricing'}
+            title={pricingLocked ? t('Unlock editing first') : undefined}>
+            {pricingBusy ? t('Saving…') : t('Save pricing')}
           </button>
-          {pricingLocked && !pricingMsg && <span className="ktc-label" style={{ fontSize: 12.5 }}>Locked against accidental edits.</span>}
+          {pricingLocked && !pricingMsg && <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('Locked against accidental edits.')}</span>}
           {pricingMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{pricingMsg}</span>}
         </div>
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Payment details (customer payment page)</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Payment details (customer payment page)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.
+          {t('Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
           {payInfo.filter((x) => x.key !== 'qr_path').map((x) => (
@@ -477,28 +479,28 @@ export default function Settings() {
             </div>
           ))}
           <div style={{ display: 'grid', gap: 5 }}>
-            <label className="ktc-label" htmlFor="pi-qr" style={{ fontSize: 12 }}>QR code image (bank / GCash){payInfo.some((x) => x.key === 'qr_path' && x.value) ? ' — replace current' : ''}</label>
+            <label className="ktc-label" htmlFor="pi-qr" style={{ fontSize: 12 }}>{t('QR code image (bank / GCash)')}{payInfo.some((x) => x.key === 'qr_path' && x.value) ? ' ' + t('— replace current') : ''}</label>
             <input id="pi-qr" className="ktc-input" type="file" accept="image/*" onChange={(e) => setQrFile(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} />
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={payBusy} onClick={() => void savePayInfo()} style={{ width: 'auto', padding: '10px 20px' }}>
-            {payBusy ? 'Saving…' : 'Save payment details'}
+            {payBusy ? t('Saving…') : t('Save payment details')}
           </button>
           {payMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{payMsg}</span>}
         </div>
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Free storage days per shipping line</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Free storage days per shipping line')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          Drives the vessel schedule's <strong>Last Free Day</strong> (finish discharging + import days). Set per line, for import and export.
+          {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set per line, for import and export.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
           <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5 }}>
-            <span style={{ flex: 1 }}>Shipping line</span>
-            <span style={{ width: 90, textAlign: 'center' }}>Import days</span>
-            <span style={{ width: 90, textAlign: 'center' }}>Export days</span>
+            <span style={{ flex: 1 }}>{t('Shipping line')}</span>
+            <span style={{ width: 90, textAlign: 'center' }}>{t('Import days')}</span>
+            <span style={{ width: 90, textAlign: 'center' }}>{t('Export days')}</span>
             <span style={{ width: 24 }} />
           </div>
           {shipLines.map((l) => (
@@ -506,27 +508,27 @@ export default function Settings() {
               <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
               <input className="ktc-input" type="number" min="0" value={l.free_days_import} onChange={(e) => setSl(l.name, 'free_days_import', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
               <input className="ktc-input" type="number" min="0" value={l.free_days_export} onChange={(e) => setSl(l.name, 'free_days_export', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
-              <button type="button" className="ktc-link" title={`Remove ${l.name}`} style={{ width: 24, color: 'var(--acc-2)', fontSize: 14 }} onClick={() => void deleteLine(l.name)}>✕</button>
+              <button type="button" className="ktc-link" title={t('Remove {name}', { name: l.name })} style={{ width: 24, color: 'var(--acc-2)', fontSize: 14 }} onClick={() => void deleteLine(l.name)}>✕</button>
             </div>
           ))}
-          {shipLines.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>No lines yet — add your shipping lines below.</p>}
+          {shipLines.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>{t('No lines yet — add your shipping lines below.')}</p>}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
-            <input className="ktc-input" placeholder="New shipping line (e.g. SITC)" value={newLine} onChange={(e) => setNewLine(e.target.value)} style={{ flex: 1, padding: '7px 10px', fontSize: 13 }} />
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addLine}>+ Add line</button>
+            <input className="ktc-input" placeholder={t('New shipping line (e.g. SITC)')} value={newLine} onChange={(e) => setNewLine(e.target.value)} style={{ flex: 1, padding: '7px 10px', fontSize: 13 }} />
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addLine}>{t('+ Add line')}</button>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={slBusy} onClick={() => void saveLines()} style={{ width: 'auto', padding: '10px 20px' }}>
-            {slBusy ? 'Saving…' : 'Save free-days'}
+            {slBusy ? t('Saving…') : t('Save free-days')}
           </button>
           {slMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{slMsg}</span>}
         </div>
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>RPS per-move rates</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('RPS per-move rates')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.
+          {t('Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
           {moveRates.map((m) => (
@@ -535,15 +537,15 @@ export default function Settings() {
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
                 <input className="ktc-input" type="number" step="0.01" min="0" value={m.rate} onChange={(e) => setMr(m.move_type, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
-                <span className="ktc-label" style={{ fontSize: 11 }}>/ move</span>
+                <span className="ktc-label" style={{ fontSize: 11 }}>{t('/ move')}</span>
               </span>
             </div>
           ))}
-          {moveRates.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>No move types configured.</p>}
+          {moveRates.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>{t('No move types configured.')}</p>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={mrBusy} onClick={() => void saveMoveRates()} style={{ width: 'auto', padding: '10px 20px' }}>
-            {mrBusy ? 'Saving…' : 'Save move rates'}
+            {mrBusy ? t('Saving…') : t('Save move rates')}
           </button>
           {mrMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{mrMsg}</span>}
         </div>
@@ -551,20 +553,20 @@ export default function Settings() {
 
       {isOwner && (
         <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Roles &amp; gates</h2>
+          <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Roles & gates')}</h2>
           <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-            What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.
+            {t('What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.')}
           </p>
           {gates.length === 0 ? (
-            <span className="ktc-label">Loading…</span>
+            <span className="ktc-label">{t('Loading…')}</span>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ borderCollapse: 'collapse', fontSize: 13, minWidth: 460 }}>
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', padding: '6px 14px 6px 0', fontWeight: 600 }} className="ktc-label">Gate</th>
+                    <th style={{ textAlign: 'left', padding: '6px 14px 6px 0', fontWeight: 600 }} className="ktc-label">{t('Gate')}</th>
                     {['admin', 'operations', 'cashier', 'checker'].map((r) => (
-                      <th key={r} style={{ padding: '6px 14px', fontWeight: 650, textTransform: 'capitalize' }}>{r}</th>
+                      <th key={r} style={{ padding: '6px 14px', fontWeight: 650, textTransform: 'capitalize' }}>{t(r)}</th>
                     ))}
                   </tr>
                 </thead>
@@ -584,7 +586,7 @@ export default function Settings() {
                     ['manage_pricing', 'Settings · rates & fees'],
                   ] as const).map(([perm, label]) => (
                     <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
-                      <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{label}</td>
+                      <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{t(label)}</td>
                       {['admin', 'operations', 'cashier', 'checker'].map((r) => {
                         const g = gates.find((x) => x.role === r && x.permission === perm)
                         return (
@@ -593,7 +595,7 @@ export default function Settings() {
                               type="checkbox"
                               checked={g?.allowed ?? false}
                               onChange={() => toggleGate(r, perm)}
-                              aria-label={`${r}: ${label}`}
+                              aria-label={`${t(r)}: ${t(label)}`}
                               style={{ width: 17, height: 17, cursor: 'pointer' }}
                             />
                           </td>
@@ -607,7 +609,7 @@ export default function Settings() {
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
             <button className="ktc-btn" type="button" disabled={gatesBusy || gates.length === 0} onClick={() => void saveGates()} style={{ width: 'auto', padding: '10px 20px' }}>
-              {gatesBusy ? 'Saving…' : 'Save gates'}
+              {gatesBusy ? t('Saving…') : t('Save gates')}
             </button>
             {gatesMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{gatesMsg}</span>}
           </div>
@@ -615,9 +617,9 @@ export default function Settings() {
       )}
 
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 600 }}>Current staff</h2>
-        {loading ? <span className="ktc-label">Loading…</span> : staff.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No staff yet.</div>
+        <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 600 }}>{t('Current staff')}</h2>
+        {loading ? <span className="ktc-label">{t('Loading…')}</span> : staff.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No staff yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 8 }}>
             {staff.map((b) => (
@@ -629,11 +631,11 @@ export default function Settings() {
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <b>{b.full_name || b.email}</b>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
-                      {b.is_owner ? 'Owner'
-                        : b.staff_role === 'operations' ? 'Operations'
-                        : b.staff_role === 'cashier' ? 'Cashier'
-                        : b.staff_role === 'checker' ? 'Checker'
-                        : 'Admin'}
+                      {b.is_owner ? t('Owner')
+                        : b.staff_role === 'operations' ? t('Operations')
+                        : b.staff_role === 'cashier' ? t('Cashier')
+                        : b.staff_role === 'checker' ? t('Checker')
+                        : t('Admin')}
                     </span>
                   </div>
                   <div className="ktc-label" style={{ fontSize: 13 }}>{b.email}</div>
@@ -644,18 +646,18 @@ export default function Settings() {
                       resetId === b.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                           <input className="ktc-input" type="text" value={resetPw} onChange={(e) => setResetPw(e.target.value)}
-                            placeholder="New password" title={PASSWORD_HINT} style={{ width: 150, padding: '7px 10px', fontSize: 13 }} autoFocus />
-                          <button className="ktc-link" disabled={busy || !resetPw} onClick={() => void doResetPw(b)} style={{ fontSize: 13, fontWeight: 600 }}>Save</button>
-                          <button className="ktc-link" onClick={() => { setResetId(null); setResetPw('') }} style={{ fontSize: 13 }}>Cancel</button>
+                            placeholder={t('New password')} title={PASSWORD_HINT} style={{ width: 150, padding: '7px 10px', fontSize: 13 }} autoFocus />
+                          <button className="ktc-link" disabled={busy || !resetPw} onClick={() => void doResetPw(b)} style={{ fontSize: 13, fontWeight: 600 }}>{t('Save')}</button>
+                          <button className="ktc-link" onClick={() => { setResetId(null); setResetPw('') }} style={{ fontSize: 13 }}>{t('Cancel')}</button>
                         </span>
                       ) : (
                         <button className="ktc-link" disabled={busy} onClick={() => { setResetId(b.id); setResetPw(''); setError(null) }} style={{ fontSize: 13 }}>
-                          Reset password
+                          {t('Reset password')}
                         </button>
                       )
                     )}
                     <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
-                      Revoke access
+                      {t('Revoke access')}
                     </button>
                   </div>
                 )}

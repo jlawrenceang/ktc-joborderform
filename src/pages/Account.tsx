@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { useT } from '../lib/i18n'
 
 type Msg = { tone: NoticeTone; text: string } | null
 
@@ -23,6 +24,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 export default function Account() {
+  const { t } = useT()
   const { broker, loading } = useBroker()
   const { session } = useAuth()
 
@@ -88,14 +90,14 @@ export default function Account() {
     }
     setBaseName(fullName.trim())
     setBaseContact(contact.trim())
-    setProfileMsg({ tone: 'success', text: '✓ Your details were saved.' })
+    setProfileMsg({ tone: 'success', text: t('✓ Your details were saved.') })
   }
 
   function onSaveProfile(e: FormEvent) {
     e.preventDefault()
-    if (!fullName.trim()) { setProfileMsg({ tone: 'error', text: 'Full name can’t be empty.' }); return }
-    if (!contact.trim()) { setProfileMsg({ tone: 'error', text: 'Contact number can’t be empty.' }); return }
-    if (!nameChanged && !contactChanged) { setProfileMsg({ tone: 'info', text: 'Nothing to save — no changes.' }); return }
+    if (!fullName.trim()) { setProfileMsg({ tone: 'error', text: t('Full name can’t be empty.') }); return }
+    if (!contact.trim()) { setProfileMsg({ tone: 'error', text: t('Contact number can’t be empty.') }); return }
+    if (!nameChanged && !contactChanged) { setProfileMsg({ tone: 'info', text: t('Nothing to save — no changes.') }); return }
     // Approved customer changing their legal name → confirm re-verification first.
     if (approved && nameChanged) { setShowReverify(true); return }
     void doSaveProfile()
@@ -104,8 +106,8 @@ export default function Account() {
   async function onChangeEmail(e: FormEvent) {
     e.preventDefault()
     const next = newEmail.trim()
-    if (!next) { setEmailMsg({ tone: 'error', text: 'Enter the new email address.' }); return }
-    if (next.toLowerCase() === email.toLowerCase()) { setEmailMsg({ tone: 'info', text: 'That’s already your email.' }); return }
+    if (!next) { setEmailMsg({ tone: 'error', text: t('Enter the new email address.') }); return }
+    if (next.toLowerCase() === email.toLowerCase()) { setEmailMsg({ tone: 'info', text: t('That’s already your email.') }); return }
     setSavingEmail(true)
     setEmailMsg(null)
     const { error } = await supabase.auth.updateUser(
@@ -117,7 +119,7 @@ export default function Account() {
     setNewEmail('')
     setEmailMsg({
       tone: 'success',
-      text: `✓ A confirmation link was sent to ${next}. Click it to finish the change — your current email stays active until you confirm.`,
+      text: t('✓ A confirmation link was sent to {next}. Click it to finish the change — your current email stays active until you confirm.', { next }),
     })
   }
 
@@ -125,7 +127,7 @@ export default function Account() {
     e.preventDefault()
     const pwIssue = passwordIssue(newPw)
     if (pwIssue) { setPwMsg({ tone: 'error', text: pwIssue }); return }
-    if (newPw !== newPw2) { setPwMsg({ tone: 'error', text: 'Passwords don’t match.' }); return }
+    if (newPw !== newPw2) { setPwMsg({ tone: 'error', text: t('Passwords don’t match.') }); return }
     setSavingPw(true)
     setPwMsg(null)
     const { error } = await supabase.auth.updateUser({ password: newPw })
@@ -133,11 +135,11 @@ export default function Account() {
     if (error) { setPwMsg({ tone: 'error', text: error.message }); return }
     setNewPw('')
     setNewPw2('')
-    setPwMsg({ tone: 'success', text: '✓ Your password was updated.' })
+    setPwMsg({ tone: 'success', text: t('✓ Your password was updated.') })
   }
 
   if (loading) {
-    return <Shell><span className="ktc-label">Loading…</span></Shell>
+    return <Shell><span className="ktc-label">{t('Loading…')}</span></Shell>
   }
 
   const sp = STATUS_STYLE[broker?.status ?? 'pending'] ?? STATUS_STYLE.pending
@@ -149,7 +151,7 @@ export default function Account() {
         <div className="ktc-glass" style={{ padding: 28 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <h1 className="ktc-title">My Account</h1>
+              <h1 className="ktc-title">{t('My Account')}</h1>
               <p className="ktc-label" style={{ marginTop: 6, marginBottom: 0 }}>
                 {email}
                 {broker?.customer_code && (
@@ -158,71 +160,71 @@ export default function Account() {
               </p>
             </div>
             <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 999, background: sp.bg, color: sp.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-              {STATUS_LABEL[broker?.status ?? 'pending'] ?? broker?.status}
+              {t(STATUS_LABEL[broker?.status ?? 'pending'] ?? broker?.status ?? '')}
             </span>
           </div>
         </div>
 
         {/* Personal details */}
         <form onSubmit={onSaveProfile} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Personal details</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Personal details')}</h2>
           {profileMsg && <Notice tone={profileMsg.tone}>{profileMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="acFullName">Full name</label>
+            <label className="ktc-label" htmlFor="acFullName">{t('Full name')}</label>
             <input id="acFullName" className="ktc-input" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
             {approved && (
               <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.75, lineHeight: 1.45 }}>
-                This is the legal name verified against your ID. Changing it requires re-verification (you’ll re-upload an ID for an admin to review).
+                {t('This is the legal name verified against your ID. Changing it requires re-verification (you’ll re-upload an ID for an admin to review).')}
               </span>
             )}
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="acContact">Contact number</label>
+            <label className="ktc-label" htmlFor="acContact">{t('Contact number')}</label>
             <input id="acContact" className="ktc-input" type="tel" value={contact} onChange={(e) => setContact(e.target.value)} autoComplete="tel" />
           </div>
           <button className="ktc-btn" type="submit" disabled={savingProfile || (!nameChanged && !contactChanged)} style={{ width: 'auto', justifySelf: 'start', padding: '10px 20px' }}>
-            {savingProfile ? 'Saving…' : 'Save changes'}
+            {savingProfile ? t('Saving…') : t('Save changes')}
           </button>
         </form>
 
         {/* Email */}
         <form onSubmit={onChangeEmail} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Email address</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Email address')}</h2>
           <p className="ktc-label" style={{ margin: 0, fontSize: 13 }}>
-            Current: <b style={{ color: 'hsl(var(--ink))' }}>{email}</b>
+            {t('Current:')} <b style={{ color: 'hsl(var(--ink))' }}>{email}</b>
           </p>
           {emailMsg && <Notice tone={emailMsg.tone}>{emailMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="acEmail">New email address</label>
-            <input id="acEmail" className="ktc-input" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@example.com" />
+            <label className="ktc-label" htmlFor="acEmail">{t('New email address')}</label>
+            <input id="acEmail" className="ktc-input" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t('you@example.com')} />
             <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.75, lineHeight: 1.45 }}>
-              We’ll email a confirmation link to the new address. The change only takes effect once you click it.
+              {t('We’ll email a confirmation link to the new address. The change only takes effect once you click it.')}
             </span>
           </div>
           <button className="ktc-btn" type="submit" disabled={savingEmail} style={{ width: 'auto', justifySelf: 'start', padding: '10px 20px' }}>
-            {savingEmail ? 'Sending…' : 'Send confirmation link'}
+            {savingEmail ? t('Sending…') : t('Send confirmation link')}
           </button>
         </form>
 
         {/* Password */}
         <form onSubmit={onChangePassword} className="ktc-glass" style={{ padding: 28, display: 'grid', gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Password</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('Password')}</h2>
           {pwMsg && <Notice tone={pwMsg.tone}>{pwMsg.text}</Notice>}
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="acPw">New password</label>
+            <label className="ktc-label" htmlFor="acPw">{t('New password')}</label>
             <input id="acPw" className="ktc-input" type="password" minLength={8} value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" />
             <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{PASSWORD_HINT}</span>
           </div>
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="acPw2">Confirm new password</label>
+            <label className="ktc-label" htmlFor="acPw2">{t('Confirm new password')}</label>
             <input id="acPw2" className="ktc-input" type="password" minLength={8} value={newPw2} onChange={(e) => setNewPw2(e.target.value)} autoComplete="new-password" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <button className="ktc-btn" type="submit" disabled={savingPw} style={{ width: 'auto', padding: '10px 20px' }}>
-              {savingPw ? 'Updating…' : 'Update password'}
+              {savingPw ? t('Updating…') : t('Update password')}
             </button>
             <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 13 }}>
-              Forgot your password? Reset it by email →
+              {t('Forgot your password? Reset it by email →')}
             </Link>
           </div>
         </form>
@@ -232,17 +234,16 @@ export default function Account() {
       {showReverify && (
         <div onClick={() => setShowReverify(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
           <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 28 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Changing your name needs re-verification</h2>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Changing your name needs re-verification')}</h2>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, fontSize: 13.5 }}>
-              Your legal name was verified against your ID. To change it to <b style={{ color: 'hsl(var(--ink))' }}>{fullName.trim()}</b>,
-              your account goes back to <b>pending</b> and you’ll re-upload a valid ID for a KTC admin to re-verify.
-              Job orders you file in the meantime are held until you’re re-approved.
+              {t('Your legal name was verified against your ID. To change it to')} <b style={{ color: 'hsl(var(--ink))' }}>{fullName.trim()}</b>,{' '}
+              {t('your account goes back to')} <b>{t('pending')}</b> {t('and you’ll re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime are held until you’re re-approved.')}
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
               <button className="ktc-btn" type="button" disabled={savingProfile} onClick={() => void doSaveProfile()} style={{ width: 'auto', padding: '10px 20px' }}>
-                {savingProfile ? 'Saving…' : 'Change name & re-verify'}
+                {savingProfile ? t('Saving…') : t('Change name & re-verify')}
               </button>
-              <button type="button" className="ktc-link" onClick={() => setShowReverify(false)}>Cancel</button>
+              <button type="button" className="ktc-link" onClick={() => setShowReverify(false)}>{t('Cancel')}</button>
             </div>
           </div>
         </div>

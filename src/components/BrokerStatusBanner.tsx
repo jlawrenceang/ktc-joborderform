@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
+import { useT } from '../lib/i18n'
 import Notice from './Notice'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
@@ -10,6 +11,7 @@ import Notice from './Notice'
 // server-side). Here we (1) sync consent captured at sign-up, and (2) point them to
 // the /verify-id page to upload the valid ID an admin needs before approving.
 export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }: { broker: Broker; onRefresh?: () => void; refreshCooling?: boolean }) {
+  const { t } = useT()
   const synced = useRef(false)
 
   // Sync consent (captured in auth metadata at sign-up) onto the customer row if it
@@ -32,8 +34,8 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
   return (
     <Notice
       tone={needsId ? 'warning' : 'info'}
-      badge="PENDING FINAL VERIFICATION"
-      title={needsId ? 'Upload your valid ID to get verified' : 'Your account is awaiting admin verification'}
+      badge={t('PENDING FINAL VERIFICATION')}
+      title={needsId ? t('Upload your valid ID to get verified') : t('Your account is awaiting admin verification')}
       style={{ marginBottom: 18 }}
       action={
         needsId ? (
@@ -42,16 +44,16 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
             fontWeight: 600, fontSize: 13, textDecoration: 'none', color: '#fff',
             background: 'linear-gradient(135deg, var(--acc), var(--acc-2))',
           }}>
-            Upload your valid ID →
+            {t('Upload your valid ID →')}
           </Link>
         ) : undefined
       }
     >
       {needsId ? (
-        'You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.'
+        t('You can already file job orders — they’re held pending verification. Upload your valid ID to get verified; once approved, your held orders are sent to KTC automatically.')
       ) : (
         <>
-          A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at{' '}
+          {t('A KTC admin is verifying your account. You can continue filing job orders, but they’re held until you’re verified. For more information, contact customer service at')}{' '}
           <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
           <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>.
         </>
@@ -64,10 +66,10 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
             className="ktc-link"
             onClick={onRefresh}
             disabled={refreshCooling}
-            title={refreshCooling ? 'Just refreshed — try again in a few seconds' : 'Checks automatically every minute'}
+            title={refreshCooling ? t('Just refreshed — try again in a few seconds') : t('Checks automatically every minute')}
             style={{ fontSize: 13, padding: 0, opacity: refreshCooling ? 0.5 : 1 }}
           >
-            ↻ Refresh status
+            {t('↻ Refresh status')}
           </button>
         </>
       )}

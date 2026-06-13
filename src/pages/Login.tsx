@@ -9,6 +9,7 @@ import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { useT } from '../lib/i18n'
 
 // Client-side brute-force deterrent: after MAX_FAILS wrong passwords for an
 // email, disable sign-in for LOCK_MS. (Supabase's server-side auth rate limits
@@ -45,6 +46,7 @@ function clearFails(em: string) {
 }
 
 export default function Login() {
+  const { t } = useT()
   const { signIn, signUp, session } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
@@ -73,12 +75,12 @@ export default function Login() {
   }
 
   async function resendConfirmation() {
-    if (!email.trim()) { setError('Enter your email above first, then resend.'); return }
+    if (!email.trim()) { setError(t('Enter your email above first, then resend.')); return }
     // Supabase enforces CAPTCHA on the resend endpoint too; the prior sign-in
     // attempt consumed the last token, so we need a fresh one (Managed Turnstile
     // re-issues automatically after resetCaptcha).
     if (captchaEnabled && !captchaToken) {
-      setError('Please wait a second for the CAPTCHA to refresh, then tap Resend again.')
+      setError(t('Please wait a second for the CAPTCHA to refresh, then tap Resend again.'))
       return
     }
     setBusy(true); setError(null); setNotice(null)
@@ -94,7 +96,7 @@ export default function Login() {
     if (captchaEnabled) resetCaptcha() // token is single-use
     if (rErr) { setError(rErr.message); return }
     setShowResend(false)
-    setNotice('✓ Confirmation email resent — check your inbox (and spam folder) for the link.')
+    setNotice(t('✓ Confirmation email resent — check your inbox (and spam folder) for the link.'))
   }
 
   function onAgreementScroll(e: UIEvent<HTMLDivElement>) {
@@ -113,19 +115,19 @@ export default function Login() {
   // Surface one-off notices (idle sign-out, or email just confirmed).
   useEffect(() => {
     if (sessionStorage.getItem('ktc_password_reset')) {
-      setNotice('✓ Your password has been updated — please sign in with your new password.')
+      setNotice(t('✓ Your password has been updated — please sign in with your new password.'))
       sessionStorage.removeItem('ktc_password_reset')
     } else if (sessionStorage.getItem('ktc_email_confirmed')) {
-      setNotice('✓ Your email is confirmed — please sign in to continue.')
+      setNotice(t('✓ Your email is confirmed — please sign in to continue.'))
       sessionStorage.removeItem('ktc_email_confirmed')
     } else if (sessionStorage.getItem('ktc_session_superseded')) {
-      setNotice('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.')
+      setNotice(t('You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.'))
       sessionStorage.removeItem('ktc_session_superseded')
     } else if (sessionStorage.getItem('ktc_idle_logout')) {
       // The flag's value carries the minutes ('15' customer / '60' staff);
       // a bare legacy '1' falls back to the customer wording.
       const mins = sessionStorage.getItem('ktc_idle_logout')
-      setNotice(`You were signed out after ${/^\d{2,}$/.test(mins ?? '') ? mins : '15'} minutes of inactivity. Please sign in again.`)
+      setNotice(t('You were signed out after {mins} minutes of inactivity. Please sign in again.', { mins: /^\d{2,}$/.test(mins ?? '') ? (mins ?? '15') : '15' }))
       sessionStorage.removeItem('ktc_idle_logout')
     }
   }, [])
@@ -157,7 +159,7 @@ export default function Login() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (mode === 'signup' && !agreedTerms) {
-      setError('Please accept the KTC Customer Agreement (Terms & Data Privacy consent) to continue.')
+      setError(t('Please accept the KTC Customer Agreement (Terms & Data Privacy consent) to continue.'))
       return
     }
     if (mode === 'signup') {
@@ -165,7 +167,7 @@ export default function Login() {
       if (pwIssue) { setError(pwIssue); return }
     }
     if (captchaEnabled && !captchaToken) {
-      setError('Please complete the CAPTCHA.')
+      setError(t('Please complete the CAPTCHA.'))
       return
     }
     // Sign-in cooldown after repeated wrong passwords.
@@ -206,7 +208,7 @@ export default function Login() {
       return
     }
     if (mode === 'signup') {
-      setNotice('✓ Account created! We’ve emailed a confirmation link to your address. Please confirm your email, then log in again here to continue.')
+      setNotice(t('✓ Account created! We’ve emailed a confirmation link to your address. Please confirm your email, then log in again here to continue.'))
       setMode('signin')
       setFullName('')
       setContactNumber('')
@@ -231,7 +233,7 @@ export default function Login() {
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>
-            Too many failed sign-in attempts. Please wait <b>{lockSecs}s</b> before trying again.
+            {t('Too many failed sign-in attempts. Please wait')} <b>{lockSecs}s</b> {t('before trying again.')}
           </Notice>
         )}
         {error && !isLocked && <Notice tone="error" style={{ marginBottom: 14 }}>{error}</Notice>}
@@ -242,24 +244,24 @@ export default function Login() {
             action={
               <button type="button" disabled={busy} onClick={() => void resendConfirmation()}
                 style={{ border: 0, borderRadius: 9, padding: '7px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
-                {busy ? 'Resending…' : 'Resend confirmation email'}
+                {busy ? t('Resending…') : t('Resend confirmation email')}
               </button>
             }
           >
-            Please confirm your email first — check your inbox (and spam folder) for the confirmation link.
+            {t('Please confirm your email first — check your inbox (and spam folder) for the confirmation link.')}
           </Notice>
         )}
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>
-          {isSignup ? 'Create account' : 'Sign in'}
+          {isSignup ? t('Create account') : t('Sign in')}
         </h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 24 }}>
-          KTC Online Portal — Container Terminal Services
+          {t('KTC Online Portal — Container Terminal Services')}
         </p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           {isSignup && (
             <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="fullName">Full name</label>
+              <label className="ktc-label" htmlFor="fullName">{t('Full name')}</label>
               <input id="fullName" className="ktc-input" type="text" required value={fullName}
                 onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
             </div>
@@ -267,23 +269,23 @@ export default function Login() {
 
           {isSignup && (
             <div style={{ display: 'grid', gap: 6 }}>
-              <label className="ktc-label" htmlFor="contactNumber">Contact number</label>
+              <label className="ktc-label" htmlFor="contactNumber">{t('Contact number')}</label>
               <input id="contactNumber" className="ktc-input" type="tel" required value={contactNumber}
                 onChange={(e) => setContactNumber(e.target.value)} autoComplete="tel"
-                placeholder="e.g. 0917 123 4567" />
+                placeholder={t('e.g. 0917 123 4567')} />
             </div>
           )}
 
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="email">{isSignup ? 'Email' : 'Email or username'}</label>
+            <label className="ktc-label" htmlFor="email">{isSignup ? t('Email') : t('Email or username')}</label>
             <input id="email" className="ktc-input" type={isSignup ? 'email' : 'text'} required value={email}
               onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-              <label className="ktc-label" htmlFor="password">Password</label>
-              {!isSignup && <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 12 }}>Forgot password?</Link>}
+              <label className="ktc-label" htmlFor="password">{t('Password')}</label>
+              {!isSignup && <Link to="/forgot-password" className="ktc-link" style={{ fontSize: 12 }}>{t('Forgot password?')}</Link>}
             </div>
             <input id="password" className="ktc-input" type="password" required minLength={isSignup ? 8 : undefined} value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -295,11 +297,11 @@ export default function Login() {
             <div style={{ display: 'grid', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>
-                  KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})
+                  {t('KTC Customer Agreement ({version})', { version: AGREEMENT_VERSION_LABEL })}
                 </span>
                 <button type="button" className="ktc-link" onClick={() => setShowAgreement(true)}
                   style={{ fontSize: 12, border: 0, background: 'none', cursor: 'pointer', padding: 0 }}>
-                  View full ↗
+                  {t('View full ↗')}
                 </button>
               </div>
               <div style={{
@@ -309,8 +311,8 @@ export default function Login() {
                 border: `1px solid ${scrolledAgreement ? 'hsl(150 45% 78%)' : 'hsl(40 85% 75%)'}`,
               }}>
                 {scrolledAgreement
-                  ? '✓ Thanks for reading — you can now tick the consent boxes below.'
-                  : '↓ Please scroll to the end of the agreement to enable the consent checkboxes.'}
+                  ? t('✓ Thanks for reading — you can now tick the consent boxes below.')
+                  : t('↓ Please scroll to the end of the agreement to enable the consent checkboxes.')}
               </div>
               <div
                 ref={agreementRef}
@@ -337,9 +339,7 @@ export default function Login() {
                   required
                 />
                 <span className="ktc-label" style={{ fontSize: 13 }}>
-                  I have read and agree to the <b>KTC Customer Agreement</b> — including the Terms &amp; Conditions,
-                  confidentiality / non-disclosure obligations, and my consent to KTC processing my personal data
-                  (including the valid ID I upload) under the Data Privacy Act of 2012.
+                  {t('I have read and agree to the')} <b>{t('KTC Customer Agreement')}</b> {t('— including the Terms & Conditions, confidentiality / non-disclosure obligations, and my consent to KTC processing my personal data (including the valid ID I upload) under the Data Privacy Act of 2012.')}
                 </span>
               </label>
             </div>
@@ -355,20 +355,20 @@ export default function Login() {
 
 
           <button className="ktc-btn" type="submit" disabled={busy || (captchaEnabled && !captchaToken) || (isSignup && !agreedTerms) || (!isSignup && isLocked)} style={{ marginTop: 6 }}>
-            {busy ? 'Please wait…' : !isSignup && isLocked ? `Try again in ${lockSecs}s` : isSignup ? 'Sign up' : 'Sign in'}
+            {busy ? t('Please wait…') : !isSignup && isLocked ? t('Try again in {secs}s', { secs: lockSecs }) : isSignup ? t('Sign up') : t('Sign in')}
           </button>
         </form>
 
         <p className="ktc-label" style={{ marginTop: 18, fontSize: 13 }}>
-          {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+          {isSignup ? t('Already have an account? ') : t("Don't have an account? ")}
           <button className="ktc-link" type="button"
             onClick={() => { setMode(isSignup ? 'signin' : 'signup'); setError(null); setNotice(null); setShowResend(false); resetCaptcha(); setAgreedTerms(false) }}>
-            {isSignup ? 'Sign in' : 'Create one'}
+            {isSignup ? t('Sign in') : t('Create one')}
           </button>
         </p>
 
         <p className="ktc-label" style={{ marginTop: 14, fontSize: 12, opacity: 0.7, textAlign: 'center' }}>
-          KTC Online Portal {VERSION_LABEL} · © {new Date().getFullYear()} KTC Container Terminal Corp.
+          {t('KTC Online Portal')} {VERSION_LABEL} · © {new Date().getFullYear()} KTC Container Terminal Corp.
         </p>
       </div>
 
@@ -383,8 +383,8 @@ export default function Login() {
             style={{ maxWidth: 640, width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontWeight: 600, fontSize: 15 }}>KTC Customer Agreement ({AGREEMENT_VERSION_LABEL})</span>
-              <button type="button" aria-label="Close" onClick={() => setShowAgreement(false)}
+              <span style={{ fontWeight: 600, fontSize: 15 }}>{t('KTC Customer Agreement ({version})', { version: AGREEMENT_VERSION_LABEL })}</span>
+              <button type="button" aria-label={t('Close')} onClick={() => setShowAgreement(false)}
                 style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>
                 ✕
               </button>
@@ -396,8 +396,8 @@ export default function Login() {
               borderBottom: `1px solid ${scrolledAgreement ? 'hsl(150 45% 80%)' : 'hsl(40 85% 78%)'}`,
             }}>
               {scrolledAgreement
-                ? '✓ Thanks for reading — you can now tick the consent boxes below.'
-                : '↓ Please scroll to the end to enable the consent checkboxes.'}
+                ? t('✓ Thanks for reading — you can now tick the consent boxes below.')
+                : t('↓ Please scroll to the end to enable the consent checkboxes.')}
             </div>
             <div ref={modalAgreementRef} onScroll={onAgreementScroll} style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>
               <MarkdownBody body={AGREEMENT_BODY} />

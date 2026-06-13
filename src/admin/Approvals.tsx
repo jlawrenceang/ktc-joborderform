@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { AdminRow } from './AdminRow'
 import { BrokerReview } from './BrokerReview'
 import { useFileViewer } from '../components/FileViewerModal'
+import { useT } from '../lib/i18n'
 
 interface PendingBroker {
   id: string
@@ -32,22 +33,23 @@ function RejectChoices({ busy, note, onNote, onChoose, onCancel }: {
   busy: boolean; note: string; onNote: (v: string) => void
   onChoose: (status: 'rejected' | 'suspended', reason: string) => void; onCancel: () => void
 }) {
+  const { t } = useT()
   return (
     <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(0 70% 98%)', border: '1px solid hsl(0 60% 88%)', display: 'grid', gap: 8 }}>
-      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Choose an outcome (the customer is told why):</label>
+      <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Choose an outcome (the customer is told why):')}</label>
       <textarea className="ktc-input" rows={2} value={note} onChange={(e) => onNote(e.target.value)}
-        placeholder="Optional note to append (e.g. which field to fix)…" />
+        placeholder={t('Optional note to append (e.g. which field to fix)…')} />
       <div style={{ display: 'grid', gap: 6 }}>
         {REJECT_PRESETS.map((p) => (
           <button key={p.label} type="button" disabled={busy}
             onClick={() => onChoose(p.status, p.reason + (note.trim() ? ' — ' + note.trim() : ''))}
             style={{ textAlign: 'left', border: '1px solid hsl(0 60% 85%)', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: p.status === 'suspended' ? 'hsl(0 65% 40%)' : 'hsl(30 70% 38%)', background: 'rgba(255,255,255,0.8)' }}>
-            {p.label}
+            {t(p.label)}
           </button>
         ))}
         <button type="button" disabled={busy} onClick={onCancel}
           style={{ justifySelf: 'start', border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))' }}>
-          Cancel
+          {t('Cancel')}
         </button>
       </div>
     </div>
@@ -55,6 +57,7 @@ function RejectChoices({ busy, note, onNote, onChoose, onCancel }: {
 }
 
 export default function Approvals() {
+  const { t } = useT()
   const [brokers, setBrokers] = useState<PendingBroker[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -75,7 +78,7 @@ export default function Approvals() {
 
   async function decideBroker(id: string, status: 'approved' | 'rejected' | 'suspended', reason?: string, path?: string | null) {
     if (status === 'approved' && !path) {
-      return setError('Cannot approve — no valid ID on file yet. Ask the customer to upload one first.')
+      return setError(t('Cannot approve — no valid ID on file yet. Ask the customer to upload one first.'))
     }
     const who = brokers.find((r) => r.id === id)
     setActing(id); setError(null)
@@ -91,7 +94,7 @@ export default function Approvals() {
     if (error) return setError(error.message)
     resetReject()
     setBrokers((x) => x.filter((r) => r.id !== id))
-    if (status === 'approved') setApprovedName(who?.full_name || who?.email || 'The customer')
+    if (status === 'approved') setApprovedName(who?.full_name || who?.email || t('The customer'))
   }
   // In-app attachment viewer (modal with Print + Save — no new tabs).
   const { openFromStorage, viewerModal } = useFileViewer(setError)
@@ -101,18 +104,18 @@ export default function Approvals() {
       {error && <div className="ktc-glass" style={{ padding: 14, marginBottom: 16, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 className="ktc-title">Account approvals</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.</p>
-        {loading ? <span className="ktc-label">Loading…</span> : brokers.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>No accounts pending. 🎉</div>
+        <h1 className="ktc-title">{t('Account approvals')}</h1>
+        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>{t("Review the customer's valid ID and confirm they accepted the Agreement (Terms + Data Privacy consent) before approving.")}</p>
+        {loading ? <span className="ktc-label">{t('Loading…')}</span> : brokers.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{t('No accounts pending. 🎉')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 10 }}>
             {brokers.map((b) => (
               <div key={b.id} style={{ display: 'grid', gap: rejectId === b.id ? 8 : 0 }}>
-                <AdminRow title={`${b.customer_code ? b.customer_code + ' · ' : ''}${b.full_name || b.email || 'Unknown'}`}
+                <AdminRow title={`${b.customer_code ? b.customer_code + ' · ' : ''}${b.full_name || b.email || t('Unknown')}`}
                   subtitle={`${b.email ?? ''}${b.contact_number ? ` · ${b.contact_number}` : ''}${b.customer_id ? ` · #${b.customer_id}` : ''}`}
                   extra={<BrokerReview b={b} />}
-                  onViewId={b.valid_id_path ? () => void openFromStorage('valid-ids', b.valid_id_path, `Valid ID — ${b.full_name || b.email || 'customer'}`) : undefined}
+                  onViewId={b.valid_id_path ? () => void openFromStorage('valid-ids', b.valid_id_path, t('Valid ID — {name}', { name: b.full_name || b.email || t('customer') })) : undefined}
                   canApprove={!!b.valid_id_path}
                   busy={acting === b.id} onApprove={() => decideBroker(b.id, 'approved', undefined, b.valid_id_path)}
                   onReject={() => { setRejectId(b.id); setRejectReason('') }} />
@@ -133,13 +136,13 @@ export default function Approvals() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
           <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 380, width: '100%', padding: 28, textAlign: 'center' }}>
             <div style={{ width: 56, height: 56, margin: '0 auto', borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 30, color: '#fff', background: 'linear-gradient(135deg, hsl(150 55% 45%), hsl(150 60% 36%))' }}>✓</div>
-            <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>Account approved</h2>
+            <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>{t('Account approved')}</h2>
             <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.6, fontSize: 14 }}>
-              <b>{approvedName}</b> has been approved and notified by email.
-              {error ? ' Note: their valid ID could not be deleted — see the warning on the page.' : ' Their valid ID was removed from storage.'}
+              <b>{approvedName}</b> {t('has been approved and notified by email.')}
+              {error ? t(' Note: their valid ID could not be deleted — see the warning on the page.') : t(' Their valid ID was removed from storage.')}
             </p>
             <button className="ktc-btn" type="button" onClick={() => setApprovedName(null)} style={{ marginTop: 18, width: '100%' }}>
-              Done
+              {t('Done')}
             </button>
           </div>
         </div>

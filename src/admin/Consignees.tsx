@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { AccreditationStatus, Consignee } from '../lib/types'
 import { prepareUpload } from '../lib/validation'
 import { useFileViewer } from '../components/FileViewerModal'
+import { useT } from '../lib/i18n'
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = []
@@ -45,10 +46,10 @@ function rowsToConsignees(grid: string[][]): { code: string; name: string }[] {
   return out
 }
 
-function friendly(err: unknown): string {
+function friendly(err: unknown, t: (k: string, vars?: Record<string, string | number>) => string): string {
   const e = err as { code?: string; message?: string }
-  if (e?.code === '23505') return 'A consignee with that name or code already exists.'
-  return e?.message ?? 'Something went wrong.'
+  if (e?.code === '23505') return t('A consignee with that name or code already exists.')
+  return e?.message ?? t('Something went wrong.')
 }
 
 const MIN_NAME = 2
@@ -76,6 +77,7 @@ async function upload2303(consigneeId: string, file: File): Promise<string> {
 }
 
 export default function Consignees() {
+  const { t } = useT()
   const [list, setList] = useState<Consignee[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -144,18 +146,18 @@ export default function Consignees() {
     setBusy(true); setError(null); setNotice(null)
     try {
       const rows = rowsToConsignees(parseCsv(await file.text()))
-      if (rows.length === 0) throw new Error('No valid rows found. Expected a name column (and optional code).')
+      if (rows.length === 0) throw new Error(t('No valid rows found. Expected a name column (and optional code).'))
       await bulkUpsert(rows)
-      setNotice(`Imported ${rows.length} row${rows.length === 1 ? '' : 's'} (pending; add address/TIN/2303 to approve).`)
+      setNotice(t('Imported {n} row(s) (pending; add address/TIN/2303 to approve).', { n: rows.length }))
       setPage(0); await load()
-    } catch (err) { setError(friendly(err)) }
+    } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false); if (csvRef.current) csvRef.current.value = '' }
   }
 
   async function addOne(e: FormEvent) {
     e.preventDefault()
     const n = name.trim()
-    if (n.length < MIN_NAME) { setError(`Name must be at least ${MIN_NAME} characters.`); return }
+    if (n.length < MIN_NAME) { setError(t('Name must be at least {n} characters.', { n: MIN_NAME })); return }
     setBusy(true); setError(null); setNotice(null)
     try {
       const row: { name: string; code?: string; address?: string; tin?: string } = { name: n }
@@ -169,11 +171,11 @@ export default function Consignees() {
         const path = await upload2303(created.id, doc)
         await supabase.from('consignees').update({ doc_2303_path: path }).eq('id', created.id)
       }
-      setNotice(`Added ${created.code} – ${n} (pending approval).`)
+      setNotice(t('Added {code} – {name} (pending approval).', { code: created.code, name: n }))
       setName(''); setCode(''); setAddress(''); setTin(''); setDoc(null)
       if (docRef.current) docRef.current.value = ''
       await load()
-    } catch (err) { setError(friendly(err)) }
+    } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false) }
   }
 
@@ -181,7 +183,7 @@ export default function Consignees() {
     setBusy(true); setError(null)
     const { error } = await supabase.from('consignees').update({ status, decided_at: new Date().toISOString() }).eq('id', c.id)
     setBusy(false)
-    if (error) return setError(friendly(error))
+    if (error) return setError(friendly(error, t))
     if (filter === 'all') setList((l) => l.map((x) => (x.id === c.id ? { ...x, status } : x)))
     else setList((l) => l.filter((x) => x.id !== c.id))
   }
@@ -189,8 +191,8 @@ export default function Consignees() {
   async function saveEdit() {
     if (!editing) return
     const n = editing.name.trim(), cc = editing.code.trim()
-    if (n.length < MIN_NAME) { setError(`Name must be at least ${MIN_NAME} characters.`); return }
-    if (!cc) { setError('Code cannot be empty.'); return }
+    if (n.length < MIN_NAME) { setError(t('Name must be at least {n} characters.', { n: MIN_NAME })); return }
+    if (!cc) { setError(t('Code cannot be empty.')); return }
     setBusy(true); setError(null)
     try {
       let docPath = editing.doc_2303_path
@@ -200,18 +202,18 @@ export default function Consignees() {
         .eq('id', editing.id)
       if (error) throw error
       await load()
-      setEditing(null); setEditDoc(null); setNotice('Saved.')
-    } catch (err) { setError(friendly(err)) }
+      setEditing(null); setEditDoc(null); setNotice(t('Saved.'))
+    } catch (err) { setError(friendly(err, t)) }
     finally { setBusy(false) }
   }
 
   async function remove(c: Consignee) {
-    if (!window.confirm(`Delete ${c.code} – ${c.name}?`)) return
+    if (!window.confirm(t('Delete {code} – {name}?', { code: c.code, name: c.name }))) return
     setBusy(true); setError(null)
     const { error } = await supabase.from('consignees').delete().eq('id', c.id)
     setBusy(false)
-    if (error) return setError(friendly(error))
-    setList((l) => l.filter((x) => x.id !== c.id)); setTotal((t) => Math.max(0, t - 1)); setNotice(`Deleted ${c.code}.`)
+    if (error) return setError(friendly(error, t))
+    setList((l) => l.filter((x) => x.id !== c.id)); setTotal((n) => Math.max(0, n - 1)); setNotice(t('Deleted {code}.', { code: c.code }))
   }
 
   const from = total === 0 ? 0 : page * PAGE + 1
@@ -222,27 +224,26 @@ export default function Consignees() {
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
-        <h1 className="ktc-title">Consignees</h1>
+        <h1 className="ktc-title">{t('Consignees')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 20 }}>
-          Added consignees are <b>pending</b>. A consignee needs <b>address, TIN, and an attached 2303</b> before it
-          can be approved; only approved consignees are visible to customers.
+          {t('Added consignees are')} <b>{t('pending')}</b>. {t('A consignee needs')} <b>{t('address, TIN, and an attached 2303')}</b> {t('before it can be approved; only approved consignees are visible to customers.')}
         </p>
 
         <div style={{ display: 'grid', gap: 6, marginBottom: 18, maxWidth: 360 }}>
-          <label className="ktc-label" htmlFor="csv">Bulk import CSV (name, optional code)</label>
+          <label className="ktc-label" htmlFor="csv">{t('Bulk import CSV (name, optional code)')}</label>
           <input id="csv" ref={csvRef} type="file" accept=".csv,text/csv" className="ktc-input" onChange={onCsv} disabled={busy} style={{ padding: '9px 13px' }} />
         </div>
 
         <form onSubmit={addOne} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <Field label="Consignee name *" w={220}><input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
-          <Field label="Code (optional)" w={120}><input className="ktc-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="auto" /></Field>
-          <Field label="Address" w={260}><input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
-          <Field label="TIN" w={150}><input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
-          <Field label="2303 document" w={210}><input ref={docRef} className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
-          <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>Add consignee</button>
+          <Field label={t('Consignee name *')} w={220}><input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} required minLength={MIN_NAME} /></Field>
+          <Field label={t('Code (optional)')} w={120}><input className="ktc-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder={t('auto')} /></Field>
+          <Field label={t('Address')} w={260}><input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} /></Field>
+          <Field label={t('TIN')} w={150}><input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} /></Field>
+          <Field label={t('2303 document')} w={210}><input ref={docRef} className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
+          <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Add consignee')}</button>
         </form>
 
-        {busy && <div className="ktc-label" style={{ marginTop: 12 }}>Working…</div>}
+        {busy && <div className="ktc-label" style={{ marginTop: 12 }}>{t('Working…')}</div>}
         {notice && <div className="ktc-label" style={{ marginTop: 12, fontSize: 13 }}>{notice}</div>}
         {error && <div style={{ marginTop: 12, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
       </div>
@@ -250,24 +251,24 @@ export default function Consignees() {
       <div className="ktc-glass" style={{ padding: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
           <select className="ktc-input" value={filter} onChange={(e) => changeFilter(e.target.value as Filter)} style={{ padding: '8px 10px' }}>
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
+            <option value="all">{t('All')}</option>
+            <option value="pending">{t('Pending')}</option>
+            <option value="approved">{t('Approved')}</option>
+            <option value="rejected">{t('Rejected')}</option>
           </select>
-          <input className="ktc-input" placeholder="Search code or name…" value={query} onChange={(e) => changeQuery(e.target.value)} style={{ width: 240 }} />
+          <input className="ktc-input" placeholder={t('Search code or name…')} value={query} onChange={(e) => changeQuery(e.target.value)} style={{ width: 240 }} />
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span className="ktc-label" style={{ fontSize: 13 }}>{total === 0 ? 'No results' : `Showing ${from}–${to} of ${total}`}</span>
+          <span className="ktc-label" style={{ fontSize: 13 }}>{total === 0 ? t('No results') : t('Showing {from}–{to} of {total}', { from, to, total })}</span>
           <span style={{ display: 'flex', gap: 8 }}>
-            <button className="ktc-link" onClick={() => setPage((p) => p - 1)} disabled={!hasPrev || busy} style={{ fontSize: 13, opacity: hasPrev ? 1 : 0.4 }}>‹ Prev</button>
-            <button className="ktc-link" onClick={() => setPage((p) => p + 1)} disabled={!hasNext || busy} style={{ fontSize: 13, opacity: hasNext ? 1 : 0.4 }}>Next ›</button>
+            <button className="ktc-link" onClick={() => setPage((p) => p - 1)} disabled={!hasPrev || busy} style={{ fontSize: 13, opacity: hasPrev ? 1 : 0.4 }}>{t('‹ Prev')}</button>
+            <button className="ktc-link" onClick={() => setPage((p) => p + 1)} disabled={!hasNext || busy} style={{ fontSize: 13, opacity: hasNext ? 1 : 0.4 }}>{t('Next ›')}</button>
           </span>
         </div>
 
-        {loading ? <span className="ktc-label">Loading…</span> : list.length === 0 ? (
-          <div className="ktc-label" style={{ fontSize: 14 }}>{query || filter !== 'all' ? 'No matches.' : 'No consignees yet.'}</div>
+        {loading ? <span className="ktc-label">{t('Loading…')}</span> : list.length === 0 ? (
+          <div className="ktc-label" style={{ fontSize: 14 }}>{query || filter !== 'all' ? t('No matches.') : t('No consignees yet.')}</div>
         ) : (
           <div style={{ display: 'grid', gap: 4 }}>
             {list.map((c) => {
@@ -277,16 +278,16 @@ export default function Consignees() {
                 return (
                   <div key={c.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', margin: '4px 0' }}>
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                      <Field label="Code" w={120}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></Field>
-                      <Field label="Name" w={220}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
-                      <Field label="Address" w={240}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></Field>
-                      <Field label="TIN" w={150}><input className="ktc-input" value={editing.tin} onChange={(e) => setEditing({ ...editing, tin: e.target.value })} /></Field>
-                      <Field label={`2303 ${editing.doc_2303_path ? '(replace)' : ''}`} w={200}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
+                      <Field label={t('Code')} w={120}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></Field>
+                      <Field label={t('Name')} w={220}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+                      <Field label={t('Address')} w={240}><input className="ktc-input" value={editing.address} onChange={(e) => setEditing({ ...editing, address: e.target.value })} /></Field>
+                      <Field label={t('TIN')} w={150}><input className="ktc-input" value={editing.tin} onChange={(e) => setEditing({ ...editing, tin: e.target.value })} /></Field>
+                      <Field label={editing.doc_2303_path ? t('2303 (replace)') : t('2303')} w={200}><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setEditDoc(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} /></Field>
                     </div>
                     <div style={{ display: 'flex', gap: 12, marginTop: 10, alignItems: 'center' }}>
-                      <button className="ktc-link" disabled={busy} onClick={saveEdit} style={{ fontSize: 13, fontWeight: 600 }}>Save</button>
-                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }} style={{ fontSize: 13 }}>Cancel</button>
-                      {editing.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', editing.doc_2303_path, `2303 — ${editing.name}`)} style={{ fontSize: 13 }}>View current 2303</button>}
+                      <button className="ktc-link" disabled={busy} onClick={saveEdit} style={{ fontSize: 13, fontWeight: 600 }}>{t('Save')}</button>
+                      <button className="ktc-link" onClick={() => { setEditing(null); setEditDoc(null) }} style={{ fontSize: 13 }}>{t('Cancel')}</button>
+                      {editing.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', editing.doc_2303_path, t('2303 — {name}', { name: editing.name }))} style={{ fontSize: 13 }}>{t('View current 2303')}</button>}
                     </div>
                   </div>
                 )
@@ -295,14 +296,14 @@ export default function Consignees() {
                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
                   <span style={{ flex: 1, fontSize: 14 }}>
                     <b>{c.code}</b> – {c.name}
-                    {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8 }}>⚠ needs address/TIN/2303</span>}
+                    {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8 }}>{t('⚠ needs address/TIN/2303')}</span>}
                   </span>
-                  {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, `2303 — ${c.name}`)} style={{ fontSize: 12 }}>2303</button>}
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{c.status}</span>
-                  {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'hsl(150 60% 32%)' }}>Approve</button>}
-                  {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'rejected')} style={{ fontSize: 13 }}>Reject</button>}
-                  <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>Edit</button>
-                  <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>Delete</button>
+                  {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
+                  {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'hsl(150 60% 32%)' }}>{t('Approve')}</button>}
+                  {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'rejected')} style={{ fontSize: 13 }}>{t('Reject')}</button>}
+                  <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>
+                  <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>
                 </div>
               )
             })}

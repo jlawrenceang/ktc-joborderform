@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AdminShell from './AdminShell'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import { usePermissions } from '../lib/usePermissions'
+import { useT } from '../lib/i18n'
 import adminBody from '../content/manual-admin.md?raw'
 import operationsBody from '../content/manual-operations.md?raw'
 import cashierBody from '../content/manual-cashier.md?raw'
@@ -21,6 +22,7 @@ const GUIDES = [
 
 export default function ManualPage() {
   const { broker } = usePermissions()
+  const { t } = useT()
   const floorGuide = broker?.staff_role === 'cashier' ? 'cashier'
     : broker?.staff_role === 'checker' ? 'checker'
     : broker?.staff_role === 'operations' ? 'operations' : null
@@ -37,11 +39,11 @@ export default function ManualPage() {
             className={`ktc-nav-link${active === g.key ? ' is-active' : ''}`}
             onClick={() => setTab(g.key)}
           >
-            {g.label}
+            {t(g.label)}
           </button>
         ))}
         <span style={{ flex: 1 }} />
-        <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}>🖨️ Print this guide</button>
+        <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => window.print()}>🖨️ {t('Print this guide')}</button>
       </div>
       <div className="ktc-glass" style={{ padding: '30px 32px' }}>
         <MarkdownBody body={guide.body} />

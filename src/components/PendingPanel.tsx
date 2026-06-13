@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import type { Broker } from '../lib/types'
 import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_PHONE_TEL } from '../lib/contact'
@@ -8,6 +9,7 @@ import { prepareUpload } from '../lib/validation'
 //  - rejected  → recoverable: fix details + re-upload ID → resubmit for review.
 //  - suspended → terminal: contact customer service.
 export default function PendingPanel({ broker }: { broker: Broker }) {
+  const { t } = useT()
   const suspended = broker.status === 'suspended'
   const [fullName, setFullName] = useState(broker.full_name ?? '')
   const [contactNumber, setContactNumber] = useState(broker.contact_number ?? '')
@@ -16,9 +18,9 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
   const [error, setError] = useState<string | null>(null)
 
   async function resubmit() {
-    if (!fullName.trim()) return setError('Please enter your full name.')
-    if (!contactNumber.trim()) return setError('Please enter your contact number.')
-    if (!broker.valid_id_path && !file) return setError('Please attach your valid ID.')
+    if (!fullName.trim()) return setError(t('Please enter your full name.'))
+    if (!contactNumber.trim()) return setError(t('Please enter your contact number.'))
+    if (!broker.valid_id_path && !file) return setError(t('Please attach your valid ID.'))
     setBusy(true); setError(null)
     let path = broker.valid_id_path
     if (file) {
@@ -43,17 +45,17 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
   if (suspended) {
     return (
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 className="ktc-title">Account suspended</h1>
+        <h1 className="ktc-title">{t('Account suspended')}</h1>
         <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
-          Your account has been suspended. Please contact KTC customer service for assistance.
+          {t('Your account has been suspended. Please contact KTC customer service for assistance.')}
         </p>
         {broker.decision_reason && (
           <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(0 70% 97%)', border: '1px solid hsl(0 60% 90%)' }}>
-            <b>Reason:</b> {broker.decision_reason}
+            <b>{t('Reason:')}</b> {broker.decision_reason}
           </p>
         )}
         <p className="ktc-label" style={{ marginTop: 14, fontSize: 13 }}>
-          Customer service: <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
+          {t('Customer service:')} <a href={`mailto:${SUPPORT_EMAIL}`} className="ktc-link">{SUPPORT_EMAIL}</a> ·{' '}
           <a href={`tel:${SUPPORT_PHONE_TEL}`} className="ktc-link">{SUPPORT_PHONE}</a>
         </p>
       </div>
@@ -64,31 +66,30 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
   return (
     <div className="ktc-glass" style={{ padding: 28 }}>
       <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(35 90% 90%)', color: 'hsl(30 80% 35%)', letterSpacing: '0.02em' }}>
-        ACTION NEEDED
+        {t('ACTION NEEDED')}
       </span>
-      <h1 style={{ margin: '12px 0 0', fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>Resubmit your details to continue</h1>
+      <h1 style={{ margin: '12px 0 0', fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Resubmit your details to continue')}</h1>
       <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
-        We just need a quick update to finish verifying your account. Please review the note below, update your
-        details, and resubmit — a KTC admin will review it again.
+        {t('We just need a quick update to finish verifying your account. Please review the note below, update your details, and resubmit — a KTC admin will review it again.')}
       </p>
       {broker.decision_reason && (
         <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 82%)' }}>
-          <b>What to update:</b> {broker.decision_reason}
+          <b>{t('What to update:')}</b> {broker.decision_reason}
         </p>
       )}
 
       <div style={{ marginTop: 16, display: 'grid', gap: 12 }}>
         <div style={{ display: 'grid', gap: 6 }}>
-          <label className="ktc-label" htmlFor="rsName" style={{ fontSize: 12, fontWeight: 600 }}>Full name</label>
+          <label className="ktc-label" htmlFor="rsName" style={{ fontSize: 12, fontWeight: 600 }}>{t('Full name')}</label>
           <input id="rsName" className="ktc-input" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div style={{ display: 'grid', gap: 6 }}>
-          <label className="ktc-label" htmlFor="rsPhone" style={{ fontSize: 12, fontWeight: 600 }}>Contact number</label>
+          <label className="ktc-label" htmlFor="rsPhone" style={{ fontSize: 12, fontWeight: 600 }}>{t('Contact number')}</label>
           <input id="rsPhone" className="ktc-input" type="tel" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} />
         </div>
         <div style={{ display: 'grid', gap: 6 }}>
           <label className="ktc-label" htmlFor="rsId" style={{ fontSize: 12, fontWeight: 600 }}>
-            Valid ID (image or PDF){broker.valid_id_path ? ' — re-upload to replace' : ''}
+            {t('Valid ID (image or PDF)')}{broker.valid_id_path ? t(' — re-upload to replace') : ''}
           </label>
           {!file ? (
             <input id="rsId" className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
@@ -103,7 +104,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
-              <button type="button" className="ktc-link" onClick={() => setFile(null)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>Remove</button>
+              <button type="button" className="ktc-link" onClick={() => setFile(null)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Remove')}</button>
             </div>
           )}
         </div>
@@ -112,7 +113,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
       {error && <div style={{ color: 'var(--acc-2)', fontSize: 13, marginTop: 12 }}>{error}</div>}
 
       <button className="ktc-btn" type="button" disabled={busy} onClick={() => void resubmit()} style={{ marginTop: 16, width: '100%' }}>
-        {busy ? 'Resubmitting…' : 'Resubmit for review'}
+        {busy ? t('Resubmitting…') : t('Resubmit for review')}
       </button>
     </div>
   )

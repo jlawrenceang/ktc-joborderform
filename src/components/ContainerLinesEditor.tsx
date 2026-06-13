@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { SERVICE_REQUESTS } from '../lib/types'
 import { useServices } from '../lib/useServices'
+import { useT } from '../lib/i18n'
 
 export interface LineDraft {
   container_number: string
@@ -23,6 +24,7 @@ export default function ContainerLinesEditor({
   lines: LineDraft[]
   onChange: (lines: LineDraft[]) => void
 }) {
+  const { t } = useT()
   const services = useServices()
   const [showBulk, setShowBulk] = useState(false)
   const [bulkText, setBulkText] = useState('')
@@ -62,7 +64,7 @@ export default function ContainerLinesEditor({
   // becomes a row with the chosen service; duplicates (case-insensitive) are skipped.
   function addBulk() {
     const tokens = bulkText.split(/[\s,;]+/).map((t) => t.trim().toUpperCase()).filter(Boolean)
-    if (tokens.length === 0) { setBulkNote('Paste at least one container number first.'); return }
+    if (tokens.length === 0) { setBulkNote(t('Paste at least one container number first.')); return }
     const existing = new Set(lines.map((l) => l.container_number.trim().toUpperCase()).filter(Boolean))
     const added: LineDraft[] = []
     let dupes = 0
@@ -75,18 +77,22 @@ export default function ContainerLinesEditor({
     const base = lines.length === 1 && !lines[0].container_number.trim() ? [] : lines
     onChange([...base, ...added])
     setBulkText('')
-    setBulkNote(`Added ${added.length} container${added.length === 1 ? '' : 's'}${dupes ? `, skipped ${dupes} duplicate${dupes === 1 ? '' : 's'}` : ''}.`)
+    setBulkNote(
+      dupes
+        ? t('Added {n} container(s), skipped {d} duplicate(s).', { n: added.length, d: dupes })
+        : t('Added {n} container(s).', { n: added.length }),
+    )
   }
 
   return (
     <div style={{ display: 'grid', gap: 10 }}>
-      <span className="ktc-label">Container Details</span>
+      <span className="ktc-label">{t('Container Details')}</span>
       {lines.map((line, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             className="ktc-input"
             style={{ flex: '1 1 45%' }}
-            placeholder="Container number (e.g. ABCD1234567)"
+            placeholder={t('Container number (e.g. ABCD1234567)')}
             value={line.container_number}
             onChange={(e) => updateLine(i, { container_number: e.target.value })}
           />
@@ -105,40 +111,40 @@ export default function ContainerLinesEditor({
             className="ktc-link"
             onClick={() => removeLine(i)}
             style={{ opacity: lines.length === 1 ? 0.3 : 1 }}
-            aria-label="Remove row"
+            aria-label={t('Remove row')}
           >
             ✕
           </button>
         </div>
       ))}
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button type="button" className="ktc-link" onClick={addLine}>+ Add container</button>
+        <button type="button" className="ktc-link" onClick={addLine}>{t('+ Add container')}</button>
         <button type="button" className="ktc-link" onClick={() => { setShowBulk((v) => !v); setBulkNote(null) }}>
-          {showBulk ? 'Hide bulk paste' : '⧉ Bulk paste'}
+          {showBulk ? t('Hide bulk paste') : t('⧉ Bulk paste')}
         </button>
       </div>
 
       {showBulk && (
         <div style={{ display: 'grid', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.5)', border: '1px solid var(--glass-brd)' }}>
-          <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>Bulk paste container numbers</span>
+          <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Bulk paste container numbers')}</span>
           <textarea
             className="ktc-input"
             rows={5}
-            placeholder={'One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321'}
+            placeholder={t('One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321')}
             value={bulkText}
             onChange={(e) => setBulkText(e.target.value)}
             style={{ resize: 'vertical', minHeight: 110, fontFamily: 'var(--font-mono)', fontSize: 13 }}
           />
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>Service for all:</label>
+            <label className="ktc-label" htmlFor="bulkSvc" style={{ fontSize: 12 }}>{t('Service for all:')}</label>
             <select id="bulkSvc" className="ktc-input" style={{ width: 'auto', minWidth: 160, flex: '0 1 auto' }} value={bulkService} onChange={(e) => setBulkService(e.target.value)}>
               {optionsFor(bulkService).map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <button type="button" className="ktc-btn" onClick={addBulk} style={{ width: 'auto', padding: '9px 18px' }}>Add to list</button>
+            <button type="button" className="ktc-btn" onClick={addBulk} style={{ width: 'auto', padding: '9px 18px' }}>{t('Add to list')}</button>
           </div>
           {bulkNote && <span className="ktc-label" style={{ fontSize: 12.5, color: 'var(--acc-2)', fontWeight: 600 }}>{bulkNote}</span>}
           <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.7, lineHeight: 1.5 }}>
-            Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.
+            {t("Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.")}
           </span>
         </div>
       )}

@@ -8,8 +8,10 @@ import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/C
 import { searchConsignees } from '../lib/pickerSearches'
 import { usePageTour } from '../components/TourProvider'
 import { jobOrderSteps } from '../components/WelcomeTour'
+import { useT } from '../lib/i18n'
 
 export default function JobOrder() {
+  const { t } = useT()
   const { broker } = useBroker()
   const navigate = useNavigate()
   usePageTour('job-order', jobOrderSteps)
@@ -46,26 +48,26 @@ export default function JobOrder() {
     if (submittingRef.current) return
     setError(null)
     if (!broker) {
-      setError('Customer profile not found.')
+      setError(t('Customer profile not found.'))
       return
     }
     if (!consignee) {
-      setError('Select a consignee from the list.')
+      setError(t('Select a consignee from the list.'))
       return
     }
     // Resolve vessel + voyage (required).
     let vVisit: string | null = null, vName = '', vVoyage = ''
     if (notListed) {
       vName = mVessel.trim(); vVoyage = mVoyage.trim()
-      if (!vName || !vVoyage) { setError('Enter the vessel name and voyage number.'); return }
+      if (!vName || !vVoyage) { setError(t('Enter the vessel name and voyage number.')); return }
     } else {
       const sel = vessels.find((v) => v.vessel_visit === vesselVisit)
-      if (!sel) { setError('Select the vessel & voyage (or tick “not listed”).'); return }
+      if (!sel) { setError(t('Select the vessel & voyage (or tick “not listed”).')); return }
       vVisit = sel.vessel_visit; vName = sel.vessel_name; vVoyage = sel.voyage_number
     }
     const filled = lines.filter((l) => l.container_number.trim())
     if (filled.length === 0) {
-      setError('Add at least one container.')
+      setError(t('Add at least one container.'))
       return
     }
     submittingRef.current = true
@@ -89,7 +91,7 @@ export default function JobOrder() {
     if (joErr || !jo) {
       submittingRef.current = false
       setBusy(false)
-      setError(joErr?.message ?? 'Could not create job order.')
+      setError(joErr?.message ?? t('Could not create job order.'))
       return
     }
     const { error: lineErr } = await supabase.from('job_order_lines').insert(
@@ -113,17 +115,17 @@ export default function JobOrder() {
   return (
     <Shell>
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <h1 className="ktc-title">New Job Order</h1>
+        <h1 className="ktc-title">{t('New Job Order')}</h1>
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
-          For X-ray / DEA / OOG stripping service orders.
+          {t('For X-ray / DEA / OOG stripping service orders.')}
         </p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16 }}>
           <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="consignee">Consignee</label>
+            <label className="ktc-label" htmlFor="consignee">{t('Consignee')}</label>
             <SearchPicker
               inputId="consignee"
-              placeholder="Search consignee by code or name…"
+              placeholder={t('Search consignee by code or name…')}
               selected={consignee}
               onSelect={setConsignee}
               search={searchConsignees}
@@ -131,34 +133,34 @@ export default function JobOrder() {
           </div>
 
           <div style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="entry">Entry Number</label>
+            <label className="ktc-label" htmlFor="entry">{t('Entry Number')}</label>
             <input
               id="entry"
               className="ktc-input"
-              placeholder="e.g. C-0000012345"
+              placeholder={t('e.g. C-0000012345')}
               value={entryNumber}
               onChange={(e) => setEntryNumber(e.target.value)}
             />
           </div>
 
           <div data-tour="jo-vessel" style={{ display: 'grid', gap: 6 }}>
-            <label className="ktc-label" htmlFor="vessel">Vessel &amp; Voyage</label>
+            <label className="ktc-label" htmlFor="vessel">{t('Vessel & Voyage')}</label>
             {!notListed ? (
               <select id="vessel" className="ktc-input" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
-                <option value="">Select a vessel…</option>
+                <option value="">{t('Select a vessel…')}</option>
                 {vessels.map((v) => (
                   <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name} — {v.voyage_number}</option>
                 ))}
               </select>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <input className="ktc-input" placeholder="Vessel name" value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
-                <input className="ktc-input" placeholder="Voyage number" value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
+                <input className="ktc-input" placeholder={t('Vessel name')} value={mVessel} onChange={(e) => setMVessel(e.target.value)} />
+                <input className="ktc-input" placeholder={t('Voyage number')} value={mVoyage} onChange={(e) => setMVoyage(e.target.value)} />
               </div>
             )}
             <label className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <input type="checkbox" checked={notListed} onChange={(e) => setNotListed(e.target.checked)} />
-              My vessel isn’t listed — enter it manually (operations will match it)
+              {t('My vessel isn’t listed — enter it manually (operations will match it)')}
             </label>
           </div>
 
@@ -168,15 +170,15 @@ export default function JobOrder() {
 
           {!approved && (
             <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
-              You can file job orders now, but they <b>can’t be processed until you pass final verification</b>.{' '}
+              {t('You can file job orders now, but they')}{' '}<b>{t('can’t be processed until you pass final verification')}</b>.{' '}
               {hasId
-                ? 'Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.'
-                : 'Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.'}
+                ? t('Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.')
+                : t('Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.')}
             </div>
           )}
 
           <button className="ktc-btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-            {busy ? (approved ? 'Submitting…' : 'Filing…') : approved ? 'Submit Job Order' : 'File Job Order'}
+            {busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
           </button>
         </form>
       </div>

@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
 import { loadPricingConfig, computeCharges, peso, type PricingConfig } from '../lib/pricing'
+import { useT } from '../lib/i18n'
 import type { JobOrder } from '../lib/types'
 
 // Per-JO payment page: fee computation + KTC bank/GCash details + QR +
@@ -15,6 +16,7 @@ import type { JobOrder } from '../lib/types'
 interface PayInfo { key: string; value: string; label: string | null }
 
 export default function Payment() {
+  const { t } = useT()
   const { id } = useParams()
   const { broker } = useBroker()
   const [order, setOrder] = useState<JobOrder | null>(null)
@@ -96,7 +98,7 @@ export default function Payment() {
     return (
       <Shell>
         <div className="ktc-glass" style={{ padding: 28 }}>
-          <p className="ktc-label">Job order not found. <Link to="/job-orders" className="ktc-link">Back to My Job Orders</Link></p>
+          <p className="ktc-label">{t('Job order not found.')} <Link to="/job-orders" className="ktc-link">{t('Back to My Job Orders')}</Link></p>
         </div>
       </Shell>
     )
@@ -114,71 +116,71 @@ export default function Payment() {
     <Shell>
       <div style={{ margin: '14px 4px 20px' }}>
         <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, letterSpacing: '-0.025em' }}>
-          Payment · <span className="ktc-mono">{order.jo_number ?? 'Draft'}</span>
+          {t('Payment')} · <span className="ktc-mono">{order.jo_number ?? t('Draft')}</span>
         </h1>
         <p className="ktc-sub">
           {order.consignee ? `${order.consignee.code} – ${order.consignee.name} · ` : ''}
-          Payment doesn’t block processing — the official Service Invoice is issued at the KTC office.
+          {t('Payment doesn’t block processing — the official Service Invoice is issued at the KTC office.')}
         </p>
       </div>
 
       {clearedForRelease && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
-          ✓ <b>Cleared for release</b> — X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.
+          ✓ <b>{t('Cleared for release')}</b> — {t('X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.')}
         </Notice>
       )}
       {order.service_invoice_no && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
           {order.service_invoice_no.toUpperCase().startsWith('BI')
-            ? `Billed on account — Billing Invoice No. ${order.invoice_pad_no ?? order.service_invoice_no}.`
-            : `Official Receipt No. ${order.invoice_pad_no ?? order.service_invoice_no} recorded at the KTC office.`}
+            ? t('Billed on account — Billing Invoice No. {no}.', { no: order.invoice_pad_no ?? order.service_invoice_no })
+            : t('Official Receipt No. {no} recorded at the KTC office.', { no: order.invoice_pad_no ?? order.service_invoice_no })}
         </Notice>
       )}
 
       {/* Charges */}
       <div className="ktc-glass" style={{ padding: 26, marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>Charges</h2>
+        <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{t('Charges')}</h2>
         {charges && (
           <>
             {charges.hasMissingRates && (
               <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, color: 'hsl(30 70% 36%)' }}>
-                Some rates aren’t configured yet — the total below may be incomplete. KTC will confirm the final amount.
+                {t('Some rates aren’t configured yet — the total below may be incomplete. KTC will confirm the final amount.')}
               </p>
             )}
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12, fontSize: 13.5 }}>
               <tbody>
                 {charges.lines.map((l) => (
                   <tr key={l.service} style={{ borderBottom: '1px solid hsl(var(--line-soft))' }}>
-                    <td style={{ padding: '8px 0' }}>{l.service} <span className="ktc-label" style={{ fontSize: 12 }}>× {l.qty}</span></td>
+                    <td style={{ padding: '8px 0' }}>{t(l.service)} <span className="ktc-label" style={{ fontSize: 12 }}>× {l.qty}</span></td>
                     <td className="ktc-mono" style={{ textAlign: 'right', padding: '8px 0' }}>{l.missingRate ? '—' : peso(l.amount)}</td>
                   </tr>
                 ))}
-                <tr><td style={{ padding: '8px 0' }} className="ktc-label">VAT ({(cfg!.vatRate * 100).toFixed(0)}% of vatable services)</td>
+                <tr><td style={{ padding: '8px 0' }} className="ktc-label">{t('VAT ({pct}% of vatable services)', { pct: (cfg!.vatRate * 100).toFixed(0) })}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right' }}>{peso(charges.vat)}</td></tr>
-                <tr><td style={{ padding: '8px 0' }} className="ktc-label">Admin / service fee</td>
+                <tr><td style={{ padding: '8px 0' }} className="ktc-label">{t('Admin / service fee')}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right' }}>{peso(charges.adminFee)}</td></tr>
                 <tr style={{ borderBottom: '1px solid hsl(var(--line-soft))' }}>
-                  <td style={{ padding: '8px 0' }} className="ktc-label">Print fee</td>
+                  <td style={{ padding: '8px 0' }} className="ktc-label">{t('Print fee')}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right' }}>{peso(charges.printFee)}</td></tr>
                 <tr>
-                  <td style={{ padding: '10px 0', fontWeight: 700, fontSize: 15 }}>Total</td>
+                  <td style={{ padding: '10px 0', fontWeight: 700, fontSize: 15 }}>{t('Total')}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16 }}>{peso(breakdown?.total ?? charges.total)}</td>
                 </tr>
                 {(breakdown?.paid ?? 0) > 0 && (
-                  <tr><td style={{ padding: '6px 0' }} className="ktc-label">Paid</td>
+                  <tr><td style={{ padding: '6px 0' }} className="ktc-label">{t('Paid')}</td>
                     <td className="ktc-mono" style={{ textAlign: 'right', color: 'hsl(150 60% 30%)' }}>− {peso(breakdown!.paid)}</td></tr>
                 )}
                 <tr style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
-                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{fullySettled ? 'Balance' : 'Balance due'}</td>
+                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{fullySettled ? t('Balance') : t('Balance due')}</td>
                   <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: fullySettled ? 'hsl(150 60% 30%)' : 'var(--acc-2)' }}>
-                    {fullySettled ? 'PAID' : peso(breakdown?.balance ?? charges.total)}
+                    {fullySettled ? t('PAID') : peso(breakdown?.balance ?? charges.total)}
                   </td>
                 </tr>
               </tbody>
             </table>
             {rpsDue && (
               <p className="ktc-label" style={{ fontSize: 12, marginTop: 10 }}>
-                Includes <b>port-services (RPS)</b> assessed by operations — payable separately below.
+                {t('Includes')} <b>{t('port-services (RPS)')}</b> {t('assessed by operations — payable separately below.')}
               </p>
             )}
           </>
@@ -190,14 +192,14 @@ export default function Payment() {
           {/* How to pay (shared) */}
           <div className="ktc-glass" style={{ padding: 26, marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-              <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>How to pay</h2>
+              <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{t('How to pay')}</h2>
               <div style={{ display: 'grid', gap: 6, marginTop: 12, fontSize: 13.5 }}>
-                {info.get('bank_name') && <div><span className="ktc-label">Bank:</span> <b>{info.get('bank_name')}</b></div>}
-                {info.get('account_name') && <div><span className="ktc-label">Account name:</span> <b>{info.get('account_name')}</b></div>}
-                {info.get('account_number') && <div><span className="ktc-label">Account no.:</span> <b className="ktc-mono">{info.get('account_number')}</b></div>}
-                {info.get('gcash_number') && <div><span className="ktc-label">GCash:</span> <b className="ktc-mono">{info.get('gcash_number')}</b></div>}
+                {info.get('bank_name') && <div><span className="ktc-label">{t('Bank:')}</span> <b>{info.get('bank_name')}</b></div>}
+                {info.get('account_name') && <div><span className="ktc-label">{t('Account name:')}</span> <b>{info.get('account_name')}</b></div>}
+                {info.get('account_number') && <div><span className="ktc-label">{t('Account no.:')}</span> <b className="ktc-mono">{info.get('account_number')}</b></div>}
+                {info.get('gcash_number') && <div><span className="ktc-label">{t('GCash:')}</span> <b className="ktc-mono">{info.get('gcash_number')}</b></div>}
                 {!info.get('bank_name') && !info.get('gcash_number') && (
-                  <span className="ktc-label">Payment details will be posted here soon — or pay directly at the KTC cashier.</span>
+                  <span className="ktc-label">{t('Payment details will be posted here soon — or pay directly at the KTC cashier.')}</span>
                 )}
               </div>
               {info.get('instructions') && (
@@ -206,8 +208,8 @@ export default function Payment() {
             </div>
             {qrUrl && (
               <div style={{ flex: '0 0 auto', textAlign: 'center' }}>
-                <img src={qrUrl} alt="Payment QR code" style={{ width: 168, height: 168, objectFit: 'contain', borderRadius: 14, background: '#fff', border: '1px solid var(--glass-brd)', boxShadow: 'var(--shadow-sm)' }} />
-                <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 6 }}>Scan to pay</div>
+                <img src={qrUrl} alt={t('Payment QR code')} style={{ width: 168, height: 168, objectFit: 'contain', borderRadius: 14, background: '#fff', border: '1px solid var(--glass-brd)', boxShadow: 'var(--shadow-sm)' }} />
+                <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 6 }}>{t('Scan to pay')}</div>
               </div>
             )}
           </div>
@@ -215,7 +217,7 @@ export default function Payment() {
           {error && <Notice tone="error" style={{ marginBottom: 16 }}>{error}</Notice>}
 
           <PaySection
-            title="X-ray charges"
+            title={t('X-ray charges')}
             amount={breakdown?.baseTotal ?? 0}
             status={baseConfirmed ? 'confirmed' : (order.payment_status ?? 'unpaid')}
             note={order.payment_note ?? null}
@@ -228,7 +230,7 @@ export default function Payment() {
 
           {rpsDue && (
             <PaySection
-              title="Port-services (RPS) charges"
+              title={t('Port-services (RPS) charges')}
               amount={breakdown?.rpsAmount ?? 0}
               status={rpsConfirmed ? 'confirmed' : (order.rps_payment_status ?? 'unpaid')}
               note={order.rps_payment_note ?? null}
@@ -243,7 +245,7 @@ export default function Payment() {
       )}
 
       <p style={{ marginTop: 18 }}>
-        <Link to="/job-orders" className="ktc-link" style={{ fontSize: 13 }}>← Back to My Job Orders</Link>
+        <Link to="/job-orders" className="ktc-link" style={{ fontSize: 13 }}>← {t('Back to My Job Orders')}</Link>
       </p>
     </Shell>
   )
@@ -260,6 +262,7 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
   onSubmit: () => void
   busy: boolean
 }) {
+  const { t } = useT()
   return (
     <div className="ktc-glass" style={{ padding: 26, marginBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
@@ -267,18 +270,18 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
         <span className="ktc-mono" style={{ fontWeight: 700, fontSize: 15 }}>{peso(amount)}</span>
       </div>
       {status === 'confirmed' ? (
-        <Notice tone="success" style={{ marginTop: 12 }}>✓ Confirmed by KTC.</Notice>
+        <Notice tone="success" style={{ marginTop: 12 }}>✓ {t('Confirmed by KTC.')}</Notice>
       ) : status === 'submitted' ? (
         <Notice tone="info" style={{ marginTop: 12 }}>
-          Your proof is with KTC for review{submittedAt ? ` (sent ${new Date(submittedAt).toLocaleString()})` : ''}. You’ll see the result here.
+          {t('Your proof is with KTC for review')}{submittedAt ? ` ${t('(sent {when})', { when: new Date(submittedAt).toLocaleString() })}` : ''}. {t('You’ll see the result here.')}
         </Notice>
       ) : (
         <>
           {status === 'rejected' && (
-            <Notice tone="error" style={{ marginTop: 12 }}>Your proof wasn’t accepted{note ? <>: <b>{note}</b></> : ''}. Please re-upload a corrected slip.</Notice>
+            <Notice tone="error" style={{ marginTop: 12 }}>{t('Your proof wasn’t accepted')}{note ? <>: <b>{note}</b></> : ''}. {t('Please re-upload a corrected slip.')}</Notice>
           )}
           <p className="ktc-label" style={{ fontSize: 13, marginTop: 10 }}>
-            Upload a clear photo or PDF of the deposit / transfer / GCash receipt.
+            {t('Upload a clear photo or PDF of the deposit / transfer / GCash receipt.')}
           </p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
             {!file ? (
@@ -287,8 +290,8 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
             ) : (
               <>
                 <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {file.name}</span>
-                <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={onSubmit}>{busy ? 'Sending…' : 'Submit to KTC'}</button>
-                <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>Remove</button>
+                <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={onSubmit}>{busy ? t('Sending…') : t('Submit to KTC')}</button>
+                <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>{t('Remove')}</button>
               </>
             )}
           </div>

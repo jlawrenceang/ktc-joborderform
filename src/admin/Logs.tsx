@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
+import { useT } from '../lib/i18n'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { joEventLabel, SECURITY_EVENT_LABEL } from '../lib/eventLabels'
 import type { JobOrderEvent } from '../lib/types'
@@ -30,6 +31,7 @@ interface Row {
 }
 
 export default function Logs() {
+  const { t } = useT()
   const { broker } = useBroker()
   const isOwner = !!broker?.is_owner
   const [cat, setCat] = useState<Cat>('orders')
@@ -93,7 +95,7 @@ export default function Logs() {
       out = ((data ?? []) as { id: number; kind: string; label: string | null; status_code: number | null; error_msg: string | null; created_at: string }[]).map((e) => ({
         id: String(e.id), at: e.created_at, actor: null,
         title: `${e.kind === 'email' ? '✉️' : '⇄'} ${e.label ?? e.kind}`,
-        sub: e.error_msg ?? (e.status_code ? `HTTP ${e.status_code}` : 'pending'),
+        sub: e.error_msg ?? (e.status_code ? `HTTP ${e.status_code}` : t('pending')),
         tone: e.error_msg || (e.status_code ?? 0) >= 400 ? 'danger' : undefined,
       }))
     }
@@ -128,10 +130,10 @@ export default function Logs() {
     <AdminShell>
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.026em' }}>Activity Log</h1>
-          <p className="ktc-sub">Everything the portal records — who did what, and when.</p>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: '-0.026em' }}>{t('Activity Log')}</h1>
+          <p className="ktc-sub">{t('Everything the portal records — who did what, and when.')}</p>
         </div>
-        <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling}>↻ Refresh</button>
+        <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={refresh} disabled={cooling}>{t('↻ Refresh')}</button>
       </div>
 
       <div className="ktc-glass" style={{ padding: 22 }}>
@@ -140,10 +142,10 @@ export default function Logs() {
             <button key={c.key} type="button"
               className={`ktc-nav-link${cat === c.key ? ' is-active' : ''}`}
               onClick={() => changeCat(c.key)} style={{ fontSize: 12.5 }}>
-              {c.label}
+              {t(c.label)}
             </button>
           ))}
-          {!loading && <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto', alignSelf: 'center' }}>{total} event{total === 1 ? '' : 's'}</span>}
+          {!loading && <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto', alignSelf: 'center' }}>{t('{n} event(s)', { n: total })}</span>}
         </div>
 
         {loading ? (
@@ -152,7 +154,7 @@ export default function Logs() {
           </div>
         ) : rows.length === 0 ? (
           <span className="ktc-label" style={{ fontSize: 14 }}>
-            {cat === 'security' ? 'No security events. 🎉' : cat === 'errors' ? 'No client errors recorded. 🎉' : 'Nothing here yet.'}
+            {cat === 'security' ? t('No security events. 🎉') : cat === 'errors' ? t('No client errors recorded. 🎉') : t('Nothing here yet.')}
           </span>
         ) : (
           <div style={{ display: 'grid', gap: 6 }}>
@@ -176,9 +178,9 @@ export default function Logs() {
 
         {total > PAGE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, justifyContent: 'center' }}>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>← Prev</button>
-            <span className="ktc-label" style={{ fontSize: 12.5 }}>{page * PAGE + 1}–{Math.min((page + 1) * PAGE, total)} of {total}</span>
-            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>Next →</button>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={page === 0} onClick={() => changePage(page - 1)}>{t('← Prev')}</button>
+            <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('{from}–{to} of {total}', { from: page * PAGE + 1, to: Math.min((page + 1) * PAGE, total), total })}</span>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={(page + 1) * PAGE >= total} onClick={() => changePage(page + 1)}>{t('Next →')}</button>
           </div>
         )}
       </div>

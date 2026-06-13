@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { useT } from '../lib/i18n'
 
 // The fields BrokerReview needs — satisfied by both the Approvals query row and
 // the full Broker type.
@@ -26,6 +27,7 @@ const pill = (bg: string, fg: string): CSSProperties => ({
 // present, amber ⚠ when missing. An approved customer's ID is deleted after review
 // (DPA), so we show "✓ ID verified" rather than a "no ID" warning.
 export function BrokerReview({ b }: { b: ReviewBroker }) {
+  const { t } = useT()
   const ok = pill('hsl(150 50% 93%)', 'hsl(150 60% 30%)')
   const warn = pill('hsl(0 70% 95%)', 'hsl(0 65% 45%)')
   const terms = fmtDate(b.terms_accepted_at)
@@ -34,11 +36,11 @@ export function BrokerReview({ b }: { b: ReviewBroker }) {
   const idVerified = !b.valid_id_path && b.status === 'approved'
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-      <span style={confirmed ? ok : warn}>{confirmed ? `✓ Email confirmed ${confirmed}` : '⚠ Email not confirmed'}</span>
+      <span style={confirmed ? ok : warn}>{confirmed ? t('✓ Email confirmed {date}', { date: confirmed }) : t('⚠ Email not confirmed')}</span>
       <span style={b.valid_id_path || idVerified ? ok : warn}>
-        {b.valid_id_path ? '✓ Valid ID on file' : idVerified ? '✓ ID verified' : '⚠ No valid ID'}
+        {b.valid_id_path ? t('✓ Valid ID on file') : idVerified ? t('✓ ID verified') : t('⚠ No valid ID')}
       </span>
-      <span style={terms || dpa ? ok : warn}>{(terms || dpa) ? `✓ Terms & DPA ${terms || dpa}` : '⚠ Agreement not accepted'}</span>
+      <span style={terms || dpa ? ok : warn}>{(terms || dpa) ? t('✓ Terms & DPA {date}', { date: terms || dpa || '' }) : t('⚠ Agreement not accepted')}</span>
     </div>
   )
 }
