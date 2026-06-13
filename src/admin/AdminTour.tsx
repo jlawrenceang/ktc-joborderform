@@ -1,126 +1,62 @@
 import { type TourStep } from '../components/Tour'
-import type { Broker } from '../lib/types'
 
-// Per-role staff walkthrough steps (launched via useTour().startTour from
-// AdminShell). Each step navigates to its page and spotlights the nav link;
-// returns to the role's home. Dismissal is remembered per browser, per role.
+// Per-page staff tours — each admin page calls usePageTour(key, steps). Steps
+// spotlight elements on that page (no cross-page navigation). Role permissions
+// already decide which pages a role can reach, so the page tours are generic.
 
-export type StaffTourRole = 'admin' | 'operations' | 'cashier' | 'checker'
-
-export function staffTourRole(b: Pick<Broker, 'staff_role' | 'is_admin' | 'is_owner'> | null | undefined): StaffTourRole | null {
-  if (!b) return null
-  if (b.staff_role === 'operations') return 'operations'
-  if (b.staff_role === 'cashier') return 'cashier'
-  if (b.staff_role === 'checker') return 'checker'
-  if (b.is_admin || b.is_owner) return 'admin'
-  return null
-}
-
-export function staffTourHome(role: StaffTourRole): string {
-  if (role === 'cashier') return '/admin/job-orders'
-  if (role === 'operations' || role === 'checker') return '/admin/checker'
-  return '/admin'
-}
-
-const ADMIN_STEPS: TourStep[] = [
+export const dashboardSteps: TourStep[] = [
   {
     icon: '🧭', title: 'Welcome to the KTC admin portal',
-    body: 'The Dashboard is your live overview. Let\'s walk through the tiles — each is a live count that links straight to where the work happens.',
+    body: 'The Dashboard is your live overview. Each tile is a live count that links straight to where the work happens — here\'s what they mean.',
   },
   {
-    icon: '✅', title: 'Accounts awaiting approval', to: '/admin', target: '[data-tour="dash-pendingAccounts"]',
-    body: 'New customers who confirmed their email and need verifying. A ring/dot means work is waiting — tap it to open Approvals, view their valid ID, and approve or reject.',
+    icon: '✅', title: 'Accounts awaiting approval', target: '[data-tour="dash-pendingAccounts"]',
+    body: 'New customers who confirmed their email and need verifying. A ring/dot means work is waiting — tap to open Approvals, view their ID, and approve or reject.',
   },
   {
-    icon: '🏷️', title: 'Consignees pending', to: '/admin', target: '[data-tour="dash-pendingConsignees"]',
-    body: 'Consignees added but not yet approved. Tap to review and approve them so they\'re selectable when customers file job orders.',
+    icon: '🏷️', title: 'Consignees pending', target: '[data-tour="dash-pendingConsignees"]',
+    body: 'Consignees added but not yet approved. Tap to review and approve them so they\'re selectable when customers file.',
   },
   {
-    icon: '👥', title: 'Customers', to: '/admin', target: '[data-tour="dash-brokers"]',
-    body: 'Your accredited customers (customs brokers). Tap to search, open a customer\'s detail, or suspend / reinstate an account.',
+    icon: '👥', title: 'Customers', target: '[data-tour="dash-brokers"]',
+    body: 'Your accredited customers. Tap to search, open a customer\'s detail, or suspend / reinstate an account.',
   },
   {
-    icon: '🏗️', title: 'Consignees', to: '/admin', target: '[data-tour="dash-consignees"]',
-    body: 'The full consignee master list customers pick from when filing. Tap to add, edit, or bulk-import consignees.',
+    icon: '🏗️', title: 'Consignees', target: '[data-tour="dash-consignees"]',
+    body: 'The full consignee master list customers pick from. Tap to add, edit, or bulk-import.',
   },
   {
-    icon: '📦', title: 'Open job orders', to: '/admin', target: '[data-tour="dash-jobOrders"]',
-    body: 'The live queue — submitted, processing, and on-hold orders. Tap to open the working queue where the day-to-day happens.',
-  },
-  {
-    icon: '⚙️', title: 'Process & get paid', to: '/admin/job-orders', target: '[data-tour="navgroup-jobs"]',
-    body: 'In the queue you tick each service ✓ as it\'s done, hold or reject with a note, confirm X-ray and RPS payments separately, and record the ERP invoice (OR = PAID / BI = BILLED). 🕘 shows the full history.',
-  },
-  {
-    icon: '📝', title: 'File on behalf', to: '/admin/new-job-order', target: '[data-tour="navgroup-jobs"]',
-    body: 'New JO files a job order for a walk-in customer — straight to submitted with a serving number; History records you as the filer.',
-  },
-  {
-    icon: '🛡️', title: 'Settings, logs & security', to: '/admin/settings', target: '[data-tour="navgroup-system"]',
-    body: 'Rates & fees, free-days, RPS move rates, payment details, staff & role gates. Logs shows every event; enroll 2FA in the 2FA tab. Sessions time out after 60 idle minutes.',
+    icon: '📦', title: 'Open job orders', target: '[data-tour="dash-jobOrders"]',
+    body: 'The live queue — submitted, processing, and on-hold orders. Tap to open the working queue. Most of the day-to-day lives there: process orders, confirm payments, record invoices.',
   },
 ]
 
-const OPERATIONS_STEPS: TourStep[] = [
+export const checkerSteps: TourStep[] = [
   {
-    icon: '👋', title: 'Welcome — operations',
-    body: 'You land on the X-ray Checker queue. Your three jobs: assess each order for X-ray / port-services, confirm the X-ray is done, and keep the vessel schedule current. This tour walks each one.',
+    icon: '🩻', title: 'X-ray Checker station',
+    body: 'Your queue of orders waiting for X-ray, sorted by line number, with the "Now serving" strip on top.',
   },
   {
-    icon: '🧪', title: '1 · Assess each order (RPS)', to: '/admin/checker',
-    body: 'On an order card, tap Assess RPS: choose "No RPS needed" for a plain X-ray, or — if it needs port-services moves (lift on, trucking, shifting, stripping, stuffing) — enter the move counts from the RPS and Save. Those bill per move. Most orders need none.',
+    icon: '🔎', title: 'Look up a container',
+    body: 'Type a container or JO number to check a box: NOT CLEARED · X-ray pending means it\'s waiting; CLEARED shows when it passed. Use it when a trucker asks.',
   },
   {
-    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker',
-    body: 'When a container passes the X-ray, hit Confirm — it stamps the date/time and the order leaves your queue. Look up any container or JO number to answer "is this box cleared?"',
+    icon: '✅', title: 'Confirm X-ray done',
+    body: 'When a container passes the X-ray, hit Confirm on its card — it stamps the date/time and the order leaves your queue (completing once its other services are done).',
   },
   {
-    icon: '🚢', title: '3 · Keep vessels current', to: '/admin/vessel-schedule', target: 'a[href="/admin/vessel-schedule"]',
-    body: 'The Vessels tab is yours: add or CSV-import calls (Last Free Day computes itself, past calls drop off). Customers can only file against current vessels. 📸 Snapshot shares the active list to your Viber group.',
-  },
-]
-
-const CASHIER_STEPS: TourStep[] = [
-  {
-    icon: '👋', title: 'Welcome — cashier station',
-    body: 'You land on the Job Orders queue — your whole workspace. This tour shows the two jobs you\'ll do all day (about 30 seconds).',
-  },
-  {
-    icon: '🧾', title: '1 · Review payment proofs', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
-    body: 'Orders with "X-ray payment to review" / "RPS payment to review" carry an uploaded slip. Open it, check the amount, then Confirm — or Reject with a short note; the customer is emailed and can re-upload.',
-  },
-  {
-    icon: '🔢', title: '2 · Record the Service Invoice', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
-    body: 'When the ERP issues the invoice, record both numbers on the completed order: the control no. (OR-INV / BI-INV) and the printed pad serial. OR = PAID, BI = BILLED.',
-  },
-  {
-    icon: '🔐', title: 'Your session',
-    body: 'The station signs out after 60 idle minutes — a "still there?" prompt appears a minute early. Each account has one active session. The Manual tab has the full cashier guide.',
+    icon: '🧪', title: 'Assess RPS (operations)',
+    body: 'If an order needs port-services moves (DEA / inspection), use Assess RPS on its card to record the moves — they bill per move on top of the base. Most orders need none.',
   },
 ]
 
-const CHECKER_STEPS: TourStep[] = [
+export const vesselSteps: TourStep[] = [
   {
-    icon: '👋', title: 'Welcome — X-ray checker station',
-    body: 'You land on the X-ray Checker queue: orders waiting for X-ray, sorted by line number, with the "Now serving" strip on top.',
+    icon: '🚢', title: 'Vessel schedule',
+    body: 'The calls customers file against. Add one with the form, or bulk-update from your sheet with ⬇ Template then ⬆ Import (matched by vessel-visit, so re-importing updates rather than duplicates).',
   },
   {
-    icon: '🔎', title: '1 · Look up a container', to: '/admin/checker',
-    body: 'Type a container number to see its card: NOT CLEARED · X-ray pending means it\'s waiting; CLEARED shows the date and time it passed. Use this when a trucker asks about a box.',
-  },
-  {
-    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker',
-    body: 'When a container passes the X-ray, hit Confirm — it stamps the date/time, the order leaves your queue, and completes once its other services (if any) are done too.',
-  },
-  {
-    icon: '🔐', title: 'Your session',
-    body: 'The tablet signs out after 60 idle minutes — a "still there?" prompt shows up a minute early. Each account has one active session. The Manual tab has the full guide.',
+    icon: '📸', title: 'Last free day & sharing',
+    body: 'Last Free Day computes itself (finish discharging + the line\'s free-days), and past calls drop off automatically. Tap 📸 Snapshot to share the active vessels straight to your Viber group, and switch to the Calendar view for arrivals by month.',
   },
 ]
-
-export const staffSteps: Record<StaffTourRole, TourStep[]> = {
-  admin: ADMIN_STEPS,
-  operations: OPERATIONS_STEPS,
-  cashier: CASHIER_STEPS,
-  checker: CHECKER_STEPS,
-}

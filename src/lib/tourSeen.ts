@@ -1,16 +1,15 @@
 import { supabase } from './supabase'
 
-// "Tour seen" is durable per ACCOUNT — customers.tour_seen, set by the
-// mark_tour_seen RPC (migration 0065). A per-session flag also stops the tour
-// re-opening on page remounts within one session (the DB flag only reflects on
-// the next load).
-const SESSION_KEY = 'ktc_tour_shown'
+// Per-PAGE "tour seen" — durable per account (customers.tours_seen, appended by
+// the mark_tour_seen RPC, migration 0066). A per-session flag also stops a
+// page tour re-opening on remounts within one session.
+const sessionKey = (page: string) => `ktc_tour_shown_${page}`
 
-export function tourShownThisSession(): boolean {
-  try { return sessionStorage.getItem(SESSION_KEY) === '1' } catch { return false }
+export function pageTourShownThisSession(page: string): boolean {
+  try { return sessionStorage.getItem(sessionKey(page)) === '1' } catch { return false }
 }
 
-export function markTourSeen() {
-  try { sessionStorage.setItem(SESSION_KEY, '1') } catch { /* ignore */ }
-  void supabase.rpc('mark_tour_seen')
+export function markPageTourSeen(page: string) {
+  try { sessionStorage.setItem(sessionKey(page), '1') } catch { /* ignore */ }
+  void supabase.rpc('mark_tour_seen', { p_page: page })
 }

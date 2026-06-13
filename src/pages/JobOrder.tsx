@@ -6,10 +6,13 @@ import { useBroker } from '../lib/useBroker'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees } from '../lib/pickerSearches'
+import { usePageTour } from '../components/TourProvider'
+import { jobOrderSteps } from '../components/WelcomeTour'
 
 export default function JobOrder() {
   const { broker } = useBroker()
   const navigate = useNavigate()
+  usePageTour('job-order', jobOrderSteps)
 
   // Consignee picker — searchable typeahead over the full master list.
   // (No per-broker accreditation gate: any registered broker can pick any consignee.)

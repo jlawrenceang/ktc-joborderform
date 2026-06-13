@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
+import { usePageTour } from '../components/TourProvider'
+import { dashboardSteps } from './AdminTour'
 
 // External customers only — staff/admin/owner accounts are not "customers".
 function customers() {
@@ -35,6 +37,7 @@ const cards: { key: keyof Stats; label: string; to: string; icon: ReactNode; acc
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
+  usePageTour('dashboard', dashboardSteps)
 
   useEffect(() => {
     Promise.all([

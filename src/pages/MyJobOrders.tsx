@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import NowServing from '../components/NowServing'
 import { SERVICE_LINE_LABEL, type JobOrder } from '../lib/types'
+import { usePageTour } from '../components/TourProvider'
+import { myJobOrdersSteps } from '../components/WelcomeTour'
 
 const STATUS_LABEL: Record<string, string> = {
   held: 'Pending approval',
@@ -99,6 +101,7 @@ function ResubmitForm({ order, kind, onDone, onError }: {
 }
 
 export default function MyJobOrders() {
+  usePageTour('job-orders', myJobOrdersSteps)
   const [orders, setOrders] = useState<JobOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState<Set<string>>(new Set())

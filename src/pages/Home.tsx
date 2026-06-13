@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom'
-import { useEffect, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import Shell from '../components/Shell'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
-import { customerSteps } from '../components/WelcomeTour'
-import { tourShownThisSession, markTourSeen } from '../lib/tourSeen'
-import { useTour } from '../components/TourProvider'
+import { homeSteps } from '../components/WelcomeTour'
+import { usePageTour, useTour } from '../components/TourProvider'
 
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
@@ -34,12 +33,9 @@ export default function Home() {
   const { broker } = useBroker()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
-  // First visit → guided tour (re-openable from the link below the welcome).
-  const { startTour, active } = useTour()
-  function openTour() { startTour({ steps: customerSteps, home: '/', label: 'customer tour' }) }
-  useEffect(() => {
-    if (broker && !broker.tour_seen && !tourShownThisSession() && !active) { markTourSeen(); openTour() }
-  }, [broker]) // eslint-disable-line react-hooks/exhaustive-deps
+  // First visit to Home auto-opens its tour; "Quick tour" replays it.
+  usePageTour('home', homeSteps)
+  const { replayPageTour } = useTour()
 
   return (
     <Shell>
@@ -56,7 +52,7 @@ export default function Home() {
         </div>
         <p className="ktc-sub" style={{ maxWidth: 480 }}>
           File job orders for terminal services and track them through processing.{' '}
-          <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={openTour}>
+          <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={replayPageTour}>
             Quick tour ▸
           </button>
         </p>

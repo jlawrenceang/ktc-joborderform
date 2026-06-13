@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
+import { usePageTour } from '../components/TourProvider'
+import { vesselSteps } from './AdminTour'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
 // Reads vessel_schedule_v: last_free_day + is_current are computed server-side
@@ -76,6 +78,7 @@ function friendly(err: unknown): string {
 }
 
 export default function VesselSchedule() {
+  usePageTour('vessels', vesselSteps)
   const [rows, setRows] = useState<VesselRow[]>([])
   const [lines, setLines] = useState<string[]>([])
   const [loading, setLoading] = useState(true)

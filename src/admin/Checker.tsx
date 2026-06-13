@@ -5,6 +5,8 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
 import NowServing from '../components/NowServing'
 import type { ServingNumber } from '../lib/types'
+import { usePageTour } from '../components/TourProvider'
+import { checkerSteps } from './AdminTour'
 
 // X-ray checker station (tablet-first, big touch targets).
 //  * Queue: open orders with an X-ray service line, oldest first.
@@ -55,6 +57,7 @@ function Clearance({ o }: { o: CheckerOrder }) {
 
 export default function Checker() {
   const { can } = usePermissions()
+  usePageTour('checker', checkerSteps)
   const [queue, setQueue] = useState<CheckerOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
