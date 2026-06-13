@@ -8,7 +8,8 @@ import { supabase } from './supabase'
 // still comes from the ERP at the cashier.
 
 export interface RateRow { service: string; rate: number; unit: string; vatable: boolean; active: boolean }
-export interface PricingConfig { rates: RateRow[]; vatRate: number; adminFee: number; printFee: number }
+export interface MoveRate { move_type: string; rate: number }
+export interface PricingConfig { rates: RateRow[]; moveRates: MoveRate[]; vatRate: number; adminFee: number; printFee: number }
 
 export interface ChargeLine { service: string; qty: number; rate: number; amount: number; vatable: boolean; missingRate: boolean }
 export interface Charges {
@@ -23,21 +24,26 @@ export interface Charges {
 }
 
 export async function loadPricingConfig(): Promise<PricingConfig> {
-  const [{ data: r }, { data: s }] = await Promise.all([
+  const [{ data: r }, { data: s }, { data: m }] = await Promise.all([
     supabase.from('service_rates').select('service, rate, unit, vatable, active'),
     supabase.from('pricing_settings').select('key, value'),
+    supabase.from('move_rates').select('move_type, rate'),
   ])
   const settings = new Map(((s ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))
   return {
     rates: ((r ?? []) as RateRow[]).map((x) => ({ ...x, rate: Number(x.rate) })),
+    moveRates: ((m ?? []) as MoveRate[]).map((x) => ({ ...x, rate: Number(x.rate) })),
     vatRate: settings.get('vat_rate') ?? 0.12,
     adminFee: settings.get('admin_fee') ?? 0,
     printFee: settings.get('print_fee') ?? 0,
   }
 }
 
-/** counts: service label → number of containers requesting it. */
-export function computeCharges(counts: Map<string, number>, cfg: PricingConfig): Charges {
+/**
+ * counts: service label → number of containers requesting it.
+ * moves (optional): RPS move type → number of moves (per-move charges, VATable).
+ */
+export function computeCharges(counts: Map<string, number>, cfg: PricingConfig, moves?: Map<string, number>): Charges {
   const lines: ChargeLine[] = []
   let subtotal = 0
   let vatableBase = 0
@@ -49,6 +55,15 @@ export function computeCharges(counts: Map<string, number>, cfg: PricingConfig):
     lines.push({ service, qty, rate: unit, amount, vatable: rate?.vatable ?? true, missingRate: !rate || rate.rate <= 0 })
     subtotal += amount
     if (rate?.vatable ?? true) vatableBase += amount
+  }
+  if (moves) for (const [moveType, qty] of moves) {
+    if (qty <= 0) continue
+    const mr = cfg.moveRates.find((m) => m.move_type === moveType)
+    const unit = mr?.rate ?? 0
+    const amount = unit * qty
+    lines.push({ service: `${moveType} (RPS move)`, qty, rate: unit, amount, vatable: true, missingRate: !mr || unit <= 0 })
+    subtotal += amount
+    vatableBase += amount // RPS moves are VATable
   }
   const vat = vatableBase * cfg.vatRate
   const total = subtotal + vat + cfg.adminFee + cfg.printFee

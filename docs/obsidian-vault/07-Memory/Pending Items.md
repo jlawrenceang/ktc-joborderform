@@ -21,11 +21,19 @@ Detailed backlog. For sequencing, see [[Roadmap]]. (Pre-v1.1.0 completed items m
 - [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered customers.
 - [ ] Public-launch call (remove the prod-testing restriction).
 
+## JO modernization + port-services billing (from real KTC forms, 2026-06-13)
+
+*Grounded in `docs/reference/` (X-ray JO, RPS, Service Invoice samples). Owner decisions captured there.*
+
+- [ ] **New staff role: `operations`** (the ops floor — was anticipated as the "employee role distinct from admin"). Maintains the **vessel schedule** and acts as **assessor** (assess RPS need → upload + moves entry); files/processes JOs. Roles are data-driven (`role_permissions` matrix + `has_permission`), so this is: a migration to extend the `customers_staff_role_check` constraint (`admin`/`cashier`/`checker` → + `operations`) + matrix rows + Settings role dropdown + role badge/landing + operations manual/tour. Proposed scope: view/file/process JOs, manage consignees + vessel schedule, **assess_rps** — **no** payments/invoice/approvals/customers/pricing/settings/security. New permissions to add with the features: `manage_vessel_schedule`, `assess_rps`. *(Open: is "assessor" folded into operations, or its own role for separation of duties?)*
+- [ ] **Vessel schedule + JO vessel/voyage dropdown.** New `vessel_schedule` table modeled on the real KTC schedule (`docs/reference/vessel-schedule-sample.jpg`): **vessel_name, voyage_number, vessel_visit** (call code e.g. `26RUH02` — natural key + seed of the TOS vessel-call entity), **actual_arrival, finish_discharging, last_free_day** (the storage/demurrage clock), **berth**, + status & remarks. Admin CRUD (RLS read=auth / write=`manage_vessel_schedule`); JO form replaces free-text with a picker of **current** vessel/voyage. **Anti-bottleneck:** derive "current" from dates (`last_free_day >= today`) so ops don't manually close every vessel, **+ a "vessel not listed → request it" escape hatch** so a missing entry never blocks filing. First concrete step toward the TOS vessel module ([[Terminal & Depot Operating System (North Star)]]; supersedes the old [[Vessel Schedule Monitoring]] idea). *(No packages/cargo-nature/gross-weight — owner dropped those.)*
+- [ ] **RPS = assessment-driven per-move billing (not customer-selected).** Model (owner 2026-06-13): **every JO queues immediately** (serving number, base charge known) → an **assessor** (operations) assesses *does it need RPS?* → if yes, upload the RPS (reuse valid-ID/payment-proof upload+review) + enter **moves per move-type** → per-move charges (VATable) **added** to the base → final total = base + RPS. New `move_rates` config (move-type + rate, like `service_rates`), seeded from the Service Invoice (Shifting ₱950.86, Trucking ₱1,000, Lift On ₱730.83, + Stripping/Stuffing TBD). Needs an assessment state (`rps_status`: not-assessed / not-needed / needed) + assessor UI; feeds the charge/payment computation. **Open: payment timing** — (i) pay base now, RPS added/settled later *(recommended, since RPS is rare)*, or (ii) finalize total after assessment, pay once.
+- [ ] Combined **X-Ray + DEA** = ₱2,918 (X-Ray flat) + RPS per-move total at review — *confirm with owner.*
+
 ## Payments / pricing open decisions
 
 - [ ] **Invoice generation trigger** — when is the cashier's Service Invoice produced (on `completed`? "ready for payment"? on demand)? Invoice lives in the **ERP**; app records `OR-INV-`/`BI-INV-` + pad no. as PAID/BILLED.
 - [ ] **Payment ↔ cashier handoff** — does an admin-confirmed online payment proof replace the cashier visit for the official BIR invoice/OR, or still require it?
-- [ ] Pricing for non-X-ray services (only X-Ray priced today; DEA/OOG = 0 placeholders).
 
 ## Integrations / automation
 

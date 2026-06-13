@@ -18,6 +18,7 @@ interface CheckerOrder {
   status: string
   xray_performed_at: string | null
   service_invoice_no: string | null
+  rps_status: string | null
   created_at: string
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
@@ -34,7 +35,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
@@ -61,6 +62,34 @@ export default function Checker() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // RPS assessment (operations / admin). Move types + rates come from move_rates.
+  const [moveRates, setMoveRates] = useState<{ move_type: string; rate: number }[]>([])
+  const [assessId, setAssessId] = useState<string | null>(null)
+  const [moves, setMoves] = useState<Record<string, number>>({})
+  const [rpsFile, setRpsFile] = useState<File | null>(null)
+  const [assessBusy, setAssessBusy] = useState(false)
+  useEffect(() => {
+    void supabase.from('move_rates').select('move_type, rate').eq('active', true).order('sort_order')
+      .then(({ data }) => setMoveRates(((data ?? []) as { move_type: string; rate: number }[]).map((m) => ({ ...m, rate: Number(m.rate) }))))
+  }, [])
+
+  async function saveAssessment(jo: string, needed: boolean) {
+    setAssessBusy(true); setError(null)
+    let path: string | null = null
+    if (needed && rpsFile) {
+      const name = `${jo}/${Date.now()}-${rpsFile.name.replace(/[^\w.\-]/g, '_')}`
+      const { error: upErr } = await supabase.storage.from('rps-docs').upload(name, rpsFile, { upsert: true })
+      if (upErr) { setAssessBusy(false); setError(upErr.message); return }
+      path = name
+    }
+    const movesObj = needed ? Object.fromEntries(Object.entries(moves).filter(([, v]) => v > 0)) : {}
+    const { error: rpcErr } = await supabase.rpc('record_rps_assessment', { p_jo: jo, p_needed: needed, p_path: path, p_moves: movesObj })
+    setAssessBusy(false)
+    if (rpcErr) { setError(rpcErr.message); return }
+    setAssessId(null); setMoves({}); setRpsFile(null)
+    await load()
+  }
 
   async function load() {
     const { data } = await supabase
@@ -159,6 +188,41 @@ export default function Checker() {
               <button className="ktc-btn" style={{ width: 'auto', padding: '13px 26px', fontSize: 15 }} onClick={() => setConfirmId(o.id)}>
                 ✓ Confirm X-ray done
               </button>
+            )}
+          </div>
+        )}
+        {can('assess_rps') && (
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--glass-brd)' }}>
+            {assessId === o.id ? (
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 600 }}>RPS / port-services moves for this JO</div>
+                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                  {moveRates.map((m) => (
+                    <label key={m.move_type} className="ktc-label" style={{ fontSize: 12, display: 'grid', gap: 3 }}>
+                      {m.move_type} <span style={{ fontSize: 10, opacity: 0.7 }}>₱{m.rate.toFixed(2)}/move</span>
+                      <input className="ktc-input" type="number" min="0" value={moves[m.move_type] ?? ''}
+                        onChange={(e) => setMoves({ ...moves, [m.move_type]: Number(e.target.value) })} style={{ width: 84, padding: '6px 8px' }} />
+                    </label>
+                  ))}
+                </div>
+                <label className="ktc-label" style={{ fontSize: 12, display: 'grid', gap: 4 }}>
+                  RPS document (optional)
+                  <input className="ktc-input" type="file" accept="image/*,.pdf" onChange={(e) => setRpsFile(e.target.files?.[0] ?? null)} style={{ padding: '8px 10px' }} />
+                </label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button className="ktc-btn ktc-btn--sm" disabled={assessBusy} onClick={() => void saveAssessment(o.id, true)}>Save — needs RPS</button>
+                  <button className="ktc-btn-secondary ktc-btn--sm" disabled={assessBusy} onClick={() => void saveAssessment(o.id, false)}>No RPS needed</button>
+                  <button className="ktc-link" onClick={() => { setAssessId(null); setMoves({}); setRpsFile(null) }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                {o.rps_status === 'needed' && <span className="ktc-chip ktc-chip--danger">RPS needed</span>}
+                {o.rps_status === 'not_needed' && <span className="ktc-chip ktc-chip--success">No RPS</span>}
+                <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => { setAssessId(o.id); setMoves({}); setRpsFile(null) }}>
+                  {o.rps_status && o.rps_status !== 'not_assessed' ? 'Re-assess RPS' : 'Assess RPS'}
+                </button>
+              </div>
             )}
           </div>
         )}

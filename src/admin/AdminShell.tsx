@@ -26,6 +26,7 @@ const NAV: { to: string; label: string; end?: boolean; perm?: Permission }[] = [
   { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders' },
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders' },
   { to: '/admin/checker', label: 'X-ray Checker', perm: 'confirm_xray' },
+  { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule' },
   { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals' },
   { to: '/admin/security', label: '2FA', perm: 'manage_approvals' },
   { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing' },
@@ -70,9 +71,11 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
   const role = broker?.is_owner ? 'Owner'
     : broker?.staff_role === 'cashier' ? 'Cashier'
     : broker?.staff_role === 'checker' ? 'Checker'
+    : broker?.staff_role === 'operations' ? 'Operations'
     : broker?.is_admin ? 'Admin' : ''
-  const home = broker?.staff_role === 'checker' ? '/admin/checker'
-    : broker?.staff_role === 'cashier' ? '/admin/job-orders' : '/admin'
+  const home = broker?.staff_role === 'checker' || broker?.staff_role === 'operations' ? '/admin/checker'
+    : broker?.staff_role === 'cashier' ? '/admin/job-orders'
+    : '/admin'
 
   return (
     <div style={{ maxWidth: 1020, margin: '0 auto', padding: '14px 20px 60px' }}>

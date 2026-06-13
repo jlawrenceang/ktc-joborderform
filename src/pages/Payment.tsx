@@ -19,6 +19,7 @@ export default function Payment() {
   const { broker } = useBroker()
   const [order, setOrder] = useState<JobOrder | null>(null)
   const [cfg, setCfg] = useState<PricingConfig | null>(null)
+  const [moves, setMoves] = useState<Map<string, number>>(new Map())
   const [info, setInfo] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
@@ -28,15 +29,17 @@ export default function Payment() {
 
   async function load() {
     if (!id) return
-    const [{ data: jo }, pricing, { data: pi }] = await Promise.all([
+    const [{ data: jo }, pricing, { data: pi }, { data: rm }] = await Promise.all([
       supabase.from('job_orders')
         .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
         .eq('id', id).maybeSingle(),
       loadPricingConfig(),
       supabase.from('payment_info').select('key, value, label'),
+      supabase.from('rps_moves').select('move_type, qty').eq('job_order_id', id),
     ])
     setOrder((jo as unknown as JobOrder) ?? null)
     setCfg(pricing)
+    setMoves(new Map(((rm ?? []) as { move_type: string; qty: number }[]).map((x) => [x.move_type, x.qty])))
     setInfo(new Map(((pi ?? []) as PayInfo[]).map((r) => [r.key, r.value])))
     setLoading(false)
   }
@@ -46,8 +49,8 @@ export default function Payment() {
     if (!order || !cfg) return null
     const counts = new Map<string, number>()
     for (const l of order.lines ?? []) counts.set(l.service_request, (counts.get(l.service_request) ?? 0) + 1)
-    return computeCharges(counts, cfg)
-  }, [order, cfg])
+    return computeCharges(counts, cfg, moves)
+  }, [order, cfg, moves])
 
   async function submitProof() {
     if (!order || !file || !broker) return

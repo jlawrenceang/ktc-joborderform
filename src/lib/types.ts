@@ -140,6 +140,4 @@ export const SERVICE_REQUESTS = [
   'DEA',
   'X-Ray + DEA',
   'X-Ray + DEA (For PDEA)',
-  'DEA (For PDEA)',
-  'OOG Stripping',
 ] as const

@@ -20,6 +20,7 @@ export default function Calculator() {
       const settings = new Map(((s ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))
       setCfg({
         rates: ((r ?? []) as PricingConfig['rates']).map((x) => ({ ...x, rate: Number(x.rate) })),
+        moveRates: [], // calculator estimates the base only; RPS moves are per-JO
         vatRate: settings.get('vat_rate') ?? 0.12,
         adminFee: settings.get('admin_fee') ?? 0,
         printFee: settings.get('print_fee') ?? 0,

@@ -15,7 +15,7 @@ export default function Settings() {
   const [suUser, setSuUser] = useState('')
   const [suPass, setSuPass] = useState('')
   const [suName, setSuName] = useState('')
-  const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker'>('admin')
+  const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker' | 'operations'>('admin')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -49,6 +49,59 @@ export default function Settings() {
   const [payBusy, setPayBusy] = useState(false)
   const [payMsg, setPayMsg] = useState<string | null>(null)
   const [qrFile, setQrFile] = useState<File | null>(null)
+
+  // Free storage days per shipping line — drives the vessel schedule's computed
+  // Last Free Day (admin-only, migration 0058).
+  type ShipLine = { name: string; free_days_import: number; free_days_export: number }
+  const [shipLines, setShipLines] = useState<ShipLine[]>([])
+  const [slBusy, setSlBusy] = useState(false)
+  const [slMsg, setSlMsg] = useState<string | null>(null)
+  const [newLine, setNewLine] = useState('')
+  useEffect(() => {
+    void supabase.from('shipping_lines').select('name, free_days_import, free_days_export').order('name')
+      .then(({ data }) => setShipLines((data ?? []) as ShipLine[]))
+  }, [])
+  function setSl(name: string, field: 'free_days_import' | 'free_days_export', v: number) {
+    setShipLines((xs) => xs.map((x) => (x.name === name ? { ...x, [field]: v } : x)))
+  }
+  function addLine() {
+    const n = newLine.trim()
+    if (!n) { setSlMsg('Enter the shipping line name first.'); return }
+    if (shipLines.some((x) => x.name.toLowerCase() === n.toLowerCase())) { setSlMsg('That line already exists.'); return }
+    setShipLines((xs) => [...xs, { name: n, free_days_import: 5, free_days_export: 7 }].sort((a, b) => a.name.localeCompare(b.name)))
+    setNewLine(''); setSlMsg(`"${n}" added — set its free-days and Save.`)
+  }
+  async function saveLines() {
+    setSlBusy(true); setSlMsg(null)
+    const { error } = await supabase.from('shipping_lines').upsert(
+      shipLines.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'name' })
+    setSlBusy(false)
+    setSlMsg(error ? error.message : '✓ Free-days saved.')
+  }
+  async function deleteLine(name: string) {
+    const { error } = await supabase.from('shipping_lines').delete().eq('name', name)
+    if (error) { setSlMsg(error.message); return }
+    setShipLines((xs) => xs.filter((x) => x.name !== name))
+    setSlMsg(`"${name}" removed.`)
+  }
+
+  // RPS per-move rates — admin-configured (manage_pricing). Charged when a JO
+  // is assessed as needing RPS.
+  type MoveRateRow = { move_type: string; rate: number; active: boolean; sort_order: number | null }
+  const [moveRates, setMoveRates] = useState<MoveRateRow[]>([])
+  const [mrBusy, setMrBusy] = useState(false)
+  const [mrMsg, setMrMsg] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.from('move_rates').select('move_type, rate, active, sort_order').order('sort_order')
+      .then(({ data }) => setMoveRates(((data ?? []) as MoveRateRow[]).map((x) => ({ ...x, rate: Number(x.rate) }))))
+  }, [])
+  function setMr(mt: string, rate: number) { setMoveRates((xs) => xs.map((x) => (x.move_type === mt ? { ...x, rate } : x))) }
+  async function saveMoveRates() {
+    setMrBusy(true); setMrMsg(null)
+    const { error } = await supabase.from('move_rates').upsert(moveRates.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'move_type' })
+    setMrBusy(false)
+    setMrMsg(error ? error.message : '✓ Move rates saved.')
+  }
 
   useEffect(() => {
     void supabase.from('payment_info').select('key, value, label').order('key')
@@ -256,8 +309,9 @@ export default function Settings() {
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suRole">Role</label>
-                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker')} style={{ width: 130 }}>
+                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations')} style={{ width: 130 }}>
                   <option value="admin">Admin</option>
+                  <option value="operations">Operations</option>
                   <option value="cashier">Cashier</option>
                   <option value="checker">Checker</option>
                 </select>
@@ -435,6 +489,66 @@ export default function Settings() {
         </div>
       </div>
 
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Free storage days per shipping line</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          Drives the vessel schedule's <strong>Last Free Day</strong> (finish discharging + import days). Set per line, for import and export.
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5 }}>
+            <span style={{ flex: 1 }}>Shipping line</span>
+            <span style={{ width: 90, textAlign: 'center' }}>Import days</span>
+            <span style={{ width: 90, textAlign: 'center' }}>Export days</span>
+            <span style={{ width: 24 }} />
+          </div>
+          {shipLines.map((l) => (
+            <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
+              <input className="ktc-input" type="number" min="0" value={l.free_days_import} onChange={(e) => setSl(l.name, 'free_days_import', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
+              <input className="ktc-input" type="number" min="0" value={l.free_days_export} onChange={(e) => setSl(l.name, 'free_days_export', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
+              <button type="button" className="ktc-link" title={`Remove ${l.name}`} style={{ width: 24, color: 'var(--acc-2)', fontSize: 14 }} onClick={() => void deleteLine(l.name)}>✕</button>
+            </div>
+          ))}
+          {shipLines.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>No lines yet — add your shipping lines below.</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
+            <input className="ktc-input" placeholder="New shipping line (e.g. SITC)" value={newLine} onChange={(e) => setNewLine(e.target.value)} style={{ flex: 1, padding: '7px 10px', fontSize: 13 }} />
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={addLine}>+ Add line</button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={slBusy} onClick={() => void saveLines()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {slBusy ? 'Saving…' : 'Save free-days'}
+          </button>
+          {slMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{slMsg}</span>}
+        </div>
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>RPS per-move rates</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.
+        </p>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+          {moveRates.map((m) => (
+            <div key={m.move_type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{m.move_type}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+                <input className="ktc-input" type="number" step="0.01" min="0" value={m.rate} onChange={(e) => setMr(m.move_type, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                <span className="ktc-label" style={{ fontSize: 11 }}>/ move</span>
+              </span>
+            </div>
+          ))}
+          {moveRates.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>No move types configured.</p>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
+          <button className="ktc-btn" type="button" disabled={mrBusy} onClick={() => void saveMoveRates()} style={{ width: 'auto', padding: '10px 20px' }}>
+            {mrBusy ? 'Saving…' : 'Save move rates'}
+          </button>
+          {mrMsg && <span className="ktc-label" style={{ fontSize: 13, fontWeight: 600 }}>{mrMsg}</span>}
+        </div>
+      </div>
+
       {isOwner && (
         <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>Roles &amp; gates</h2>
@@ -449,7 +563,7 @@ export default function Settings() {
                 <thead>
                   <tr>
                     <th style={{ textAlign: 'left', padding: '6px 14px 6px 0', fontWeight: 600 }} className="ktc-label">Gate</th>
-                    {['admin', 'cashier', 'checker'].map((r) => (
+                    {['admin', 'operations', 'cashier', 'checker'].map((r) => (
                       <th key={r} style={{ padding: '6px 14px', fontWeight: 650, textTransform: 'capitalize' }}>{r}</th>
                     ))}
                   </tr>
@@ -465,11 +579,13 @@ export default function Settings() {
                     ['manage_approvals', 'Account approvals + dashboard'],
                     ['manage_customers', 'Manage customers'],
                     ['manage_consignees', 'Manage consignees'],
+                    ['manage_vessel_schedule', 'Vessel schedule'],
+                    ['assess_rps', 'Assess RPS (confirm X-ray / port-services moves)'],
                     ['manage_pricing', 'Settings · rates & fees'],
                   ] as const).map(([perm, label]) => (
                     <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
                       <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{label}</td>
-                      {['admin', 'cashier', 'checker'].map((r) => {
+                      {['admin', 'operations', 'cashier', 'checker'].map((r) => {
                         const g = gates.find((x) => x.role === r && x.permission === perm)
                         return (
                           <td key={r} style={{ textAlign: 'center', padding: '8px 14px' }}>
@@ -514,6 +630,7 @@ export default function Settings() {
                     <b>{b.full_name || b.email}</b>
                     <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, color: '#fff', background: 'linear-gradient(135deg, var(--acc), var(--acc-2))' }}>
                       {b.is_owner ? 'Owner'
+                        : b.staff_role === 'operations' ? 'Operations'
                         : b.staff_role === 'cashier' ? 'Cashier'
                         : b.staff_role === 'checker' ? 'Checker'
                         : 'Admin'}
