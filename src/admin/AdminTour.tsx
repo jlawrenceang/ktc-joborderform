@@ -56,15 +56,15 @@ const ADMIN_STEPS: TourStep[] = [
     body: 'The live queue — submitted, processing, and on-hold orders. Tap to open the working queue where the day-to-day happens.',
   },
   {
-    icon: '⚙️', title: 'Process & get paid', to: '/admin/job-orders', target: 'a[href="/admin/job-orders"]',
+    icon: '⚙️', title: 'Process & get paid', to: '/admin/job-orders', target: '[data-tour="navgroup-jobs"]',
     body: 'In the queue you tick each service ✓ as it\'s done, hold or reject with a note, confirm X-ray and RPS payments separately, and record the ERP invoice (OR = PAID / BI = BILLED). 🕘 shows the full history.',
   },
   {
-    icon: '📝', title: 'File on behalf', to: '/admin/new-job-order', target: 'a[href="/admin/new-job-order"]',
+    icon: '📝', title: 'File on behalf', to: '/admin/new-job-order', target: '[data-tour="navgroup-jobs"]',
     body: 'New JO files a job order for a walk-in customer — straight to submitted with a serving number; History records you as the filer.',
   },
   {
-    icon: '🛡️', title: 'Settings, logs & security', to: '/admin/settings', target: 'a[href="/admin/settings"]',
+    icon: '🛡️', title: 'Settings, logs & security', to: '/admin/settings', target: '[data-tour="navgroup-system"]',
     body: 'Rates & fees, free-days, RPS move rates, payment details, staff & role gates. Logs shows every event; enroll 2FA in the 2FA tab. Sessions time out after 60 idle minutes.',
   },
 ]
@@ -75,11 +75,11 @@ const OPERATIONS_STEPS: TourStep[] = [
     body: 'You land on the X-ray Checker queue. Your three jobs: assess each order for X-ray / port-services, confirm the X-ray is done, and keep the vessel schedule current. This tour walks each one.',
   },
   {
-    icon: '🧪', title: '1 · Assess each order (RPS)', to: '/admin/checker', target: 'a[href="/admin/checker"]',
+    icon: '🧪', title: '1 · Assess each order (RPS)', to: '/admin/checker',
     body: 'On an order card, tap Assess RPS: choose "No RPS needed" for a plain X-ray, or — if it needs port-services moves (lift on, trucking, shifting, stripping, stuffing) — enter the move counts from the RPS and Save. Those bill per move. Most orders need none.',
   },
   {
-    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker', target: 'a[href="/admin/checker"]',
+    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker',
     body: 'When a container passes the X-ray, hit Confirm — it stamps the date/time and the order leaves your queue. Look up any container or JO number to answer "is this box cleared?"',
   },
   {
@@ -113,11 +113,11 @@ const CHECKER_STEPS: TourStep[] = [
     body: 'You land on the X-ray Checker queue: orders waiting for X-ray, sorted by line number, with the "Now serving" strip on top.',
   },
   {
-    icon: '🔎', title: '1 · Look up a container', to: '/admin/checker', target: 'a[href="/admin/checker"]',
+    icon: '🔎', title: '1 · Look up a container', to: '/admin/checker',
     body: 'Type a container number to see its card: NOT CLEARED · X-ray pending means it\'s waiting; CLEARED shows the date and time it passed. Use this when a trucker asks about a box.',
   },
   {
-    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker', target: 'a[href="/admin/checker"]',
+    icon: '✅', title: '2 · Confirm X-ray done', to: '/admin/checker',
     body: 'When a container passes the X-ray, hit Confirm — it stamps the date/time, the order leaves your queue, and completes once its other services (if any) are done too.',
   },
   {

@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { usePermissions, type Permission } from '../lib/usePermissions'
 import { purgeExpiredIds } from '../lib/idPurge'
@@ -16,23 +16,78 @@ import { VERSION_LABEL } from '../version'
 // "still there?" prompt fires a minute before, and one tap keeps them alive.
 const ADMIN_IDLE_LOGOUT_MS = 60 * 60 * 1000
 
-// Persistent frosted admin nav — every admin surface one tap away; the active
-// pill shows where you are. Items are gated by the owner-tweakable role
-// permissions (cashier/checker only see what their role allows).
-const NAV: { to: string; label: string; end?: boolean; perm?: Permission }[] = [
+// Persistent frosted admin nav — condensed into groups (each opens a dropdown)
+// so the bar stays short. Items are gated by the owner-tweakable role
+// permissions; a group with one visible item collapses to a direct link, and
+// an empty group disappears (so each role sees only what it needs).
+type NavLeaf = { to: string; label: string; end?: boolean; perm?: Permission }
+type NavGroup = { label: string; tour?: string; items: NavLeaf[] }
+type NavNode = NavLeaf | NavGroup
+
+const NAV: NavNode[] = [
   { to: '/admin', label: 'Dashboard', end: true, perm: 'manage_approvals' },
-  { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals' },
-  { to: '/admin/customers', label: 'Customers', perm: 'manage_customers' },
-  { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees' },
-  { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders' },
-  { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders' },
-  { to: '/admin/checker', label: 'X-ray Checker', perm: 'confirm_xray' },
+  { label: 'Job Orders', tour: 'navgroup-jobs', items: [
+    { to: '/admin/job-orders', label: 'Queue', perm: 'view_job_orders' },
+    { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders' },
+    { to: '/admin/checker', label: 'X-ray Checker', perm: 'confirm_xray' },
+  ] },
+  { label: 'Customers', tour: 'navgroup-customers', items: [
+    { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals' },
+    { to: '/admin/customers', label: 'Customers', perm: 'manage_customers' },
+    { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees' },
+  ] },
   { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule' },
-  { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals' },
-  { to: '/admin/security', label: '2FA', perm: 'manage_approvals' },
-  { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing' },
+  { label: 'System', tour: 'navgroup-system', items: [
+    { to: '/admin/settings', label: 'Settings', perm: 'manage_pricing' },
+    { to: '/admin/logs', label: 'Logs', perm: 'manage_approvals' },
+    { to: '/admin/security', label: '2FA', perm: 'manage_approvals' },
+  ] },
   { to: '/admin/manual', label: 'Manual' }, // every staff role gets the guide
 ]
+
+function AdminNav({ can }: { can: (p: Permission) => boolean }) {
+  const [open, setOpen] = useState<string | null>(null)
+  const location = useLocation()
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { setOpen(null) }, [location.pathname]) // close on navigation
+  useEffect(() => {
+    // pointerdown covers mouse + touch + pen, so tapping away closes it on a tablet too
+    function onDoc(e: PointerEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null) }
+    document.addEventListener('pointerdown', onDoc)
+    return () => document.removeEventListener('pointerdown', onDoc)
+  }, [])
+  const linkClass = ({ isActive }: { isActive: boolean }) => `ktc-nav-link${isActive ? ' is-active' : ''}`
+  return (
+    <div className="ktc-nav-links" ref={ref}>
+      {NAV.map((node) => {
+        if ('items' in node) {
+          const items = node.items.filter((i) => !i.perm || can(i.perm))
+          if (items.length === 0) return null
+          if (items.length === 1) return <NavLink key={node.label} to={items[0].to} className={linkClass}>{node.label}</NavLink>
+          const groupActive = items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + '/'))
+          const isOpen = open === node.label
+          return (
+            <div key={node.label} style={{ position: 'relative', display: 'inline-flex' }}>
+              <button type="button" data-tour={node.tour} aria-haspopup="true" aria-expanded={isOpen}
+                className={`ktc-nav-link${groupActive ? ' is-active' : ''}`} onClick={() => setOpen(isOpen ? null : node.label)}>
+                {node.label} <span aria-hidden style={{ fontSize: 9, marginLeft: 2, opacity: 0.7 }}>▾</span>
+              </button>
+              {isOpen && (
+                <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'rgba(255,255,255,0.97)' }}>
+                  {items.map((i) => (
+                    <NavLink key={i.to} to={i.to} role="menuitem" className={linkClass} style={{ textAlign: 'left' }}>{i.label}</NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        }
+        if (node.perm && !can(node.perm)) return null
+        return <NavLink key={node.to} to={node.to} end={node.end} className={linkClass}>{node.label}</NavLink>
+      })}
+    </div>
+  )
+}
 
 export default function AdminShell({ children }: { children: ReactNode; crumb?: string }) {
   const { signOut } = useAuth()
@@ -97,18 +152,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         >
           {role || 'Admin'}
         </span>
-        <div className="ktc-nav-links">
-          {NAV.filter((n) => !n.perm || can(n.perm)).map((n) => (
-            <NavLink
-              key={n.to}
-              to={n.to}
-              end={n.end}
-              className={({ isActive }) => `ktc-nav-link${isActive ? ' is-active' : ''}`}
-            >
-              {n.label}
-            </NavLink>
-          ))}
-        </div>
+        <AdminNav can={can} />
         {tourRole && (
           <button className="ktc-nav-link" onClick={openTour} style={{ flex: '0 0 auto' }} title="Replay the quick tour">
             ✨

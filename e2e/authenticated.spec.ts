@@ -24,8 +24,8 @@ test.describe('KTC portal — authenticated (Phase 2)', () => {
     await mintSession(page, OWNER)
     await page.goto('/')
     await expect(page).toHaveURL(/\/admin$/)
-    // scope to the nav — the dashboard also has a Consignees tile
-    await expect(page.getByRole('navigation', { name: 'Admin' }).getByRole('link', { name: 'Consignees' })).toBeVisible()
+    // grouped nav: Consignees lives under the "Customers" dropdown group
+    await expect(page.getByRole('navigation', { name: 'Admin' }).getByRole('button', { name: /Customers/ })).toBeVisible()
   })
 
   test('owner can open the Consignees admin (master list)', async ({ page }) => {
