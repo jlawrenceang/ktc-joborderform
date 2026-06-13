@@ -7,10 +7,11 @@ import type { Broker } from '../lib/types'
 // Dismissal is remembered per browser, per role — so a shared floor tablet
 // that switches from checker to admin still shows the right tour once.
 
-export type StaffTourRole = 'admin' | 'cashier' | 'checker'
+export type StaffTourRole = 'admin' | 'operations' | 'cashier' | 'checker'
 
 export function staffTourRole(b: Pick<Broker, 'staff_role' | 'is_admin' | 'is_owner'> | null | undefined): StaffTourRole | null {
   if (!b) return null
+  if (b.staff_role === 'operations') return 'operations'
   if (b.staff_role === 'cashier') return 'cashier'
   if (b.staff_role === 'checker') return 'checker'
   if (b.is_admin || b.is_owner) return 'admin'
@@ -56,6 +57,29 @@ const ADMIN_STEPS: TourStep[] = [
     icon: '🛡️',
     title: '5 · Settings, logs & security',
     body: 'Settings holds service rates (unlock to edit), the service catalogue, payment details, staff accounts and role gates. Logs shows every order event, security event, client error and email. Protect your account: enroll 2FA in the 2FA tab — sessions time out after 60 idle minutes and each account allows one active session.',
+  },
+]
+
+const OPERATIONS_STEPS: TourStep[] = [
+  {
+    icon: '👋',
+    title: 'Welcome — operations',
+    body: 'You land on the X-ray Checker queue. Your three jobs: assess each order for X-ray / port-services, confirm the X-ray is done, and keep the vessel schedule current. About 30 seconds.',
+  },
+  {
+    icon: '🧪',
+    title: '1 · Assess each order (RPS)',
+    body: 'On an order card, tap Assess RPS: choose "No RPS needed" for a plain X-ray, or — if it needs port-services moves (lift on, trucking, shifting, stripping, stuffing) — read the move counts off the RPS, enter them (upload the RPS too if you like) and Save. Those moves bill per move on top of the base. Most orders need none.',
+  },
+  {
+    icon: '✅',
+    title: '2 · Confirm X-ray done',
+    body: 'When a container passes the X-ray, hit Confirm — it stamps the date/time and the order leaves your queue. Look up any container or JO number to answer "is this box cleared?"',
+  },
+  {
+    icon: '🚢',
+    title: '3 · Keep vessels current',
+    body: 'The Vessels tab is yours: add or CSV-import calls (Last Free Day computes itself, and past calls drop off). Customers can only file against current vessels, so keep it fresh. 📸 Snapshot shares the active list to your Viber group. ✨ replays this tour; the Manual tab has the full guide.',
   },
 ]
 
@@ -107,6 +131,7 @@ const CHECKER_STEPS: TourStep[] = [
 
 const STEPS: Record<StaffTourRole, TourStep[]> = {
   admin: ADMIN_STEPS,
+  operations: OPERATIONS_STEPS,
   cashier: CASHIER_STEPS,
   checker: CHECKER_STEPS,
 }

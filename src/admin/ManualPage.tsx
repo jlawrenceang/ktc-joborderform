@@ -3,6 +3,7 @@ import AdminShell from './AdminShell'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import { usePermissions } from '../lib/usePermissions'
 import adminBody from '../content/manual-admin.md?raw'
+import operationsBody from '../content/manual-operations.md?raw'
 import cashierBody from '../content/manual-cashier.md?raw'
 import checkerBody from '../content/manual-checker.md?raw'
 import customerBody from '../content/manual-customer.md?raw'
@@ -12,6 +13,7 @@ import customerBody from '../content/manual-customer.md?raw'
 // (handy when walking a customer or floor staff through something).
 const GUIDES = [
   { key: 'admin', label: 'Admin', body: adminBody },
+  { key: 'operations', label: 'Operations', body: operationsBody },
   { key: 'cashier', label: 'Cashier', body: cashierBody },
   { key: 'checker', label: 'Checker', body: checkerBody },
   { key: 'customer', label: 'Customer', body: customerBody },
@@ -20,7 +22,8 @@ const GUIDES = [
 export default function ManualPage() {
   const { broker } = usePermissions()
   const floorGuide = broker?.staff_role === 'cashier' ? 'cashier'
-    : broker?.staff_role === 'checker' ? 'checker' : null
+    : broker?.staff_role === 'checker' ? 'checker'
+    : broker?.staff_role === 'operations' ? 'operations' : null
   const [tab, setTab] = useState<(typeof GUIDES)[number]['key']>(floorGuide ?? 'admin')
   const active = floorGuide ?? tab
   const guide = GUIDES.find((g) => g.key === active) ?? GUIDES[0]
