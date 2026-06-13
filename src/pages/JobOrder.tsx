@@ -134,8 +134,8 @@ export default function JobOrder() {
       title: 'Consignee & entry',
       validate: consigneeError,
       content: (
-        <div style={{ display: 'grid', gap: 16 }}>
-          <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6 }}>
+        <div className="ktc-fields">
+          <div data-tour="jo-consignee" style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="consignee">{t('Consignee')}</label>
             <SearchPicker
               inputId="consignee"
@@ -145,7 +145,7 @@ export default function JobOrder() {
               search={searchConsignees}
             />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div style={{ display: 'grid', gap: 6, alignContent: 'start' }}>
             <label className="ktc-label" htmlFor="entry">{t('Entry Number')}</label>
             <input
               id="entry"
@@ -194,9 +194,9 @@ export default function JobOrder() {
 
   return (
     <Shell>
-      <div className="ktc-glass ktc-pad-mobile" style={{ padding: 28 }}>
+      <div className="ktc-glass ktc-pad-mobile" style={{ padding: 22 }}>
         <h1 className="ktc-title">{t('New Job Order')}</h1>
-        <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>
+        <p className="ktc-label" style={{ marginTop: 5, marginBottom: 16 }}>
           {t('For X-ray / DEA / OOG stripping service orders.')}
         </p>
 
