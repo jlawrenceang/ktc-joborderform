@@ -26,6 +26,13 @@ export const e2eAuthConfigured = Boolean(SUPABASE_URL && SERVICE_ROLE)
 
 export async function mintSession(page: Page, email: string): Promise<void> {
   if (!e2eAuthConfigured) throw new Error('E2E auth not configured (E2E_SUPABASE_URL / E2E_SERVICE_ROLE_KEY)')
+  // Behave like a returning user who already picked English: skip the first-run
+  // language chooser (it would overlay the page) and keep assertions on English
+  // copy. Re-applied on every navigation, so it survives the localStorage.clear
+  // below. Tours stay gated per-account in the DB.
+  await page.addInitScript(() => {
+    try { localStorage.setItem('ktc_lang', 'en'); localStorage.setItem('ktc_lang_set', '1') } catch { /* ignore */ }
+  })
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { autoRefreshToken: false, persistSession: false },
   })

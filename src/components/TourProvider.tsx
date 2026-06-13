@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import Tour, { type TourStep } from './Tour'
 import { useBroker } from '../lib/useBroker'
+import { useT } from '../lib/i18n'
 import { pageTourShownThisSession, markPageTourSeen } from '../lib/tourSeen'
 
 // Hosts the Tour ABOVE the routes so it survives navigation. Pages register
@@ -54,6 +55,7 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 // registered so the help (?) icon can replay it on demand.
 export function usePageTour(key: string, steps: TourStep[]) {
   const { broker } = useBroker()
+  const { langChosen } = useT()
   const { startTour, active, registerPageTour } = useTour()
   useEffect(() => {
     registerPageTour(key, steps)
@@ -61,9 +63,12 @@ export function usePageTour(key: string, steps: TourStep[]) {
   }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!broker || steps.length === 0) return
+    // Wait for the first-run language choice — the demo should run in the
+    // language the user just picked, not flash in English first.
+    if (!langChosen) return
     const seen = (broker.tours_seen ?? []).includes(key)
     if (seen || pageTourShownThisSession(key) || active) return
     markPageTourSeen(key)
     startTour({ steps })
-  }, [broker]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [broker, langChosen]) // eslint-disable-line react-hooks/exhaustive-deps
 }

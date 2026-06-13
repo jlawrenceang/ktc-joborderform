@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import TourProvider from './components/TourProvider'
+import LanguageGate from './components/LanguageGate'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
@@ -73,6 +74,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <TourProvider>
+        <LanguageGate />
         <Suspense
           fallback={
             <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>

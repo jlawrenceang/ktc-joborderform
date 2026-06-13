@@ -12,16 +12,21 @@ import { tl } from './translations'
 
 export type Lang = 'en' | 'tl'
 const KEY = 'ktc_lang'
+const CHOSEN = 'ktc_lang_set' // set once the user has made an explicit choice
 
 export type TFunc = (en: string, vars?: Record<string, string | number>) => string
 
 interface I18nCtx {
   lang: Lang
   setLang: (l: Lang) => void
+  // True once the user has explicitly picked a language (via the first-run
+  // chooser or the nav toggle). Drives the one-time language prompt and gates
+  // the first-run tour until a language is set.
+  langChosen: boolean
   t: TFunc
 }
 
-const Ctx = createContext<I18nCtx>({ lang: 'en', setLang: () => {}, t: (s) => s })
+const Ctx = createContext<I18nCtx>({ lang: 'en', setLang: () => {}, langChosen: false, t: (s) => s })
 
 export function useT() { return useContext(Ctx) }
 
@@ -38,16 +43,21 @@ function initialLang(): Lang {
     return 'en'
   }
 }
+function initialChosen(): boolean {
+  try { return localStorage.getItem(CHOSEN) === '1' } catch { return false }
+}
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang)
+  const [langChosen, setChosen] = useState<boolean>(initialChosen)
   const setLang = useCallback((l: Lang) => {
-    try { localStorage.setItem(KEY, l) } catch { /* ignore */ }
+    try { localStorage.setItem(KEY, l); localStorage.setItem(CHOSEN, '1') } catch { /* ignore */ }
     setLangState(l)
+    setChosen(true)
   }, [])
   const t = useCallback<TFunc>((en, vars) => {
     const out = lang === 'tl' ? (tl[en] ?? en) : en
     return interpolate(out, vars)
   }, [lang])
-  return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ lang, setLang, langChosen, t }}>{children}</Ctx.Provider>
 }
