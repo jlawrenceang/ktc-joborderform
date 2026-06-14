@@ -6,7 +6,7 @@ import { type TourStep } from './Tour'
 
 export const homeSteps: TourStep[] = [
   {
-    icon: '👋', title: 'Welcome to the KTC Online Portal',
+    icon: '👋', title: 'Madayaw! Welcome to the KTC Online Portal',
     body: 'File Job Orders for container terminal services from anywhere, anytime. No more queueing at the office. Here\'s a quick look around.',
   },
   {

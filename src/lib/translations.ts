@@ -798,7 +798,7 @@ export const tl: Record<string, string> = {
   "We’ll email a confirmation link to the new address. The change only takes effect once you click it.": "Magpapadala kami ng confirmation link sa bagong address via email. Magkakabisa lang ang pagbabago kapag na-click mo na ito.",
   "Welcome": "Maligayang pagdating",
   "Welcome to the KTC admin portal": "Maligayang pagdating sa KTC admin portal",
-  "Welcome to the KTC Online Portal": "Madayaw! Welcome to the KTC Online Portal",
+  "Madayaw! Welcome to the KTC Online Portal": "Madayaw! Welcome to the KTC Online Portal",
   "Welcome, {name}": "Maligayang pagdating, {name}",
   "What did you fix? (optional note to KTC)": "Ano ang inayos mo? (optional na note sa KTC)",
   "What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.": "Kung ano ang pwedeng gawin ng bawat staff role. Owner-only — naka-enforce sa server-side (RLS + RPCs), ang UI ay sumasalamin lang dito.",
