@@ -9,7 +9,7 @@ import IdleWarning from '../components/IdleWarning'
 import { useTour } from '../components/TourProvider'
 import LangToggle from '../components/LangToggle'
 import { useT } from '../lib/i18n'
-import { VERSION_LABEL } from '../version'
+import { VERSION_LABEL, VERSION_FULL } from '../version'
 
 // All staff sessions time out — on a longer leash than the 15-min customer
 // rule because back-office work happens in bursts (review, step away, come
@@ -164,7 +164,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
       <div className="ktc-stagger">{children}</div>
 
       <footer style={{ marginTop: 40, paddingTop: 14, borderTop: '1px solid var(--glass-brd)', textAlign: 'center', fontSize: 11.5, color: 'hsl(var(--ink-2))', opacity: 0.8 }}>
-        {t('KTC Online Portal')} {VERSION_LABEL}
+        {t('KTC Online Portal')} <span title={VERSION_FULL}>{VERSION_LABEL}</span>
       </footer>
 
       {idleWarning && <IdleWarning />}

@@ -8,5 +8,9 @@
 // (vite.config.ts), so even an unbumped deploy is traceable.
 export const APP_VERSION = 'v1.1.0'
 
-/** Exact build provenance, e.g. "v1.1.0 (3d81eca · 2026-06-13)". */
-export const VERSION_LABEL = `${APP_VERSION} (${__APP_COMMIT__} · ${__APP_BUILT__})`
+/** Shown in the footers — just the version, kept clean. */
+export const VERSION_LABEL = APP_VERSION
+
+/** Exact build provenance, e.g. "v1.1.0 (3d81eca · 2026-06-13)" — surfaced as a
+ *  hover tooltip on the footer version so deploys stay traceable without clutter. */
+export const VERSION_FULL = `${APP_VERSION} (${__APP_COMMIT__} · ${__APP_BUILT__})`
