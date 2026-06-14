@@ -1,5 +1,15 @@
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useT } from '../lib/i18n'
+
+// Public / auth-flow routes where the chooser must NOT appear — most importantly
+// /confirmed, where the email-confirmation link establishes a transient session
+// before the user actually signs in. The chooser belongs on the portal, after
+// a real login.
+const PRE_AUTH_PATHS = new Set([
+  '/login', '/confirmed', '/forgot-password', '/reset-password',
+  '/agreement', '/irr', '/terms', '/privacy',
+])
 
 // One-time, first-run language chooser. Shows after sign-in (only when no
 // language has been explicitly picked yet) and BEFORE the demo tour — the tour
@@ -9,8 +19,9 @@ import { useT } from '../lib/i18n'
 export default function LanguageGate() {
   const { session } = useAuth()
   const { langChosen, setLang } = useT()
+  const { pathname } = useLocation()
 
-  if (!session || langChosen) return null
+  if (!session || langChosen || PRE_AUTH_PATHS.has(pathname)) return null
 
   return (
     <div className="ktc-modal-backdrop" style={{ zIndex: 80 }}>
