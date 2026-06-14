@@ -301,7 +301,7 @@ export const tl: Record<string, string> = {
   "e.g. TCLU1234567 or JO-000123": "hal. TCLU1234567 o JO-000123",
   "Each line becomes a container row with the selected service — you can change any row's service afterward. Duplicates are skipped.": "Bawat linya ay magiging container row na may napiling service — pwede mong palitan ang service ng kahit anong row pagkatapos. Ini-skip ang mga duplicate.",
   "Edit": "I-edit",
-  "Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it's matched to your ID).": "I-edit o i-update ang iyong personal details kahit kailan. Ang pagpapalit ng iyong legal name ay kailangan ng re-verification ng KTC admin (dahil naka-match ito sa iyong ID).",
+  "Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it's matched to your ID).": "I-edit o i-update ang iyong personal details. Ang pagpapalit ng inyong legal name ay kailangan ng re-verification ng KTC admin.",
   "Email": "Email",
   "Email address": "Email address",
   "Email confirmed": "Confirmed na ang email",
