@@ -747,7 +747,7 @@ export const tl: Record<string, string> = {
   "Update password": "I-update ang password",
   "Updating…": "Ina-update…",
   "Upload a clear photo or PDF of the deposit / transfer / GCash receipt.": "I-upload ang malinaw na photo o PDF ng deposit / transfer / GCash receipt.",
-  "Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they're held until a KTC admin reviews and approves your account.": "I-upload ang valid government ID at ire-review ng KTC admin ang iyong account. Pwede ka nang mag-file ng Job Orders habang naghihintay — pero naka-hold ang mga ito hanggang ma-review at ma-approve ng KTC admin ang account mo.",
+  "Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they're held until a KTC admin reviews and approves your account.": "I-upload ang valid government ID at ire-review ng isang KTC admin ang iyong account. Pwede ka nang mag-file ng Job Orders habang naghihintay — pero naka-hold ang mga ito hanggang ma-review at ma-approve ng isang KTC admin ang account mo.",
   "Upload your valid ID": "I-upload ang iyong valid ID",
   "Upload your valid ID →": "I-upload ang iyong valid ID →",
   "Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.": "I-upload ang valid ID mo para sa final verification (banner sa itaas); kapag inaprubahan ka na ng KTC admin, automatic nang ipapadala ang held orders mo.",
