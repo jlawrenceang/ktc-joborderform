@@ -10,7 +10,7 @@ export const homeSteps: TourStep[] = [
     body: 'File Job Orders for container terminal services from anywhere, anytime. No more queueing at the office. Here\'s a quick look around.',
   },
   {
-    icon: '🪪', title: 'Get verified once', target: '[data-tour="id-banner"]',
+    icon: '🪪', title: 'Get verified', target: '[data-tour="id-banner"]',
     body: 'Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they\'re held until a KTC admin reviews and approves your account.',
   },
   {

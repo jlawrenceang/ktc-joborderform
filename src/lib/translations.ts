@@ -358,7 +358,7 @@ export const tl: Record<string, string> = {
   "Full name can’t be empty.": "Hindi pwedeng walang laman ang full name.",
   "Gate": "Gate",
   "GCash:": "GCash:",
-  "Get verified once": "Mag-verify minsan lang",
+  "Get verified": "Mag-verify",
   "Go to start page": "Pumunta sa start page",
   "Grant access": "Magbigay ng access",
   "has been approved and notified by email.": "ay na-approve na at na-notify sa email.",
