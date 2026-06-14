@@ -61,6 +61,7 @@ migrations). Logged here so the ST02 record is complete.
 | W7 | Registration consent clause too long (Lane 1.1) | Shortened the tick label to "…the **KTC Customer Agreement** — including the Terms & Conditions, and my consent to KTC processing my personal data." (full Terms/NDA/DPA still in the linked Agreement) | `ff1b424` |
 | W8 | Footer showed commit hash + build date | Footer now shows just **v1.1.0**; commit+date moved to a hover tooltip (still traceable) | `f65861b` |
 | W9 | Forgot-password could be requested repeatedly (Lane 7.4 area) | **5-min per-email resend cooldown** with a `m:ss` countdown ("Resend in 4:07") + spam-folder hint. (Supabase server-side rate-limit + CAPTCHA were already the real backstops; this is UX) | _2026-06-14_ |
+| W10 | Home demo-tour copy (Lane 1.3) — reword for clarity | Rewrote all 6 home-tour steps (EN + FIL): "container terminal services from the comfort of your home", clearer verify/held wording, dropped "Your main action", "Track your orders", simpler account step | _2026-06-14_ |
 
 **Still open from this pass (not yet built):**
 - Mobile **wave 2** (registration → wizard; Payment / Verify ID / Account → dense + sticky) and **wave 3** (admin data tables → phone card lists) — owner holding for a device test first.

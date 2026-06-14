@@ -7,27 +7,27 @@ import { type TourStep } from './Tour'
 export const homeSteps: TourStep[] = [
   {
     icon: '👋', title: 'Welcome to the KTC Online Portal',
-    body: 'File Job Orders for X-ray, DEA exam, and OOG stripping from anywhere — no more queueing at the office. Here\'s a quick look at your home.',
+    body: 'File Job Orders for container terminal services from the comfort of your home — or anywhere you can get online. No more queueing at the office. Here\'s a quick look around.',
   },
   {
     icon: '🪪', title: 'Get verified once', target: '[data-tour="id-banner"]',
-    body: 'Upload a valid government ID here and a KTC admin verifies your account. You can file job orders while you wait — they\'re held and sent to KTC automatically once you\'re approved.',
+    body: 'Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they\'re held until a KTC admin reviews and approves your account.',
   },
   {
     icon: '📝', title: 'File a Job Order', target: '[data-tour="home-job-order"]',
-    body: 'Your main action — file a new Job Order. We\'ll walk you through the form the first time you open it.',
+    body: 'File a new Job Order. We\'ll walk you through the form the first time you open it.',
   },
   {
-    icon: '📦', title: 'Track everything', target: '[data-tour="home-job-orders"]',
-    body: 'My Job Orders is your home base after filing — live status, your serving number, "View charges & pay", and Print slip once approved.',
+    icon: '📦', title: 'Track your orders', target: '[data-tour="home-job-orders"]',
+    body: 'After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.',
   },
   {
     icon: '🧮', title: 'Estimate charges', target: '[data-tour="home-calculator"]',
-    body: 'The Rate Calculator estimates fees before you file — pick services and container counts to see the total with VAT and fees.',
+    body: 'The Rate Calculator estimates your fees — pick services and container counts to see the estimated total, inclusive of VAT and fees.',
   },
   {
     icon: '👤', title: 'Your account', target: '[data-tour="home-account"]',
-    body: 'Edit your name, contact number, email and password anytime. (Changing your legal name re-runs verification, since it was matched to your ID.)',
+    body: 'Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it\'s matched to your ID).',
   },
 ]
 
