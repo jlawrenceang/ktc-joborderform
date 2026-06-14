@@ -2,22 +2,22 @@ english,filipino,kept_english
 " — re-upload to replace"," — i-upload ulit para palitan",false
 " Note: their valid ID could not be deleted — see the warning on the page."," Note: hindi ma-delete ang valid ID nila — tingnan ang warning sa page.",false
 " Their valid ID was removed from storage."," Tinanggal sa storage ang valid ID nila.",false
-"— a stolen password alone can't reach any staff function.","— hindi sapat ang ninakaw na password lang para makapasok sa anumang staff function.",false
+"— a stolen password alone can't reach any staff function.","— hindi sapat ang ninakaw na password para makapasok sa anumang staff function.",false
 "— including the Terms & Conditions, and my consent to KTC processing my personal data.","— kasama ang Terms & Conditions, at ang aking pahintulot sa KTC na iproseso ang aking personal na data.",false
-"— replace current","— palitan ang kasalukuyan",false
-"‹ Prev","‹ Nakaraan",false
+"— replace current","— palitan",false
+"‹ Prev","‹ Prev",true
 """{n}"" added — set its free-days and Save.","Nadagdag ang ""{n}"" — i-set ang free-days nito at i-Save.",false
 """{name}"" added — set its rate and Save pricing.","Nadagdag ang ""{name}"" — i-set ang rate nito at i-Save ang pricing.",false
 """{name}"" deleted.","Na-delete ang ""{name}"".",false
 """{name}"" removed.","Naalis ang ""{name}"".",false
 "(customer can’t resubmit)","(hindi puwedeng i-resubmit ng customer)",false
-"(finish discharging + import days). Set per line, for import and export.","(tapos mag-discharge + import days). I-set kada line, para sa import at export.",false
+"(finish discharging + import days). Set for import and export.","(tapos mag-discharge + import days). I-set para sa import at export.",false
 "(sent {when})","(naipadala {when})",false
 "(serving number assigned now).","(naka-assign na ang serving number).",false
 "{count} {scope} call(s)","{count} na {scope} na barko",false
 "{count} container(s)","{count} container(s)",true
 "{count} current call(s)","{count} na current call",false
-"{count} total call(s)","{count} na call lahat",false
+"{count} total call(s)","{count} na total call",false
 "{from}–{to} of {total}","{from}–{to} ng {total}",false
 "{label} line","{label} line",true
 "{line} done","Tapos na ang {line}",false
@@ -28,14 +28,14 @@ english,filipino,kept_english
 "{total} order(s)","{total} order(s)",true
 "/ container","/ container",true
 "/ move","/ move",true
-"← Back","← Bumalik",false
+"← Back","← Back",true
 "← Back to sign in","← Bumalik sa sign in",false
-"← Prev","← Nakaraan",false
-"↓ Please scroll to the end of the agreement to enable the consent checkboxes.","↓ Pakil-scroll hanggang dulo ng agreement para ma-enable ang mga consent checkbox.",false
-"↓ Please scroll to the end to enable the consent checkboxes.","↓ Pakil-scroll hanggang dulo para ma-enable ang mga consent checkbox.",false
+"← Prev","← Prev",true
+"↓ Please scroll to the end of the agreement to enable the consent checkboxes.","↓ Paki-scroll hanggang dulo ng agreement para ma-enable ang mga consent checkbox.",false
+"↓ Please scroll to the end to enable the consent checkboxes.","↓ Paki-scroll hanggang dulo para ma-enable ang mga consent checkbox.",false
 "↻ Re-check","↻ I-check ulit",false
-"↻ Refresh","↻ I-refresh",false
-"↻ Refresh status","↻ I-refresh ang status",false
+"↻ Refresh","↻ Refresh",true
+"↻ Refresh status","↻ Refresh status",true
 "+ Add container","+ Magdagdag ng container",false
 "+ Add line","+ Magdagdag ng line",false
 "+ Add service","+ Magdagdag ng service",false
@@ -46,11 +46,11 @@ english,filipino,kept_english
 "⚠ No valid ID","⚠ Walang valid ID",false
 "✓ A confirmation link was sent to {next}. Click it to finish the change — your current email stays active until you confirm.","✓ May confirmation link na ipinadala sa {next}. I-click ito para matapos ang pagbabago — mananatiling active ang kasalukuyang email mo hanggang ma-confirm mo.",false
 "✓ Account created! We’ve emailed a confirmation link to your address. Please confirm your email, then log in again here to continue.","✓ Nagawa na ang account! Nag-email kami ng confirmation link sa iyong address. I-confirm ang iyong email, tapos mag-log in ulit dito para magpatuloy.",false
-"✓ Archived {n} paid & completed order(s).","✓ Na-archive ang {n} bayad at tapos nang order.",false
-"✓ Billed · view charges","✓ Na-bill · tingnan ang charges",false
-"✓ Confirm X-ray done","✓ I-confirm na tapos na ang X-ray",false
+"✓ Archived {n} paid & completed order(s).","✓ Na-file ang {n} bayad at tapos nang order.",false
+"✓ Billed · view charges","✓ Billed · tingnan ang charges",false
+"✓ Confirm X-ray done","✓ Confirmed na tapos na ang X-ray",false
 "✓ Confirmation email resent — check your inbox (and spam folder) for the link.","✓ Na-resend na ang confirmation email — i-check ang iyong inbox (at spam folder) para sa link.",false
-"✓ Copied","✓ Nakopya",false
+"✓ Copied","✓ Copied",true
 "✓ Email confirmed {date}","✓ Na-confirm ang email {date}",false
 "✓ Free-days saved.","✓ Na-save ang free-days.",false
 "✓ Gates saved. Staff see the change on their next page load.","✓ Na-save ang gates. Makikita ng staff ang pagbabago sa susunod nilang page load.",false
@@ -61,7 +61,7 @@ english,filipino,kept_english
 "✓ Payment details saved.","✓ Na-save ang payment details.",false
 "✓ Pricing saved.","✓ Na-save ang pricing.",false
 "✓ Terms & DPA {date}","✓ Terms & DPA {date}",true
-"✓ Thanks for reading — you can now tick the consent boxes below.","✓ Salamat sa pagbabasa — pwede mo nang i-tick ang mga consent box sa ibaba.",false
+"✓ Thanks for reading — you can now check the consent boxes below.","✓ Salamat sa pagbabasa — pwede mo nang i-check ang mga consent box sa ibaba.",false
 "✓ Two-factor authentication is ON. From now on, signing in asks for a code from your app.","✓ Naka-ON ang two-factor authentication. Mula ngayon, hihingian ka ng code mula sa iyong app tuwing mag-sign in.",false
 "✓ Valid ID on file","✓ May valid ID na naka-file",false
 "✓ Yes — X-ray done","✓ Oo — tapos na ang X-ray",false
@@ -70,7 +70,7 @@ english,filipino,kept_english
 "✓ Your password has been updated — please sign in with your new password.","✓ Na-update na ang iyong password — mag-sign in gamit ang bago mong password.",false
 "✓ Your password was updated.","✓ Na-update na ang password mo.",false
 "⧉ Bulk paste","⧉ Bulk paste",true
-"⬆ Import CSV","⬆ I-import ang CSV",false
+"⬆ Import CSV","⬆ Import CSV",true
 "⬇ Template","⬇ Template",true
 "📸 Snapshot","📸 Snapshot",true
 "🔐 Set up two-factor authentication","🔐 I-set up ang two-factor authentication",false
@@ -93,7 +93,7 @@ english,filipino,kept_english
 "A valid ID is required before you can approve","Kailangan ng valid ID bago mo ma-approve",false
 "Account approvals","Account approvals",true
 "Account approvals + dashboard","Account approvals + dashboard",true
-"Account approved","Aprubado ang account",false
+"Account approved","Account approved",true
 "Account name:","Account name:",true
 "Account no.:","Account no.:",true
 "Account suspended","Naka-suspend ang account",false

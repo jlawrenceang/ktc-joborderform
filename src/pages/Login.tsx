@@ -316,7 +316,7 @@ export default function Login() {
                 border: `1px solid ${scrolledAgreement ? 'hsl(150 45% 78%)' : 'hsl(40 85% 75%)'}`,
               }}>
                 {scrolledAgreement
-                  ? t('✓ Thanks for reading — you can now tick the consent boxes below.')
+                  ? t('✓ Thanks for reading — you can now check the consent boxes below.')
                   : t('↓ Please scroll to the end of the agreement to enable the consent checkboxes.')}
               </div>
               <div
@@ -401,7 +401,7 @@ export default function Login() {
               borderBottom: `1px solid ${scrolledAgreement ? 'hsl(150 45% 80%)' : 'hsl(40 85% 78%)'}`,
             }}>
               {scrolledAgreement
-                ? t('✓ Thanks for reading — you can now tick the consent boxes below.')
+                ? t('✓ Thanks for reading — you can now check the consent boxes below.')
                 : t('↓ Please scroll to the end to enable the consent checkboxes.')}
             </div>
             <div ref={modalAgreementRef} onScroll={onAgreementScroll} style={{ overflowY: 'auto', padding: '16px 20px', fontSize: 13 }}>

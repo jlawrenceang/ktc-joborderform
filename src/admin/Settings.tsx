@@ -494,7 +494,7 @@ export default function Settings() {
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Free storage days per shipping line')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set per line, for import and export.')}
+          {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set for import and export.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
           <div className="ktc-label" style={{ display: 'flex', gap: 10, fontSize: 11.5 }}>
