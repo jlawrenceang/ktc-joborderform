@@ -6,6 +6,7 @@ import { purgeExpiredIds } from '../lib/idPurge'
 import { useIdleLogout } from '../lib/useIdleLogout'
 import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
+import StaffNotificationBell from '../components/StaffNotificationBell'
 import AdminBottomNav from './AdminBottomNav'
 import { useT } from '../lib/i18n'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
@@ -63,6 +64,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
           <img src="/ktc-logo.png" alt="KTC" style={{ height: 32 }} />
         </Link>
         <span style={{ flex: 1 }} />
+        <StaffNotificationBell />
         <span
           title={role ? `${t(role)}: ${broker?.email ?? ''}` : undefined}
           style={{
