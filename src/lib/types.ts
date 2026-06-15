@@ -120,6 +120,7 @@ export interface JobOrder {
   admin_note: string | null
   customer_note?: string | null
   rejected_recoverable?: boolean
+  last_customer_edit_at?: string | null
   xray_performed_at?: string | null
   service_invoice_no?: string | null
   /** Printed OR / Billing Invoice pad serial (the paper the customer holds). */

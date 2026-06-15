@@ -35,7 +35,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
+  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -329,6 +329,12 @@ export default function AllJobOrders() {
                           {t(SERVICE_LINE_LABEL[s.service_line])} #{s.serving_no}
                         </span>
                       ))}
+                      {o.last_customer_edit_at && ['submitted', 'processing', 'on_hold'].includes(o.status) && (
+                        <span className="ktc-chip ktc-chip--warning"
+                          title={t('The customer changed this order after filing — please re-check it.') + ' · ' + new Date(o.last_customer_edit_at).toLocaleString()}>
+                          ✎ {t('Edited after filing')}
+                        </span>
+                      )}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
                         <span className="ktc-chip ktc-chip--warning">{t('X-ray payment to review')}</span>
                       )}

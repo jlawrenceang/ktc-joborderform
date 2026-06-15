@@ -22,6 +22,8 @@ const ICON: Record<string, string> = {
   rps: '🧾',
   announcement: '📢',
   support_reply: '💬',
+  serving: '🎫',
+  payment_reminder: '⏰',
 }
 
 function fmtWhen(iso: string): string {
