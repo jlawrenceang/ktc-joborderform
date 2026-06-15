@@ -56,9 +56,11 @@ export default function Account() {
     setFullName(broker.full_name ?? '')
     setContact(broker.contact_number ?? '')
     // Keep customers.email in sync with the (possibly just-confirmed) auth email.
+    // Needs .then() to actually dispatch — a bare `void supabase.from(...).update()`
+    // is a lazy builder and never runs.
     const authEmail = session?.user.email
     if (authEmail && broker.email && authEmail !== broker.email) {
-      void supabase.from('customers').update({ email: authEmail }).eq('id', broker.id)
+      void supabase.from('customers').update({ email: authEmail }).eq('id', broker.id).then(() => undefined, () => undefined)
     }
   }, [broker, session?.user.email])
 

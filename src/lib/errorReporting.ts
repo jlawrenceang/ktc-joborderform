@@ -26,12 +26,16 @@ function report(message: string, stack?: string | null) {
     if (seen.has(key)) return // once per distinct error per session
     seen.add(key)
     sentThisWindow++
-    void supabase.rpc('log_client_error', {
-      p_message: message.slice(0, 500),
-      p_stack: stack?.slice(0, 4000) ?? null,
-      p_path: window.location.pathname,
-      p_ua: navigator.userAgent.slice(0, 300),
-    })
+    // Must attach .then() — a bare `void supabase.rpc(...)` is a lazy builder
+    // that never dispatches the request (the report would silently never send).
+    supabase
+      .rpc('log_client_error', {
+        p_message: message.slice(0, 500),
+        p_stack: stack?.slice(0, 4000) ?? null,
+        p_path: window.location.pathname,
+        p_ua: navigator.userAgent.slice(0, 300),
+      })
+      .then(() => undefined, () => undefined)
   } catch {
     // never break the app over reporting
   }

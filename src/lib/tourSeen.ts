@@ -11,5 +11,9 @@ export function pageTourShownThisSession(page: string): boolean {
 
 export function markPageTourSeen(page: string) {
   try { sessionStorage.setItem(sessionKey(page), '1') } catch { /* ignore */ }
-  void supabase.rpc('mark_tour_seen', { p_page: page })
+  // supabase-js builders are LAZY thenables — the request only dispatches when
+  // .then()/await is called. A bare `void supabase.rpc(...)` builds the request
+  // and discards it, so it never fires (tours_seen stayed empty → the tour
+  // re-ran every fresh login). Attach .then() to actually send it.
+  supabase.rpc('mark_tour_seen', { p_page: page }).then(() => undefined, () => undefined)
 }
