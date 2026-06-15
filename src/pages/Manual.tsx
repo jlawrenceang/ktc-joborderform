@@ -1,17 +1,10 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shell from '../components/Shell'
 import ProtectedDoc from '../components/ProtectedDoc'
 import { useT } from '../lib/i18n'
 
-// Boxes per row in the snake flow — fewer on phones, more on wide screens.
-function snakeCols(): number {
-  if (typeof window === 'undefined') return 4
-  const w = window.innerWidth
-  return w < 460 ? 2 : w < 760 ? 3 : 4
-}
-
-// Customer Guide — the customer's journey as a numbered flow (overview) with a
+// Customer Guide — the customer's journey as a two-phase flow overview with a
 // detailed description of each step underneath. View-only (ProtectedDoc). The
 // staff/admin guide is separate (/admin/manual).
 const STEPS: { title: string; body: string }[] = [
@@ -25,22 +18,16 @@ const STEPS: { title: string; body: string }[] = [
   { title: 'Print & claim', body: 'Once approved, print the Job Order slip and present it at the terminal to claim your Official Receipt and get document clearance.' },
 ]
 
+// Two phases for the overview — each reads left-to-right (numbers stay in
+// order); a prominent connector links them.
+const PHASES = [
+  { label: 'Set up & file', from: 0, to: 4 },
+  { label: 'Track, pay & claim', from: 4, to: 8 },
+]
+
 export default function Manual() {
   const { t } = useT()
   const navigate = useNavigate()
-
-  // Lay the steps out as a snake: chunk into rows; even rows run right-to-left.
-  const [cols, setCols] = useState(snakeCols())
-  useEffect(() => {
-    const onResize = () => setCols(snakeCols())
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-  const rows: { title: string; n: number }[][] = []
-  STEPS.forEach((s, i) => {
-    const r = Math.floor(i / cols)
-    ;(rows[r] ??= []).push({ title: s.title, n: i + 1 })
-  })
 
   return (
     <Shell>
@@ -52,32 +39,32 @@ export default function Manual() {
             {t('How the KTC Online Portal works — from sign-up to claiming your service, step by step.')}
           </p>
 
-          {/* Flow overview — serpentine (snake) box diagram */}
-          <div className="ktc-snake" aria-hidden>
-            {rows.map((row, r) => {
-              const reversed = r % 2 === 1
-              const cells = reversed ? [...row].reverse() : row
-              return (
-                <Fragment key={r}>
-                  <div className="ktc-snake-row">
-                    {cells.map((c, j) => (
-                      <Fragment key={c.n}>
-                        <div className="ktc-snake-box">
-                          <span className="ktc-chart-num">{c.n}</span>
-                          <span className="ktc-snake-label">{t(c.title)}</span>
-                        </div>
-                        {j < cells.length - 1 && <span className="ktc-snake-arrow">{reversed ? '←' : '→'}</span>}
-                      </Fragment>
-                    ))}
+          {/* Flow overview — two left-to-right phases linked by a connector */}
+          <div className="ktc-phases" aria-hidden>
+            {PHASES.map((ph, pi) => (
+              <Fragment key={pi}>
+                <div className="ktc-phase">
+                  <span className="ktc-phase-label">{t(ph.label)}</span>
+                  <div className="ktc-phase-row">
+                    {STEPS.slice(ph.from, ph.to).map((s, j, arr) => {
+                      const n = ph.from + j + 1
+                      return (
+                        <Fragment key={n}>
+                          <div className="ktc-phase-box">
+                            <span className="ktc-chart-num">{n}</span>
+                            <span className="ktc-snake-label">{t(s.title)}</span>
+                          </div>
+                          {j < arr.length - 1 && <span className="ktc-phase-arrow">→</span>}
+                        </Fragment>
+                      )
+                    })}
                   </div>
-                  {r < rows.length - 1 && (
-                    <div className="ktc-snake-turn" style={{ justifyContent: reversed ? 'flex-start' : 'flex-end' }}>
-                      <span className="ktc-snake-down">↓</span>
-                    </div>
-                  )}
-                </Fragment>
-              )
-            })}
+                </div>
+                {pi < PHASES.length - 1 && (
+                  <div className="ktc-phase-link"><span className="ktc-phase-down">↓</span></div>
+                )}
+              </Fragment>
+            ))}
           </div>
 
           {/* Detailed steps */}
