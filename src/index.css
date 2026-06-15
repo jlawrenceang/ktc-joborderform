@@ -158,6 +158,48 @@
     line-height: 1;
   }
   .ktc-nav-help-text { font-weight: 650; font-size: 12.5px; }
+  /* Notification center: bell + unread badge + dropdown panel (every page). */
+  .ktc-nav-bell {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-brd);
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background var(--dur-fast) ease;
+  }
+  .ktc-nav-bell:hover { background: rgb(var(--acc-rgb) / 0.12); }
+  .ktc-nav-bell-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--acc-2);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  .ktc-notif-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(360px, 92vw);
+    padding: 0;
+    border-radius: 14px;
+    z-index: 60;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+    overflow: hidden;
+  }
   .ktc-burger-label { font-size: 13px; font-weight: 650; }
   .ktc-nav-links {
     display: flex;

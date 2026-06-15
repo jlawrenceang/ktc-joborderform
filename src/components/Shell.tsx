@@ -15,6 +15,7 @@ import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 import NavDrawer from './NavDrawer'
+import NotificationBell from './NotificationBell'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -84,6 +85,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             (the desktop links above carry flex:1, but they're hidden on phones). */}
         <span className="ktc-nav-spacer" aria-hidden />
         <span className="ktc-nav-lang"><LangToggle /><ThemeToggle /></span>
+        <NotificationBell />
         {hasPageTour && (
           <button className="ktc-nav-help" onClick={replayPageTour}
             title={t('Quick tour')} aria-label={t('Quick tour')}>

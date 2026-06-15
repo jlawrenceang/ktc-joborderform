@@ -248,6 +248,25 @@ export default function Settings() {
     setTermMsg(error ? error.message : t('✓ Terminal rates saved.'))
   }
 
+  // Owner switch: customer notification emails on/off (0074). Default OFF.
+  const [emailsOn, setEmailsOn] = useState<boolean | null>(null)
+  const [emailBusy, setEmailBusy] = useState(false)
+  const [emailMsg, setEmailMsg] = useState<string | null>(null)
+  useEffect(() => {
+    void supabase.from('app_settings').select('bool_value').eq('key', 'emails_enabled').maybeSingle()
+      .then(({ data }) => setEmailsOn(!!(data as { bool_value?: boolean } | null)?.bool_value))
+  }, [])
+  async function toggleEmails(next: boolean) {
+    setEmailBusy(true); setEmailMsg(null)
+    const prev = emailsOn
+    setEmailsOn(next)
+    const { error } = await supabase.from('app_settings')
+      .upsert({ key: 'emails_enabled', bool_value: next, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    setEmailBusy(false)
+    if (error) { setEmailsOn(prev); setEmailMsg(error.message); return }
+    setEmailMsg(next ? t('✓ Customer emails are ON.') : t('✓ Customer emails are suspended.'))
+  }
+
   async function createStaff(e: FormEvent) {
     e.preventDefault()
     const u = suUser.trim().toLowerCase()
@@ -367,6 +386,33 @@ export default function Settings() {
         {notice && <div className="ktc-label" style={{ marginTop: 10, fontSize: 13 }}>{notice}</div>}
         {error && <div style={{ marginTop: 10, color: 'var(--acc-2)', fontSize: 13 }}>{error}</div>}
       </div>
+
+      {isOwner && (
+        <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ maxWidth: 460 }}>
+              <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Customer notification emails')}</h2>
+              <p className="ktc-label" style={{ marginTop: 0, marginBottom: 0, fontSize: 13 }}>
+                {t('Master switch for emails sent to customers (account approved, order on-hold / rejected, payment-proof issues). In-app notifications keep working either way. Owner security / watchdog alerts are never affected by this.')}
+              </p>
+            </div>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: emailBusy ? 'default' : 'pointer', flex: '0 0 auto' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: emailsOn ? 'var(--acc-2)' : 'hsl(var(--ink-3))' }}>
+                {emailsOn === null ? t('…') : emailsOn ? t('ON') : t('Suspended')}
+              </span>
+              <input type="checkbox" role="switch" checked={!!emailsOn} disabled={emailBusy || emailsOn === null}
+                onChange={(e) => void toggleEmails(e.target.checked)}
+                style={{ width: 40, height: 22, cursor: 'inherit' }} />
+            </label>
+          </div>
+          {emailMsg && <div className="ktc-label" style={{ marginTop: 12, fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{emailMsg}</div>}
+          {emailsOn === false && (
+            <div className="ktc-label" style={{ marginTop: 12, fontSize: 12.5, padding: '9px 12px', borderRadius: 9, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
+              {t('Currently suspended — no customer emails are being sent. Flip the switch when you’re ready to turn them on.')}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
