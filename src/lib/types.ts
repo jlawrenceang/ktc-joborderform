@@ -112,6 +112,9 @@ export interface JobOrder {
   customer_id: string
   consignee_id: string | null
   entry_number: string | null
+  vessel_visit?: string | null
+  vessel_name?: string | null
+  voyage_number?: string | null
   status: string
   created_at: string
   admin_note: string | null

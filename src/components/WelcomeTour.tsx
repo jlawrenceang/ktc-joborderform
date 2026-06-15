@@ -49,7 +49,7 @@ export const jobOrderSteps: TourStep[] = [
 export const myJobOrdersSteps: TourStep[] = [
   {
     icon: '📦', title: 'Your job orders live here',
-    body: 'Every order you file shows here with its live status and serving number. Open one to "View charges & pay" (upload your deposit slip) and to Print the A6 slip once it\'s approved. The "Now serving" board up top helps you time your trip to the terminal.',
+    body: 'All your job orders show here with their status and priority number. View the estimated charges and pay in advance to speed up processing — then print the paid Job Order slip and present it at the terminal to claim your Official Receipt (OR) and proceed with the service.',
   },
 ]
 

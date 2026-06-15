@@ -4,6 +4,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
+import JoSupport from '../components/JoSupport'
 import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type JobOrderEvent, type ServiceLine, type ServingNumber } from '../lib/types'
 import { isCreditInvoice, joEventLabel } from '../lib/eventLabels'
 import { useT } from '../lib/i18n'
@@ -25,12 +26,12 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelled',
 }
 const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
-  submitted: { bg: 'hsl(210 60% 90%)', ink: 'hsl(210 55% 36%)' },
-  processing: { bg: 'hsl(265 55% 91%)', ink: 'hsl(265 45% 42%)' },
-  on_hold: { bg: 'hsl(40 90% 86%)', ink: 'hsl(30 75% 32%)' },
-  completed: { bg: 'hsl(150 50% 88%)', ink: 'hsl(150 55% 26%)' },
-  rejected: { bg: 'hsl(0 75% 92%)', ink: 'hsl(0 65% 42%)' },
-  cancelled: { bg: 'hsl(220 12% 88%)', ink: 'hsl(220 8% 40%)' },
+  submitted: { bg: 'var(--c-h210-60-90)', ink: 'var(--c-h210-55-36)' },
+  processing: { bg: 'var(--c-h265-55-91)', ink: 'var(--c-h265-45-42)' },
+  on_hold: { bg: 'var(--c-h40-90-86)', ink: 'var(--c-h30-75-32)' },
+  completed: { bg: 'var(--c-h150-50-88)', ink: 'var(--c-h150-55-26)' },
+  rejected: { bg: 'var(--c-h0-75-92)', ink: 'var(--c-h0-65-42)' },
+  cancelled: { bg: 'var(--c-h220-12-88)', ink: 'var(--c-h220-8-40)' },
 }
 
 const SELECT =
@@ -111,7 +112,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
   cursor: 'pointer',
   whiteSpace: 'nowrap',
   color: variant === 'solid' ? '#fff' : variant === 'danger' ? 'var(--acc-2)' : 'hsl(var(--ink))',
-  background: variant === 'solid' ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : variant === 'danger' ? 'hsl(0 75% 96%)' : 'rgba(255,255,255,0.6)',
+  background: variant === 'solid' ? 'linear-gradient(135deg, var(--acc), var(--acc-2))' : variant === 'danger' ? 'var(--c-h0-75-96)' : 'var(--c-w60)',
 })
 
 export default function AllJobOrders() {
@@ -323,7 +324,7 @@ export default function AllJobOrders() {
               const printable = o.status === 'processing' || o.status === 'completed'
               const isBusy = busyId === o.id
               return (
-                <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+                <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <b className="ktc-mono" style={{ fontSize: 14.5 }}>{o.jo_number ?? '—'}</b>
@@ -384,16 +385,18 @@ export default function AllJobOrders() {
                     </ul>
                   )}
                   {o.admin_note && (o.status === 'on_hold' || o.status === 'rejected') && (
-                    <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 84%)', color: 'hsl(30 60% 32%)' }}>
+                    <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h40-90-96)', border: '1px solid var(--c-h35-85-84)', color: 'var(--c-h30-60-32)' }}>
                       <b>{t('Note to customer:')}</b> {o.admin_note}
                       {o.status === 'rejected' && o.rejected_recoverable === false && <> · <b>{t('terminal')}</b> {t('(customer can’t resubmit)')}</>}
                     </div>
                   )}
                   {o.customer_note && (
-                    <div style={{ marginTop: 8, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'hsl(210 60% 96%)', border: '1px solid hsl(210 55% 86%)', color: 'hsl(210 55% 32%)' }}>
+                    <div style={{ marginTop: 8, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h210-60-96)', border: '1px solid var(--c-h210-55-86)', color: 'var(--c-h210-55-32)' }}>
                       <b>{t('Customer reply:')}</b> {o.customer_note}
                     </div>
                   )}
+                  {/* Customer-attached supporting info/documents (read-only; shows only when present). */}
+                  <JoSupport orderId={o.id} userId="" active={false} hideWhenEmpty />
 
                   {/* Actions — gated by the owner-tweakable role permissions */}
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -503,7 +506,7 @@ export default function AllJobOrders() {
                   </div>
 
                   {historyId === o.id && (
-                    <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', fontSize: 12.5 }}>
+                    <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', fontSize: 12.5 }}>
                       {history.length === 0 ? (
                         <span className="ktc-label">{t('Loading history…')}</span>
                       ) : (

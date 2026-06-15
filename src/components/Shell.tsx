@@ -13,6 +13,7 @@ import IdleWarning from './IdleWarning'
 import { useTour } from './TourProvider'
 import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
+import ThemeToggle from './ThemeToggle'
 import NavDrawer from './NavDrawer'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
@@ -83,6 +84,7 @@ export default function Shell({ children }: { children: ReactNode }) {
             (the desktop links above carry flex:1, but they're hidden on phones). */}
         <span className="ktc-nav-spacer" aria-hidden />
         <span className="ktc-nav-lang"><LangToggle /></span>
+        <ThemeToggle />
         {hasPageTour && (
           <button className="ktc-nav-help" onClick={replayPageTour}
             title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>
@@ -108,12 +110,12 @@ export default function Shell({ children }: { children: ReactNode }) {
                   {t(n.label)}
                 </NavLink>
               ))}
+              <NavLink to="/manual" onClick={close}
+                className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
+                {t('User Manual')}
+              </NavLink>
               <div className="ktc-drawer-sep" />
-              {hasPageTour && (
-                <button type="button" className="ktc-drawer-link" onClick={() => { close(); replayPageTour() }}>
-                  {t("Show this page's walkthrough")}
-                </button>
-              )}
+              {/* Tour replay lives only on the top-rail ? button now (de-duplicated). */}
               <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
             </>
           )}

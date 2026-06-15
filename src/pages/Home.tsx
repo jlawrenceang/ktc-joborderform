@@ -4,7 +4,7 @@ import Shell from '../components/Shell'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { homeSteps } from '../components/WelcomeTour'
-import { usePageTour, useTour } from '../components/TourProvider'
+import { usePageTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
 
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -24,7 +24,6 @@ const CalcIcon = () => (
 const VesselIcon = () => (
   <svg {...iconProps}><path d="M3 18a3 3 0 0 0 2.5 1.5h13A3 3 0 0 0 21 18l-2-6H5l-2 6Z" /><path d="M12 12V4M8 8h8M12 4h.01" /></svg>
 )
-
 const cards: { to: string; title: string; desc: string; icon: ReactNode }[] = [
   { to: '/job-order', title: 'New Job Order', desc: 'File for X-ray, DEA or OOG stripping services', icon: <NewOrderIcon /> },
   { to: '/job-orders', title: 'My Job Orders', desc: 'Track statuses, pay, and print approved slips', icon: <OrdersIcon /> },
@@ -39,9 +38,8 @@ export default function Home() {
   const { t } = useT()
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
-  // First visit to Home auto-opens its tour; "Quick tour" replays it.
+  // First visit to Home auto-opens its tour; the ? button in the top rail replays it.
   usePageTour('home', homeSteps)
-  const { replayPageTour } = useTour()
 
   return (
     <Shell>
@@ -49,11 +47,8 @@ export default function Home() {
         <h1 className="ktc-home-greet">
           {firstName ? t('Welcome, {name}', { name: firstName }) : t('Welcome')}
         </h1>
-        <p className="ktc-sub" style={{ maxWidth: 480 }}>
-          {t('File job orders for terminal services and track them through processing.')}{' '}
-          <button type="button" className="ktc-link" style={{ fontSize: 'inherit' }} onClick={replayPageTour}>
-            {t('Quick tour ▸')}
-          </button>
+        <p className="ktc-sub" style={{ maxWidth: 460 }}>
+          {t('Manage and track your KTC terminal services — anytime, anywhere.')}
         </p>
       </div>
 
