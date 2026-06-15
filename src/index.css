@@ -128,23 +128,36 @@
   /* Mobile-only flex spacer (desktop uses .ktc-nav-links flex:1 instead). */
   .ktc-nav-spacer { display: none; }
   .ktc-nav-lang { display: inline-flex; flex: 0 0 auto; }
-  /* Per-page "replay the walkthrough" help button — kept visible on phones. */
+  /* Per-page "replay the walkthrough" button — a labelled pill (? + Quick tour),
+     kept visible on phones. */
   .ktc-nav-help {
     flex: 0 0 auto;
-    display: inline-grid;
-    place-items: center;
-    width: 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     height: 32px;
+    padding: 0 12px 0 9px;
     border-radius: 999px;
     border: 1px solid var(--glass-brd);
     background: rgba(255, 255, 255, 0.5);
     color: var(--acc-2);
-    font-weight: 800;
-    font-size: 15px;
     cursor: pointer;
+    white-space: nowrap;
     transition: background var(--dur-fast) ease;
   }
   .ktc-nav-help:hover { background: rgb(var(--acc-rgb) / 0.12); }
+  .ktc-nav-help-q {
+    display: inline-grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgb(var(--acc-rgb) / 0.16);
+    font-weight: 800;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .ktc-nav-help-text { font-weight: 650; font-size: 12.5px; }
   .ktc-burger-label { font-size: 13px; font-weight: 650; }
   .ktc-nav-links {
     display: flex;

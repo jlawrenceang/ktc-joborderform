@@ -88,7 +88,8 @@ export default function Shell({ children }: { children: ReactNode }) {
         {hasPageTour && (
           <button className="ktc-nav-help" onClick={replayPageTour}
             title={t('Quick tour')} aria-label={t('Quick tour')}>
-            ?
+            <span aria-hidden className="ktc-nav-help-q">?</span>
+            <span className="ktc-nav-help-text">{t('Quick tour')}</span>
           </button>
         )}
         <span className="ktc-nav-util">
