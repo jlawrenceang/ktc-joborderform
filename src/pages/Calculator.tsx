@@ -5,6 +5,7 @@ import { peso } from '../lib/pricing'
 import { usePageTour } from '../components/TourProvider'
 import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
+import { SHIPPING_LINES, normLine, type Origin } from '../lib/shippingLines'
 
 // Rate calculator — a guided estimate the customer builds step by step, then
 // presses "Generate estimate" to see the charges. Flow (owner, 2026-06-16):
@@ -21,21 +22,8 @@ import { useT } from '../lib/i18n'
 type TermRate = { service: string; trade: string; origin: string; size: string; rate: number }
 type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string; last_free_day: string | null; shipping_line: string | null }
 type Size = '20' | '40'
-type Origin = 'domestic' | 'foreign'
-
-// The shipping lines KTC carries. MCC is Maersk's domestic feeder arm, so the
-// trade route is derived from the line (only MCC is domestic). Maersk & MCC
-// shoulder the customer's LoLo on EXPORT, so it's waived for them.
-const LINES: { code: string; label: string; origin: Origin }[] = [
-  { code: 'MAERSK', label: 'Maersk', origin: 'foreign' },
-  { code: 'MCC', label: 'MCC', origin: 'domestic' },
-  { code: 'EVERGREEN', label: 'Evergreen', origin: 'foreign' },
-  { code: 'SITC', label: 'SITC', origin: 'foreign' },
-  { code: 'MSC', label: 'MSC', origin: 'foreign' },
-  { code: 'CMA-CGM', label: 'CMA-CGM', origin: 'foreign' },
-]
-const LOLO_WAIVER_LINES = ['MAERSK', 'MCC']
-const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+// A per-line charge rule (0080) layered on the base tariff.
+type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
 
 export default function Calculator() {
   const { t } = useT()
@@ -45,6 +33,7 @@ export default function Calculator() {
   const [xrayRate, setXrayRate] = useState(0)
   const [settings, setSettings] = useState({ vat: 0.12, admin: 0, print: 0, reefer: 0, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
+  const [rules, setRules] = useState<Rule[]>([])
 
   // Inputs
   const [line, setLine] = useState('')
@@ -63,11 +52,12 @@ export default function Calculator() {
 
   useEffect(() => {
     void (async () => {
-      const [{ data: tr }, { data: sr }, { data: ps }, { data: v }] = await Promise.all([
+      const [{ data: tr }, { data: sr }, { data: ps }, { data: v }, { data: cr }] = await Promise.all([
         supabase.from('terminal_rates').select('service, trade, origin, size, rate'),
         supabase.from('service_rates').select('service, rate').ilike('service', '%x-ray%').limit(1),
         supabase.from('pricing_settings').select('key, value'),
         supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number, last_free_day, shipping_line').eq('is_current', true).order('vessel_name'),
+        supabase.from('shipping_line_charge_rules').select('shipping_line, service, trade, action, value').eq('active', true),
       ])
       setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: Number(x.rate) })))
       setXrayRate(Number((sr?.[0] as { rate?: number })?.rate ?? 0))
@@ -77,6 +67,7 @@ export default function Calculator() {
         reefer: m.get('reefer_rate') ?? 0, reeferMin: m.get('reefer_min_hours') ?? 4, deposit: m.get('reefer_deposit') ?? 10000,
       })
       setVessels((v ?? []) as VesselOpt[])
+      setRules(((cr ?? []) as Rule[]).map((x) => ({ ...x, value: Number(x.value) })))
     })()
   }, [])
 
@@ -85,13 +76,13 @@ export default function Calculator() {
 
   // Vessels for the chosen line (loose name match); all vessels when no line.
   const lineVessels = useMemo(
-    () => (line ? vessels.filter((v) => norm(v.shipping_line) === norm(line)) : vessels),
+    () => (line ? vessels.filter((v) => normLine(v.shipping_line) === normLine(line)) : vessels),
     [vessels, line],
   )
 
   function chooseLine(code: string) {
     setLine(code)
-    const o = LINES.find((l) => l.code === code)?.origin
+    const o = SHIPPING_LINES.find((l) => l.code === code)?.origin
     if (o) setOrigin(o)
     setVesselVisit('') // re-pick a vessel under the new line
   }
@@ -102,19 +93,40 @@ export default function Calculator() {
   }, [termRates, trade, origin])
 
   const lfd = lineVessels.find((v) => v.vessel_visit === vesselVisit)?.last_free_day ?? null
-  const loloWaived = trade === 'export' && LOLO_WAIVER_LINES.includes(line)
 
-  // Which basic terminal charges apply for the current shipment.
+  // Which basic terminal charges apply structurally (weighing is export-only).
+  // Per-line rules (waive/discount/surcharge, 0080) are applied to the amounts
+  // below — a waived charge shows as ₱0 with a "Waived" tag.
   const basicServices = useMemo(() => [
     { key: 'arrastre', label: 'Arrastre', show: true },
     { key: 'weighing', label: 'Weighing scale', show: trade === 'export' },
     { key: 'wharfage', label: 'Wharfage', show: true },
-    { key: 'lolo', label: 'Lift on / Lift off (LoLo)', show: !loloWaived },
-  ].filter((s) => s.show), [trade, loloWaived])
+    { key: 'lolo', label: 'Lift on / Lift off (LoLo)', show: true },
+  ].filter((s) => s.show), [trade])
 
   const calc = useMemo(() => {
     const sized = (service: string) => rateOf(service, '20') * count20 + rateOf(service, '40') * count40
-    const basic = basicServices.map((s) => ({ key: s.key, label: s.label, amount: sized(s.key) }))
+    const counts = count20 + count40
+    // Apply the chosen line's charge rules to a base amount.
+    const applyRules = (service: string, base: number): { amount: number; tag: string } => {
+      const rs = line
+        ? rules.filter((r) => normLine(r.shipping_line) === normLine(line) && r.service === service && (r.trade == null || r.trade === trade))
+        : []
+      if (rs.length === 0) return { amount: base, tag: '' }
+      if (rs.some((r) => r.action === 'waive')) return { amount: 0, tag: t('Waived') }
+      let amt = base
+      const tags: string[] = []
+      for (const r of rs) {
+        if (r.action === 'discount_pct') { amt = amt * (1 - r.value / 100); tags.push(`−${r.value}%`) }
+        else if (r.action === 'discount_amt') { amt = Math.max(0, amt - r.value * counts); tags.push(`−${peso(r.value)}`) }
+        else if (r.action === 'surcharge_amt') { amt = amt + r.value * counts; tags.push(`+${peso(r.value)}`) }
+      }
+      return { amount: amt, tag: tags.join(' ') }
+    }
+    const basic = basicServices.map((s) => {
+      const r = applyRules(s.key, sized(s.key))
+      return { key: s.key, label: s.label, amount: r.amount, tag: r.tag }
+    })
     const basicTotal = basic.reduce((a, b) => a + b.amount, 0)
 
     // Storage days = calendar days from the Last Free Day to the planned pickup.
@@ -123,7 +135,9 @@ export default function Calculator() {
       const ms = new Date(pickupDate).getTime() - new Date(lfd).getTime()
       storageDays = ms > 0 ? Math.round(ms / 86_400_000) : 0
     }
-    const storage = sized('storage') * storageDays
+    const storageR = applyRules('storage', sized('storage') * storageDays)
+    const storage = storageR.amount
+    const storageTag = storageR.tag
     const xray = xrayRate * Math.max(0, xrayVans)
 
     // Electrical/reefer: per van per hour, plug-in → plug-out, with a minimum
@@ -140,8 +154,8 @@ export default function Calculator() {
     const vatable = basicTotal + storage + xray + reefer
     const vat = vatable * settings.vat
     const charges = vatable + vat + settings.admin + settings.print
-    return { basic, storage, storageDays, xray, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit }
-  }, [rateOf, basicServices, count20, count40, lfd, pickupDate, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut])
+    return { basic, storage, storageTag, storageDays, xray, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit }
+  }, [rateOf, basicServices, count20, count40, lfd, pickupDate, xrayRate, xrayVans, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
   const hasContainers = count20 > 0 || count40 > 0
 
@@ -210,7 +224,7 @@ export default function Calculator() {
                 <span className="ktc-label">{t('Shipping line')}</span>
                 <select className="ktc-input" value={line} onChange={(e) => chooseLine(e.target.value)}>
                   <option value="">{t('Select a shipping line…')}</option>
-                  {LINES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                  {SHIPPING_LINES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
                 </select>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -237,11 +251,6 @@ export default function Calculator() {
               {fieldRow(
                 t('Shipment'),
                 seg(trade, setTrade, [{ v: 'import', label: 'Import (Withdrawal)' }, { v: 'export', label: 'Export (Deposit)' }]),
-              )}
-              {loloWaived && (
-                <p className="ktc-label" style={{ fontSize: 12, margin: 0 }}>
-                  {t('LoLo is waived — {line} shoulders the customer’s lift on/off on export.', { line: LINES.find((l) => l.code === line)?.label ?? line })}
-                </p>
               )}
             </div>
           </div>
@@ -300,8 +309,8 @@ export default function Calculator() {
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
                 <tbody>
-                  {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={peso(b.amount)} />)}
-                  {calc.storage > 0 && <Row label={t('Storage')} value={peso(calc.storage)} hint={`× ${calc.storageDays} ${t('day(s)')}`} />}
+                  {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={peso(b.amount)} hint={b.tag} />)}
+                  {calc.storageDays > 0 && <Row label={t('Storage')} value={peso(calc.storage)} hint={`× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
                   {calc.xray > 0 && <Row label={t('X-ray')} value={peso(calc.xray)} hint={`× ${xrayVans}`} />}
                   {calc.reefer > 0 && <Row label={t('Electrical / reefer')} value={peso(calc.reefer)} hint={`${reeferVans} × ${calc.reeferHours}h`} />}
                   <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />

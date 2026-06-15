@@ -6,6 +6,8 @@ import { useBroker } from '../lib/useBroker'
 import type { Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import { peso } from '../lib/pricing'
+import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
 
 // Terminal tariff dimensions (migration 0073): service × trade × origin × size.
 const TERM_SERVICES: [string, string][] = [['arrastre', 'Arrastre'], ['wharfage', 'Wharfage'], ['lolo', 'LoLo'], ['weighing', 'Weighing scale (export)'], ['storage', 'Storage (per day)']]
@@ -246,6 +248,49 @@ export default function Settings() {
       .upsert(termRates.map((x) => ({ id: x.id, service: x.service, trade: x.trade, origin: x.origin, size: x.size, rate: x.rate })), { onConflict: 'id' })
     setTermBusy(false)
     setTermMsg(error ? error.message : t('✓ Terminal rates saved.'))
+  }
+
+  // Per-shipping-line charge rules (0080): waive/discount/surcharge layered on
+  // the base tariff. Inserted/deleted live (admin RLS).
+  type LineRule = { id: string; shipping_line: string; service: string; trade: string | null; action: string; value: number }
+  const [lineRules, setLineRules] = useState<LineRule[]>([])
+  const [ruleMsg, setRuleMsg] = useState<string | null>(null)
+  const [draft, setDraft] = useState<{ line: string; service: string; trade: string; action: string; value: string } | null>(null)
+  useEffect(() => {
+    void supabase.from('shipping_line_charge_rules').select('id, shipping_line, service, trade, action, value').order('shipping_line')
+      .then(({ data }) => setLineRules(((data ?? []) as LineRule[]).map((x) => ({ ...x, value: Number(x.value) }))))
+  }, [])
+  function openDraft(line: string) {
+    setRuleMsg(null)
+    setDraft({ line, service: 'lolo', trade: 'export', action: 'waive', value: '' })
+  }
+  async function addRule() {
+    if (!draft) return
+    const needsValue = CHARGE_RULE_ACTIONS.find((a) => a.key === draft.action)?.needsValue
+    const row = {
+      shipping_line: draft.line, service: draft.service,
+      trade: draft.trade === 'any' ? null : draft.trade,
+      action: draft.action, value: needsValue ? (Number(draft.value) || 0) : 0,
+    }
+    const { data, error } = await supabase.from('shipping_line_charge_rules')
+      .insert(row).select('id, shipping_line, service, trade, action, value').single()
+    if (error) { setRuleMsg(error.message); return }
+    setLineRules((rs) => [...rs, { ...(data as LineRule), value: Number((data as LineRule).value) }])
+    setDraft(null); setRuleMsg(t('✓ Rule added.'))
+  }
+  async function deleteRule(id: string) {
+    const { error } = await supabase.from('shipping_line_charge_rules').delete().eq('id', id)
+    if (error) { setRuleMsg(error.message); return }
+    setLineRules((rs) => rs.filter((r) => r.id !== id))
+  }
+  function ruleLabel(r: LineRule): string {
+    const svc = TERMINAL_CHARGE_SERVICES.find((s) => s.key === r.service)?.label ?? r.service
+    const tr = r.trade ? t(r.trade) : t('all')
+    let act = t('Waive')
+    if (r.action === 'discount_pct') act = `−${r.value}%`
+    else if (r.action === 'discount_amt') act = `−${peso(r.value)}/${t('cont')}`
+    else if (r.action === 'surcharge_amt') act = `+${peso(r.value)}/${t('cont')}`
+    return `${svc} · ${tr} · ${act}`
   }
 
   // Owner switch: customer notification emails on/off (0074). Default OFF.
@@ -639,6 +684,59 @@ export default function Settings() {
           </button>
           {termMsg && <span className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600 }}>{termMsg}</span>}
         </div>
+      </div>
+
+      <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Per-shipping-line charge rules')}</h2>
+        <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+          {t('Layer line-specific rules on top of the tariff: waive a charge, give a discount (% or ₱/container), or add a surcharge. Example: Maersk & MCC waive LoLo on export. Free storage days are set per line in the vessel schedule settings.')}
+        </p>
+        <div style={{ display: 'grid', gap: 12 }}>
+          {SHIPPING_LINES.map((l) => {
+            const rs = lineRules.filter((r) => r.shipping_line === l.code)
+            return (
+              <div key={l.code} style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 700 }}>{l.label} <span className="ktc-label" style={{ fontSize: 11.5, fontWeight: 500 }}>({l.origin === 'domestic' ? t('Domestic') : t('Foreign')})</span></span>
+                  <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => openDraft(l.code)}>+ {t('Add rule')}</button>
+                </div>
+                {rs.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                    {rs.map((r) => (
+                      <span key={r.id} className="ktc-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5 }}>
+                        {ruleLabel(r)}
+                        <button type="button" aria-label={t('Remove')} onClick={() => void deleteRule(r.id)}
+                          style={{ border: 0, background: 'none', cursor: 'pointer', color: 'inherit', fontSize: 13, lineHeight: 1, padding: 0 }}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {draft?.line === l.code && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                    <select className="ktc-input" value={draft.service} onChange={(e) => setDraft({ ...draft, service: e.target.value })} style={{ width: 'auto', padding: '7px 10px', fontSize: 12.5 }}>
+                      {TERMINAL_CHARGE_SERVICES.map((s) => <option key={s.key} value={s.key}>{t(s.label)}</option>)}
+                    </select>
+                    <select className="ktc-input" value={draft.trade} onChange={(e) => setDraft({ ...draft, trade: e.target.value })} style={{ width: 'auto', padding: '7px 10px', fontSize: 12.5 }}>
+                      <option value="any">{t('Import & export')}</option>
+                      <option value="import">{t('Import')}</option>
+                      <option value="export">{t('Export')}</option>
+                    </select>
+                    <select className="ktc-input" value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} style={{ width: 'auto', padding: '7px 10px', fontSize: 12.5 }}>
+                      {CHARGE_RULE_ACTIONS.map((a) => <option key={a.key} value={a.key}>{t(a.label)}</option>)}
+                    </select>
+                    {CHARGE_RULE_ACTIONS.find((a) => a.key === draft.action)?.needsValue && (
+                      <input className="ktc-input" type="number" step="0.01" min="0" value={draft.value} placeholder="0"
+                        onChange={(e) => setDraft({ ...draft, value: e.target.value })} style={{ width: 90, padding: '7px 10px', fontSize: 12.5 }} aria-label={t('Value')} />
+                    )}
+                    <button type="button" className="ktc-btn ktc-btn--sm" onClick={() => void addRule()} style={{ width: 'auto', padding: '7px 14px' }}>{t('Add')}</button>
+                    <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => setDraft(null)}>{t('Cancel')}</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        {ruleMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{ruleMsg}</p>}
       </div>
 
       <div className="ktc-glass" style={{ padding: 28, marginBottom: 18 }}>
