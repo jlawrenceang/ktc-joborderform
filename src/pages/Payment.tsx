@@ -143,7 +143,7 @@ export default function Payment() {
         {charges && (
           <>
             {charges.hasMissingRates && (
-              <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, color: 'hsl(30 70% 36%)' }}>
+              <p className="ktc-label" style={{ fontSize: 12.5, marginTop: 8, color: 'var(--c-h30-70-36)' }}>
                 {t('Some rates aren’t configured yet — the total below may be incomplete. KTC will confirm the final amount.')}
               </p>
             )}
@@ -168,11 +168,11 @@ export default function Payment() {
                 </tr>
                 {(breakdown?.paid ?? 0) > 0 && (
                   <tr><td style={{ padding: '6px 0' }} className="ktc-label">{t('Paid')}</td>
-                    <td className="ktc-mono" style={{ textAlign: 'right', color: 'hsl(150 60% 30%)' }}>− {peso(breakdown!.paid)}</td></tr>
+                    <td className="ktc-mono" style={{ textAlign: 'right', color: 'var(--c-h150-60-30)' }}>− {peso(breakdown!.paid)}</td></tr>
                 )}
                 <tr style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
                   <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{fullySettled ? t('Balance') : t('Balance due')}</td>
-                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: fullySettled ? 'hsl(150 60% 30%)' : 'var(--acc-2)' }}>
+                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: fullySettled ? 'var(--c-h150-60-30)' : 'var(--acc-2)' }}>
                     {fullySettled ? t('PAID') : peso(breakdown?.balance ?? charges.total)}
                   </td>
                 </tr>
@@ -289,7 +289,7 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, padding: '10px 13px' }} />
             ) : (
               <>
-                <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {file.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, padding: '9px 13px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📎 {file.name}</span>
                 <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={onSubmit}>{busy ? t('Sending…') : t('Submit to KTC')}</button>
                 <button type="button" className="ktc-link" disabled={busy} onClick={() => setFile(null)}>{t('Remove')}</button>
               </>

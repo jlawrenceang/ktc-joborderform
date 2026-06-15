@@ -456,6 +456,18 @@
     .ktc-home-tile-title { font-size: 13.5px; }
     .ktc-home-tile-desc { display: none; } /* keep tiles square + fully in view */
 
+    /* Job-order rows stack into two lines on phones (id+priority / count+date). */
+    .ktc-jo-head { display: none; }
+    .ktc-jo-row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "id prio" "cont date";
+      gap: 6px 10px;
+    }
+    .ktc-jo-id { grid-area: id; }
+    .ktc-jo-prio { grid-area: prio; justify-self: end; align-self: start; }
+    .ktc-jo-cont { grid-area: cont; text-align: left; }
+    .ktc-jo-date { grid-area: date; justify-self: end; }
+
     .ktc-title { font-size: 20px; }
     .ktc-sub { font-size: 13px; }
 
@@ -615,6 +627,40 @@
   .ktc-home-tile-chev { display: none; } /* clean launcher look — the whole tile is the affordance */
   .ktc-home-tile-desc { display: block; font-size: 12.5px; margin-top: 5px; line-height: 1.45; max-width: 24ch; }
 
+  /* ---- My Job Orders: compact table rows (click → detail modal) ---- */
+  .ktc-jo-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px 96px auto;
+    gap: 12px;
+    padding: 2px 16px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: hsl(var(--ink-2));
+    opacity: 0.65;
+  }
+  .ktc-jo-head > span + span { text-align: right; }
+  .ktc-jo-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 84px 96px auto;
+    align-items: center;
+    gap: 6px 12px;
+    width: 100%;
+    font: inherit;
+    color: hsl(var(--ink));
+    text-align: left;
+    padding: 12px 16px;
+    border: 1px solid var(--glass-brd);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+  }
+  .ktc-jo-row:hover { background: rgba(255, 255, 255, 0.85); border-color: var(--glass-brd-strong); }
+  .ktc-jo-cont, .ktc-jo-date { text-align: right; font-size: 12.5px; white-space: nowrap; }
+  .ktc-jo-prio { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
   /* Skeleton shimmer — frosted placeholder while content loads */
   .ktc-skeleton {
     position: relative;
@@ -639,3 +685,44 @@
     .ktc-skeleton::after { animation: none; }
   }
 }
+
+/* ============================================================
+   Dark theme — component tweaks for surfaces whose light values are
+   hardcoded in the rules above (unlayered, so they win over @layer base).
+   The token-based rules (.ktc-glass, .ktc-nav, chips, text…) flip on their
+   own via the dark token palette in v2-tokens.css.
+   ============================================================ */
+:root[data-theme='dark'] .ktc-input { background: rgba(255, 255, 255, 0.05); }
+:root[data-theme='dark'] .ktc-input:focus { background: rgba(255, 255, 255, 0.08); }
+:root[data-theme='dark'] .ktc-drawer { background: #14171e; }
+:root[data-theme='dark'] .ktc-nav-help { background: rgba(255, 255, 255, 0.06); }
+:root[data-theme='dark'] .ktc-jo-row { background: rgba(255, 255, 255, 0.04); }
+:root[data-theme='dark'] .ktc-jo-row:hover { background: rgba(255, 255, 255, 0.09); }
+:root[data-theme='dark'] .ktc-burger { background: rgba(255, 255, 255, 0.06); }
+:root[data-theme='dark'] .ktc-skeleton { background: rgba(255, 255, 255, 0.05); }
+
+/* Logo plate — the brand PNG has dark elements, so back it with a light chip
+   on dark surfaces wherever it appears (nav, footer, auth pages). */
+:root[data-theme='dark'] img[src='/ktc-logo.png'] {
+  background: #fff;
+  border-radius: 7px;
+  padding: 3px 6px;
+  box-sizing: content-box;
+}
+
+/* Theme toggle button in the rail (sun/moon). */
+.ktc-theme-toggle {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-brd);
+  background: rgba(255, 255, 255, 0.5);
+  color: hsl(var(--ink-2));
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.ktc-theme-toggle:hover { color: hsl(var(--ink)); background: rgb(var(--acc-rgb) / 0.12); }
+:root[data-theme='dark'] .ktc-theme-toggle { background: rgba(255, 255, 255, 0.06); }

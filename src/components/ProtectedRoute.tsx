@@ -44,7 +44,7 @@ function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
           <button
             type="button"
             onClick={() => void signOut()}
-            style={{ border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '9px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))' }}
+            style={{ border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '9px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'var(--c-w70)', color: 'hsl(var(--ink-2))' }}
           >
             Back to sign in
           </button>

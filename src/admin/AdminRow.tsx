@@ -21,7 +21,7 @@ export function AdminRow(props: Props) {
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
         padding: '12px 14px', borderRadius: 12,
-        background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)',
+        background: 'var(--c-w55)', border: '1px solid var(--glass-brd)',
       }}
     >
       <div style={{ fontSize: 14, lineHeight: 1.5 }}>
@@ -40,7 +40,7 @@ export function AdminRow(props: Props) {
           style={{
             border: 0, borderRadius: 10, padding: '8px 14px', fontWeight: 600, fontSize: 13,
             cursor: props.busy || props.canApprove === false ? 'not-allowed' : 'pointer', color: '#fff',
-            background: 'linear-gradient(135deg, hsl(150 55% 42%), hsl(150 60% 34%))',
+            background: 'linear-gradient(135deg, var(--c-h150-55-42), var(--c-h150-60-34))',
             opacity: props.canApprove === false ? 0.5 : 1,
           }}>
           {props.approveLabel ?? t('Approve')}
@@ -48,7 +48,7 @@ export function AdminRow(props: Props) {
         <button type="button" onClick={props.onReject} disabled={props.busy}
           style={{
             border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 14px',
-            fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))',
+            fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'var(--c-w70)', color: 'hsl(var(--ink-2))',
           }}>
           {props.rejectLabel ?? t('Reject')}
         </button>

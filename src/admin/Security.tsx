@@ -107,8 +107,8 @@ export default function Security() {
           {t('Adds a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…) to your sign-in. Once enabled it\'s enforced')} <b>{t('server-side')}</b> {t('— a stolen password alone can\'t reach any staff function.')}
         </p>
 
-        {error && <div role="alert" style={{ marginTop: 14, fontSize: 13, color: 'var(--acc-2)', padding: '10px 14px', borderRadius: 10, background: 'hsl(0 75% 97%)', border: '1px solid hsl(0 70% 88%)' }}>{error}</div>}
-        {notice && <div style={{ marginTop: 14, fontSize: 13.5, padding: '10px 14px', borderRadius: 10, background: 'hsl(145 60% 96%)', border: '1px solid hsl(145 50% 80%)' }}>{notice}</div>}
+        {error && <div role="alert" style={{ marginTop: 14, fontSize: 13, color: 'var(--acc-2)', padding: '10px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>{error}</div>}
+        {notice && <div style={{ marginTop: 14, fontSize: 13.5, padding: '10px 14px', borderRadius: 10, background: 'var(--c-h145-60-96)', border: '1px solid var(--c-h145-50-80)' }}>{notice}</div>}
 
         {loading ? (
           <div className="ktc-skeleton" style={{ height: 56, borderRadius: 12, marginTop: 18 }} />
@@ -141,7 +141,7 @@ export default function Security() {
           </div>
         ) : verified.length > 0 ? (
           <div style={{ marginTop: 20, display: 'grid', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'hsl(145 60% 96%)', border: '1px solid hsl(145 50% 80%)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'var(--c-h145-60-96)', border: '1px solid var(--c-h145-50-80)' }}>
               <span className="ktc-chip ktc-chip--success">{t('ON')}</span>
               <span style={{ fontSize: 14 }}>{t('Two-factor authentication is active on this account.')}</span>
             </div>

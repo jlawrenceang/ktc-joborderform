@@ -138,7 +138,7 @@ export default function JobOrder() {
   }
 
   const pendingNotice = !approved ? (
-    <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, marginTop: 14, background: 'hsl(40 90% 97%)', border: '1px solid hsl(35 85% 82%)', color: 'hsl(30 60% 32%)' }}>
+    <div style={{ fontSize: 13, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, marginTop: 14, background: 'var(--c-h40-90-97)', border: '1px solid var(--c-h35-85-82)', color: 'var(--c-h30-60-32)' }}>
       {t('You can file job orders now, but they')}{' '}<b>{t('can’t be processed until you pass final verification')}</b>.{' '}
       {hasId
         ? t('Your valid ID is on file — a KTC admin is verifying your account. Once approved, your held orders are sent to KTC automatically.')

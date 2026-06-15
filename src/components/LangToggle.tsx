@@ -15,7 +15,7 @@ export default function LangToggle({ compact = false }: { compact?: boolean }) {
       aria-label="Language"
       style={{
         display: 'inline-flex', flex: '0 0 auto', borderRadius: 999, padding: 2, gap: 2,
-        border: '1px solid var(--glass-brd)', background: 'rgba(255,255,255,0.5)',
+        border: '1px solid var(--glass-brd)', background: 'var(--c-w50)',
       }}
     >
       {opts.map((o) => {

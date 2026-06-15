@@ -8,6 +8,7 @@ import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import { useTour } from '../components/TourProvider'
 import LangToggle from '../components/LangToggle'
+import ThemeToggle from '../components/ThemeToggle'
 import NavDrawer from '../components/NavDrawer'
 import { useT } from '../lib/i18n'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
@@ -76,7 +77,7 @@ function AdminNav({ can }: { can: (p: Permission) => boolean }) {
                 {t(node.label)} <span aria-hidden style={{ fontSize: 9, marginLeft: 2, opacity: 0.7 }}>▾</span>
               </button>
               {isOpen && (
-                <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'rgba(255,255,255,0.97)' }}>
+                <div className="ktc-glass" role="menu" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 170, padding: 6, display: 'grid', gap: 2, zIndex: 50, background: 'var(--c-w97)' }}>
                   {items.map((i) => (
                     <NavLink key={i.to} to={i.to} role="menuitem" className={linkClass} style={{ textAlign: 'left' }}>{t(i.label)}</NavLink>
                   ))}
@@ -152,6 +153,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
         </span>
         <AdminNav can={can} />
         <LangToggle />
+        <ThemeToggle />
         <span className="ktc-nav-util">
           {hasPageTour && (
             <button className="ktc-nav-link" onClick={replayPageTour} style={{ flex: '0 0 auto', fontWeight: 700 }} title={t("Show this page's walkthrough")} aria-label={t("Show this page's walkthrough")}>

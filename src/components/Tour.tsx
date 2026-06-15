@@ -105,7 +105,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
         style={{
           position: 'fixed', zIndex: 61, left: '50%', transform: 'translateX(-50%)',
           maxWidth: 420, width: 'calc(100% - 40px)', padding: '24px 26px 20px',
-          background: 'rgba(255,255,255,0.96)',
+          background: 'var(--c-w96)',
           ...cardPos,
         }}
       >

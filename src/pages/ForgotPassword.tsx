@@ -87,12 +87,12 @@ export default function ForgotPassword() {
         </p>
 
         {notice && (
-          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'hsl(150 55% 95%)', border: '1px solid hsl(150 45% 80%)', color: 'hsl(150 55% 26%)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
+          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'var(--c-h150-55-95)', border: '1px solid var(--c-h150-45-80)', color: 'var(--c-h150-55-26)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
             {notice}
           </div>
         )}
         {error && (
-          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'hsl(0 75% 96%)', border: '1px solid hsl(0 70% 85%)', color: 'hsl(0 65% 42%)', fontSize: 13, fontWeight: 500 }}>
+          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'var(--c-h0-75-96)', border: '1px solid var(--c-h0-70-85)', color: 'var(--c-h0-65-42)', fontSize: 13, fontWeight: 500 }}>
             {error}
           </div>
         )}

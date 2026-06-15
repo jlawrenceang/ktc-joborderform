@@ -87,7 +87,7 @@ export default function VerifyId() {
       </header>
 
       <div className="ktc-glass" style={{ padding: 28 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(35 90% 90%)', color: 'hsl(30 80% 35%)', letterSpacing: '0.02em' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--c-h35-90-90)', color: 'var(--c-h30-80-35)', letterSpacing: '0.02em' }}>
           {t('PENDING FINAL VERIFICATION')}
         </span>
         <h1 style={{ margin: '12px 0 0', fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Upload your valid ID')}</h1>
@@ -117,7 +117,7 @@ export default function VerifyId() {
               <span className="ktc-label" style={{ fontSize: 12, opacity: 0.8 }}>{t('Choose a clear photo or PDF — you can review it before submitting.')}</span>
             </>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
               <button type="button" className="ktc-link" onClick={() => setShowPreview(true)} style={{ fontSize: 13 }}>{t('View')}</button>
               <button type="button" className="ktc-link" onClick={removeFile} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Remove')}</button>

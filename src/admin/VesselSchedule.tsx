@@ -316,13 +316,13 @@ export default function VesselSchedule() {
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void onImport(f); e.target.value = '' }} />
         </div>
         {err && <p className="ktc-error" style={{ whiteSpace: 'pre-wrap', marginTop: 10 }}>{err}</p>}
-        {msg && <p style={{ color: 'hsl(150 60% 30%)', marginTop: 10, fontSize: 13 }}>{msg}</p>}
+        {msg && <p style={{ color: 'var(--c-h150-60-30)', marginTop: 10, fontSize: 13 }}>{msg}</p>}
         {importReport && <p style={{ whiteSpace: 'pre-wrap', marginTop: 10, fontSize: 13, color: 'hsl(var(--ink-2))' }}>{importReport}</p>}
       </form>
 
       {/* Pending vessel requests — unlisted vessels customers filed against. */}
       {reqs.length > 0 && (
-        <div className="ktc-glass" style={{ padding: 16, marginBottom: 16, border: '1px solid hsl(40 85% 78%)', background: 'hsl(40 95% 97%)' }}>
+        <div className="ktc-glass" style={{ padding: 16, marginBottom: 16, border: '1px solid var(--c-h40-85-78)', background: 'var(--c-h40-95-97)' }}>
           <strong style={{ fontSize: 14, display: 'block', marginBottom: 4 }}>
             {t('⚠ Vessel requests — {n} awaiting review', { n: reqs.length })}
           </strong>
@@ -398,9 +398,9 @@ export default function VesselSchedule() {
                   </td>
                   <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
-                    {r.cancelled ? <Badge bg="hsl(0 70% 95%)" fg="hsl(0 65% 45%)">{t('cancelled')}</Badge>
-                      : r.is_current ? <Badge bg="hsl(150 50% 93%)" fg="hsl(150 60% 30%)">{t('current')}</Badge>
-                      : <Badge bg="hsl(220 16% 92%)" fg="hsl(220 10% 45%)">{t('past')}</Badge>}
+                    {r.cancelled ? <Badge bg="var(--c-h0-70-95)" fg="var(--c-h0-65-45)">{t('cancelled')}</Badge>
+                      : r.is_current ? <Badge bg="var(--c-h150-50-93)" fg="var(--c-h150-60-30)">{t('current')}</Badge>
+                      : <Badge bg="var(--c-h220-16-92)" fg="var(--c-h220-10-45)">{t('past')}</Badge>}
                   </td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <button className="ktc-link" onClick={() => startEdit(r)}>{t('Edit')}</button>{' · '}

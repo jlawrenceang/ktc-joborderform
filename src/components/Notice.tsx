@@ -5,10 +5,10 @@ import type { ReactNode, CSSProperties } from 'react'
 export type NoticeTone = 'success' | 'error' | 'warning' | 'info'
 
 const TONES: Record<NoticeTone, { bg: string; brd: string; ink: string; pill: string }> = {
-  success: { bg: 'hsl(150 55% 95%)', brd: 'hsl(150 45% 80%)', ink: 'hsl(150 55% 26%)', pill: 'hsl(150 50% 88%)' },
-  error:   { bg: 'hsl(0 75% 96%)',   brd: 'hsl(0 70% 85%)',   ink: 'hsl(0 65% 42%)',   pill: 'hsl(0 75% 92%)' },
-  warning: { bg: 'hsl(40 95% 94%)',  brd: 'hsl(40 85% 78%)',  ink: 'hsl(30 75% 32%)',  pill: 'hsl(40 90% 86%)' },
-  info:    { bg: 'hsl(210 60% 96%)', brd: 'hsl(210 55% 82%)', ink: 'hsl(210 55% 36%)', pill: 'hsl(210 60% 90%)' },
+  success: { bg: 'var(--c-h150-55-95)', brd: 'var(--c-h150-45-80)', ink: 'var(--c-h150-55-26)', pill: 'var(--c-h150-50-88)' },
+  error:   { bg: 'var(--c-h0-75-96)',   brd: 'var(--c-h0-70-85)',   ink: 'var(--c-h0-65-42)',   pill: 'var(--c-h0-75-92)' },
+  warning: { bg: 'var(--c-h40-95-94)',  brd: 'var(--c-h40-85-78)',  ink: 'var(--c-h30-75-32)',  pill: 'var(--c-h40-90-86)' },
+  info:    { bg: 'var(--c-h210-60-96)', brd: 'var(--c-h210-55-82)', ink: 'var(--c-h210-55-36)', pill: 'var(--c-h210-60-90)' },
 }
 
 export default function Notice({

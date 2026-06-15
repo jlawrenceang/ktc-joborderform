@@ -43,7 +43,7 @@ export default function ResetPassword() {
         <p className="ktc-label" style={{ marginTop: 6, marginBottom: 22 }}>{t('Choose a new password for your account.')}</p>
 
         {error && (
-          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'hsl(0 75% 96%)', border: '1px solid hsl(0 70% 85%)', color: 'hsl(0 65% 42%)', fontSize: 13, fontWeight: 500 }}>
+          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'var(--c-h0-75-96)', border: '1px solid var(--c-h0-70-85)', color: 'var(--c-h0-65-42)', fontSize: 13, fontWeight: 500 }}>
             {error}
           </div>
         )}

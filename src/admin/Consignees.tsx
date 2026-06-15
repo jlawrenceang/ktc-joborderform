@@ -57,9 +57,9 @@ const PAGE = 200
 type Filter = 'all' | AccreditationStatus
 
 const STATUS_STYLE: Record<AccreditationStatus, { bg: string; fg: string }> = {
-  pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
-  approved: { bg: 'hsl(150 50% 93%)', fg: 'hsl(150 60% 30%)' },
-  rejected: { bg: 'hsl(0 70% 95%)', fg: 'hsl(0 65% 45%)' },
+  pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
+  approved: { bg: 'var(--c-h150-50-93)', fg: 'var(--c-h150-60-30)' },
+  rejected: { bg: 'var(--c-h0-70-95)', fg: 'var(--c-h0-65-45)' },
 }
 
 interface EditState {
@@ -276,7 +276,7 @@ export default function Consignees() {
               const complete = !!(c.address && c.tin && c.doc_2303_path)
               if (editing?.id === c.id) {
                 return (
-                  <div key={c.id} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)', margin: '4px 0' }}>
+                  <div key={c.id} style={{ padding: 14, borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)', margin: '4px 0' }}>
                     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
                       <Field label={t('Code')} w={120}><input className="ktc-input" value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value })} /></Field>
                       <Field label={t('Name')} w={220}><input className="ktc-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
@@ -300,7 +300,7 @@ export default function Consignees() {
                   </span>
                   {c.doc_2303_path && <button className="ktc-link" onClick={() => void openFromStorage('consignee-docs', c.doc_2303_path, t('2303 — {name}', { name: c.name }))} style={{ fontSize: 12 }}>{t('2303')}</button>}
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: ss.bg, color: ss.fg }}>{t(c.status)}</span>
-                  {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'hsl(150 60% 32%)' }}>{t('Approve')}</button>}
+                  {c.status !== 'approved' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'approved')} style={{ fontSize: 13, color: 'var(--c-h150-60-32)' }}>{t('Approve')}</button>}
                   {c.status !== 'rejected' && <button className="ktc-link" disabled={busy} onClick={() => setStatus(c, 'rejected')} style={{ fontSize: 13 }}>{t('Reject')}</button>}
                   <button className="ktc-link" onClick={() => setEditing({ id: c.id, code: c.code, name: c.name, address: c.address ?? '', tin: c.tin ?? '', doc_2303_path: c.doc_2303_path })} style={{ fontSize: 13 }}>{t('Edit')}</button>
                   <button className="ktc-link" disabled={busy} onClick={() => remove(c)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Delete')}</button>

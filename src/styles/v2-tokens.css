@@ -64,4 +64,43 @@
   --tone-neutral-ink: hsl(220 8% 40%);
   --tone-accent-bg: rgb(var(--acc-rgb) / 0.14);
   --tone-accent-ink: var(--acc-2);
+
+  color-scheme: light;
+}
+
+/* ============================================================
+   Dark theme — redefines the core tokens. Brand accent stays the
+   same (KTC orange reads well on dark). The long tail of semantic
+   colors lives in the generated theme-colors.css.
+   ============================================================ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --cc-canvas: #0f1116;
+  --cc-canvas-strong: #0b0d11;
+  --card: #1a1d25;
+  --ink: 220 16% 92%;
+  --ink-2: 220 10% 70%;
+  --ink-3: 220 8% 56%;
+  --line: 220 10% 26%;
+  --line-soft: 220 10% 22%;
+
+  --glass-thin: rgba(30, 34, 44, 0.42);
+  --glass: rgba(30, 34, 44, 0.62);
+  --glass-thick: rgba(26, 30, 40, 0.84);
+  --glass-brd: rgba(255, 255, 255, 0.10);
+  --glass-brd-strong: rgba(255, 255, 255, 0.18);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 28px 60px -20px rgba(0, 0, 0, 0.7), 0 6px 16px rgba(0, 0, 0, 0.45);
+  --edge: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+
+  --tone-success-bg: hsl(150 38% 20%); --tone-success-ink: hsl(150 50% 74%);
+  --tone-info-bg: hsl(210 40% 22%);     --tone-info-ink: hsl(210 55% 76%);
+  --tone-progress-bg: hsl(265 32% 26%); --tone-progress-ink: hsl(265 50% 80%);
+  --tone-warning-bg: hsl(38 48% 22%);   --tone-warning-ink: hsl(40 85% 70%);
+  --tone-danger-bg: hsl(0 42% 26%);     --tone-danger-ink: hsl(0 75% 78%);
+  --tone-neutral-bg: hsl(220 8% 26%);   --tone-neutral-ink: hsl(220 10% 74%);
+  --tone-accent-bg: rgb(var(--acc-rgb) / 0.22); --tone-accent-ink: hsl(22 90% 70%);
 }

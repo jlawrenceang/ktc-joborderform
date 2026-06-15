@@ -50,7 +50,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
           {t('Your account has been suspended. Please contact KTC customer service for assistance.')}
         </p>
         {broker.decision_reason && (
-          <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(0 70% 97%)', border: '1px solid hsl(0 60% 90%)' }}>
+          <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'var(--c-h0-70-97)', border: '1px solid var(--c-h0-60-90)' }}>
             <b>{t('Reason:')}</b> {broker.decision_reason}
           </p>
         )}
@@ -65,7 +65,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
   // rejected → resubmit
   return (
     <div className="ktc-glass" style={{ padding: 28 }}>
-      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(35 90% 90%)', color: 'hsl(30 80% 35%)', letterSpacing: '0.02em' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--c-h35-90-90)', color: 'var(--c-h30-80-35)', letterSpacing: '0.02em' }}>
         {t('ACTION NEEDED')}
       </span>
       <h1 style={{ margin: '12px 0 0', fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Resubmit your details to continue')}</h1>
@@ -73,7 +73,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
         {t('We just need a quick update to finish verifying your account. Please review the note below, update your details, and resubmit — a KTC admin will review it again.')}
       </p>
       {broker.decision_reason && (
-        <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'hsl(40 90% 96%)', border: '1px solid hsl(35 85% 82%)' }}>
+        <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, padding: '10px 12px', borderRadius: 10, background: 'var(--c-h40-90-96)', border: '1px solid var(--c-h35-85-82)' }}>
           <b>{t('What to update:')}</b> {broker.decision_reason}
         </p>
       )}
@@ -102,7 +102,7 @@ export default function PendingPanel({ broker }: { broker: Broker }) {
                 })
               }} style={{ padding: '9px 13px' }} />
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.6)', border: '1px solid var(--glass-brd)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 500, flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
               <button type="button" className="ktc-link" onClick={() => setFile(null)} style={{ fontSize: 13, color: 'var(--acc-2)' }}>{t('Remove')}</button>
             </div>

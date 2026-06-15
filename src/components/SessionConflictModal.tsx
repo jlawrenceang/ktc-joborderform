@@ -48,7 +48,7 @@ export default function SessionConflictModal() {
               fontWeight: 600,
               fontSize: 14,
               cursor: busy ? 'default' : 'pointer',
-              background: 'rgba(255,255,255,0.7)',
+              background: 'var(--c-w70)',
               color: 'hsl(var(--ink-2))',
               opacity: busy ? 0.7 : 1,
             }}

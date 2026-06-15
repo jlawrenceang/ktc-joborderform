@@ -90,7 +90,7 @@ export default function Dashboard() {
                   width: 44, height: 44, borderRadius: 14, display: 'grid', placeItems: 'center',
                   background: active
                     ? 'linear-gradient(135deg, rgb(var(--acc-rgb) / 0.22), rgb(var(--acc-rgb) / 0.10))'
-                    : 'rgba(255,255,255,0.55)',
+                    : 'var(--c-w55)',
                   border: '1px solid var(--glass-brd)',
                   color: c.accent ? 'var(--acc)' : 'hsl(var(--ink-2))',
                 }}

@@ -17,10 +17,10 @@ const STATUS_LABEL: Record<string, string> = {
   suspended: 'Suspended',
 }
 const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
-  pending: { bg: 'hsl(40 90% 86%)', ink: 'hsl(30 75% 32%)' },
-  approved: { bg: 'hsl(150 50% 88%)', ink: 'hsl(150 55% 26%)' },
-  rejected: { bg: 'hsl(0 75% 92%)', ink: 'hsl(0 65% 42%)' },
-  suspended: { bg: 'hsl(220 12% 88%)', ink: 'hsl(220 8% 40%)' },
+  pending: { bg: 'var(--c-h40-90-86)', ink: 'var(--c-h30-75-32)' },
+  approved: { bg: 'var(--c-h150-50-88)', ink: 'var(--c-h150-55-26)' },
+  rejected: { bg: 'var(--c-h0-75-92)', ink: 'var(--c-h0-65-42)' },
+  suspended: { bg: 'var(--c-h220-12-88)', ink: 'var(--c-h220-8-40)' },
 }
 
 export default function Account() {

@@ -111,7 +111,7 @@ export default function NewJobOrder() {
 
         {filed ? (
           <div style={{ display: 'grid', gap: 16 }}>
-            <div style={{ fontSize: 15, lineHeight: 1.7, padding: '16px 18px', borderRadius: 12, background: 'hsl(145 60% 96%)', border: '1px solid hsl(145 50% 80%)' }}>
+            <div style={{ fontSize: 15, lineHeight: 1.7, padding: '16px 18px', borderRadius: 12, background: 'var(--c-h145-60-96)', border: '1px solid var(--c-h145-50-80)' }}>
               ✓ {t('Filed')} <b className="ktc-mono">{filed.jo_number ?? '—'}</b>
               {filed.customer_name ? <> {t('for')} <b>{filed.customer_name}</b></> : null}.
               {' '}{t('Serving numbers are assigned — the slip can be printed now.')}

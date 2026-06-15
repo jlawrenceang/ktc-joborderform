@@ -314,9 +314,9 @@ export default function Login() {
               </div>
               <div style={{
                 fontSize: 12, fontWeight: 600, padding: '8px 12px', borderRadius: 8,
-                background: scrolledAgreement ? 'hsl(150 50% 94%)' : 'hsl(40 95% 90%)',
-                color: scrolledAgreement ? 'hsl(150 55% 28%)' : 'hsl(30 80% 34%)',
-                border: `1px solid ${scrolledAgreement ? 'hsl(150 45% 78%)' : 'hsl(40 85% 75%)'}`,
+                background: scrolledAgreement ? 'var(--c-h150-50-94)' : 'var(--c-h40-95-90)',
+                color: scrolledAgreement ? 'var(--c-h150-55-28)' : 'var(--c-h30-80-34)',
+                border: `1px solid ${scrolledAgreement ? 'var(--c-h150-45-78)' : 'var(--c-h40-85-75)'}`,
               }}>
                 {scrolledAgreement
                   ? t('✓ Thanks for reading — you can now check the consent boxes below.')
@@ -330,7 +330,7 @@ export default function Login() {
                   overflowY: 'auto',
                   borderRadius: 12,
                   border: '1px solid var(--glass-brd)',
-                  background: 'rgba(255,255,255,0.5)',
+                  background: 'var(--c-w50)',
                   padding: '12px 16px',
                   fontSize: 12,
                 }}
@@ -399,9 +399,9 @@ export default function Login() {
             </div>
             <div style={{
               fontSize: 12, fontWeight: 600, padding: '10px 20px',
-              background: scrolledAgreement ? 'hsl(150 50% 94%)' : 'hsl(40 95% 90%)',
-              color: scrolledAgreement ? 'hsl(150 55% 28%)' : 'hsl(30 80% 34%)',
-              borderBottom: `1px solid ${scrolledAgreement ? 'hsl(150 45% 80%)' : 'hsl(40 85% 78%)'}`,
+              background: scrolledAgreement ? 'var(--c-h150-50-94)' : 'var(--c-h40-95-90)',
+              color: scrolledAgreement ? 'var(--c-h150-55-28)' : 'var(--c-h30-80-34)',
+              borderBottom: `1px solid ${scrolledAgreement ? 'var(--c-h150-45-80)' : 'var(--c-h40-85-78)'}`,
             }}>
               {scrolledAgreement
                 ? t('✓ Thanks for reading — you can now check the consent boxes below.')

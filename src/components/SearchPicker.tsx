@@ -103,7 +103,7 @@ export default function SearchPicker({
             maxHeight: 260,
             overflowY: 'auto',
             borderRadius: 12,
-            background: 'rgba(255,255,255,0.92)',
+            background: 'var(--c-w92)',
             backdropFilter: 'blur(20px) saturate(1.6)',
             border: '1px solid var(--glass-brd)',
             boxShadow: '0 12px 32px rgba(0,0,0,0.12)',

@@ -196,7 +196,7 @@ export default function FileViewerModal({
           </button>
         </div>
 
-        <div style={{ flex: '1 1 auto', minHeight: 240, overflow: 'auto', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.35)', padding: kind === 'pdf' ? 0 : 16 }}>
+        <div style={{ flex: '1 1 auto', minHeight: 240, overflow: 'auto', display: 'grid', placeItems: 'center', background: 'var(--c-w35)', padding: kind === 'pdf' ? 0 : 16 }}>
           {error ? (
             <span style={{ fontSize: 13.5, color: 'var(--acc-2)', fontWeight: 500 }}>{error}</span>
           ) : !blobUrl ? (

@@ -78,9 +78,9 @@ export default function Vessels() {
                   </td>
                   <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
-                    {r.cancelled ? <Badge bg="hsl(0 70% 95%)" fg="hsl(0 65% 45%)">{t('cancelled')}</Badge>
-                      : r.is_current ? <Badge bg="hsl(150 50% 93%)" fg="hsl(150 60% 30%)">{t('current')}</Badge>
-                      : <Badge bg="hsl(220 16% 92%)" fg="hsl(220 10% 45%)">{t('past')}</Badge>}
+                    {r.cancelled ? <Badge bg="var(--c-h0-70-95)" fg="var(--c-h0-65-45)">{t('cancelled')}</Badge>
+                      : r.is_current ? <Badge bg="var(--c-h150-50-93)" fg="var(--c-h150-60-30)">{t('current')}</Badge>
+                      : <Badge bg="var(--c-h220-16-92)" fg="var(--c-h220-10-45)">{t('past')}</Badge>}
                   </td>
                 </tr>
               ))}

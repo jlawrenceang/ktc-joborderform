@@ -74,7 +74,7 @@ export function MonthCalendar({ rows }: { rows: VesselRow[] }) {
           <div key={i} style={{
             minHeight: 78, borderRadius: 8, padding: 4, fontSize: 11,
             border: '1px solid var(--glass-brd)',
-            background: day && isThisMonth && day === today.getDate() ? 'rgb(var(--acc-rgb) / 0.10)' : day ? 'rgba(255,255,255,0.45)' : 'transparent',
+            background: day && isThisMonth && day === today.getDate() ? 'rgb(var(--acc-rgb) / 0.10)' : day ? 'var(--c-w45)' : 'transparent',
           }}>
             {day && (
               <>

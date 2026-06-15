@@ -162,8 +162,8 @@ export default function Logs() {
               <div key={r.id} style={{
                 display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap',
                 fontSize: 13, padding: '9px 13px', borderRadius: 10,
-                background: r.tone === 'danger' ? 'hsl(0 75% 97%)' : 'rgba(255,255,255,0.55)',
-                border: r.tone === 'danger' ? '1px solid hsl(0 70% 88%)' : '1px solid var(--glass-brd)',
+                background: r.tone === 'danger' ? 'var(--c-h0-75-97)' : 'var(--c-w55)',
+                border: r.tone === 'danger' ? '1px solid var(--c-h0-70-88)' : '1px solid var(--glass-brd)',
               }}>
                 <span style={{ fontWeight: 550, minWidth: 0, overflowWrap: 'anywhere' }}>{r.title}</span>
                 {r.sub && <span className="ktc-mono ktc-label" style={{ fontSize: 11.5, minWidth: 0, overflowWrap: 'anywhere' }}>{r.sub}</span>}

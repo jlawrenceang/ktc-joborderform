@@ -13,6 +13,9 @@ npm-debug.log*
 # build artifact from scripts/apply-theme.sh (logo inlined into CSS)
 .theme-combined.css
 
+# Supabase CLI working state (function-deploy cache, linked-project ref)
+supabase/.temp/
+
 # Vercel
 .vercel
 

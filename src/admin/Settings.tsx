@@ -373,7 +373,7 @@ export default function Settings() {
               onDragEnd={() => setDragIdx(null)}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10,
-                background: r.active ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.3)',
+                background: r.active ? 'var(--c-w55)' : 'var(--c-w30)',
                 border: dragIdx === i ? '1px dashed rgb(var(--acc-rgb) / 0.6)' : '1px solid var(--glass-brd)',
                 opacity: r.active ? 1 : 0.6,
                 cursor: pricingLocked ? 'default' : 'grab',
@@ -432,7 +432,7 @@ export default function Settings() {
           {settings.map((s) =>
             s.key === 'vat_rate' ? (
               // Statutory — read-only here, server-guarded (migration 0050).
-              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.35)', border: '1px dashed var(--glass-brd)' }}>
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || t('VAT rate')}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <b className="ktc-mono" style={{ fontSize: 14 }}>{(s.value * 100).toFixed(0)}%</b>
@@ -440,7 +440,7 @@ export default function Settings() {
                 </span>
               </div>
             ) : (
-              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)', opacity: pricingLocked ? 0.65 : 1 }}>
+              <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', opacity: pricingLocked ? 0.65 : 1 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || s.key}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
@@ -504,7 +504,7 @@ export default function Settings() {
             <span style={{ width: 24 }} />
           </div>
           {shipLines.map((l) => (
-            <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+            <div key={l.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
               <input className="ktc-input" type="number" min="0" value={l.free_days_import} onChange={(e) => setSl(l.name, 'free_days_import', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
               <input className="ktc-input" type="number" min="0" value={l.free_days_export} onChange={(e) => setSl(l.name, 'free_days_export', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
@@ -532,7 +532,7 @@ export default function Settings() {
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
           {moveRates.map((m) => (
-            <div key={m.move_type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+            <div key={m.move_type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{m.move_type}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
@@ -625,7 +625,7 @@ export default function Settings() {
             {staff.map((b) => (
               <div key={b.id} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)',
+                padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)',
               }}>
                 <div style={{ fontSize: 14 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

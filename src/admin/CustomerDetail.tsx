@@ -8,10 +8,10 @@ import { useFileViewer } from '../components/FileViewerModal'
 import { useT } from '../lib/i18n'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
-  pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
-  approved: { bg: 'hsl(150 50% 93%)', fg: 'hsl(150 60% 30%)' },
-  rejected: { bg: 'hsl(0 70% 95%)', fg: 'hsl(0 65% 45%)' },
-  suspended: { bg: 'hsl(28 85% 93%)', fg: 'hsl(24 80% 40%)' },
+  pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
+  approved: { bg: 'var(--c-h150-50-93)', fg: 'var(--c-h150-60-30)' },
+  rejected: { bg: 'var(--c-h0-70-95)', fg: 'var(--c-h0-65-45)' },
+  suspended: { bg: 'var(--c-h28-85-93)', fg: 'var(--c-h24-80-40)' },
 }
 const JO_STATUS: Record<string, string> = {
   held: 'Pending approval (held)', submitted: 'Submitted', processing: 'Processing', completed: 'Completed', cancelled: 'Cancelled',
@@ -139,7 +139,7 @@ export default function CustomerDetail() {
         ) : (
           <div style={{ display: 'grid', gap: 12 }}>
             {orders.map((o) => (
-              <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+              <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
                   <b style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                   <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()} · {t(JO_STATUS[o.status] ?? o.status)}</span>

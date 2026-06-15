@@ -35,7 +35,7 @@ function RejectChoices({ busy, note, onNote, onChoose, onCancel }: {
 }) {
   const { t } = useT()
   return (
-    <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(0 70% 98%)', border: '1px solid hsl(0 60% 88%)', display: 'grid', gap: 8 }}>
+    <div style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-h0-70-98)', border: '1px solid var(--c-h0-60-88)', display: 'grid', gap: 8 }}>
       <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Choose an outcome (the customer is told why):')}</label>
       <textarea className="ktc-input" rows={2} value={note} onChange={(e) => onNote(e.target.value)}
         placeholder={t('Optional note to append (e.g. which field to fix)…')} />
@@ -43,12 +43,12 @@ function RejectChoices({ busy, note, onNote, onChoose, onCancel }: {
         {REJECT_PRESETS.map((p) => (
           <button key={p.label} type="button" disabled={busy}
             onClick={() => onChoose(p.status, p.reason + (note.trim() ? ' — ' + note.trim() : ''))}
-            style={{ textAlign: 'left', border: '1px solid hsl(0 60% 85%)', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: p.status === 'suspended' ? 'hsl(0 65% 40%)' : 'hsl(30 70% 38%)', background: 'rgba(255,255,255,0.8)' }}>
+            style={{ textAlign: 'left', border: '1px solid var(--c-h0-60-85)', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', color: p.status === 'suspended' ? 'var(--c-h0-65-40)' : 'var(--c-h30-70-38)', background: 'var(--c-w80)' }}>
             {t(p.label)}
           </button>
         ))}
         <button type="button" disabled={busy} onClick={onCancel}
-          style={{ justifySelf: 'start', border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'rgba(255,255,255,0.7)', color: 'hsl(var(--ink-2))' }}>
+          style={{ justifySelf: 'start', border: '1px solid hsl(var(--line))', borderRadius: 10, padding: '8px 12px', fontWeight: 600, fontSize: 13, cursor: 'pointer', background: 'var(--c-w70)', color: 'hsl(var(--ink-2))' }}>
           {t('Cancel')}
         </button>
       </div>
@@ -135,7 +135,7 @@ export default function Approvals() {
         <div onClick={() => setApprovedName(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
           <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 380, width: '100%', padding: 28, textAlign: 'center' }}>
-            <div style={{ width: 56, height: 56, margin: '0 auto', borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 30, color: '#fff', background: 'linear-gradient(135deg, hsl(150 55% 45%), hsl(150 60% 36%))' }}>✓</div>
+            <div style={{ width: 56, height: 56, margin: '0 auto', borderRadius: 999, display: 'grid', placeItems: 'center', fontSize: 30, color: '#fff', background: 'linear-gradient(135deg, var(--c-h150-55-45), var(--c-h150-60-36))' }}>✓</div>
             <h2 style={{ margin: '14px 0 0', fontSize: 19, fontWeight: 600 }}>{t('Account approved')}</h2>
             <p className="ktc-label" style={{ marginTop: 8, lineHeight: 1.6, fontSize: 14 }}>
               <b>{approvedName}</b> {t('has been approved and notified by email.')}

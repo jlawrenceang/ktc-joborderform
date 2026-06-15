@@ -58,7 +58,7 @@ export default function Calculator() {
           ) : (
             <div style={{ display: 'grid', gap: 8 }}>
               {cfg.rates.map((r) => (
-                <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)' }}>
+                <div key={r.service} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '9px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600 }}>{r.service}</div>
                     <div className="ktc-label" style={{ fontSize: 11.5 }}>
@@ -111,7 +111,7 @@ export default function Calculator() {
             </table>
           )}
           {charges?.hasMissingRates && anyQty && (
-            <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, color: 'hsl(30 70% 36%)' }}>
+            <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, color: 'var(--c-h30-70-36)' }}>
               {t('Some rates aren’t configured yet — “—” lines aren’t included in the total.')}
             </p>
           )}

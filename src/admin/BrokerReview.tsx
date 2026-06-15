@@ -28,8 +28,8 @@ const pill = (bg: string, fg: string): CSSProperties => ({
 // (DPA), so we show "✓ ID verified" rather than a "no ID" warning.
 export function BrokerReview({ b }: { b: ReviewBroker }) {
   const { t } = useT()
-  const ok = pill('hsl(150 50% 93%)', 'hsl(150 60% 30%)')
-  const warn = pill('hsl(0 70% 95%)', 'hsl(0 65% 45%)')
+  const ok = pill('var(--c-h150-50-93)', 'var(--c-h150-60-30)')
+  const warn = pill('var(--c-h0-70-95)', 'var(--c-h0-65-45)')
   const terms = fmtDate(b.terms_accepted_at)
   const dpa = fmtDate(b.privacy_consented_at)
   const confirmed = fmtDate(b.email_confirmed_at)

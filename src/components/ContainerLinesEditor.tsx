@@ -147,7 +147,7 @@ export default function ContainerLinesEditor({
       </div>
 
       {showBulk && (
-        <div style={{ display: 'grid', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.5)', border: '1px solid var(--glass-brd)' }}>
+        <div style={{ display: 'grid', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'var(--c-w50)', border: '1px solid var(--glass-brd)' }}>
           <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Bulk paste container numbers')}</span>
           <textarea
             className="ktc-input"

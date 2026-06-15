@@ -8,19 +8,19 @@ import { useFileViewer } from '../components/FileViewerModal'
 import { useT } from '../lib/i18n'
 
 const STATUS_STYLE: Record<string, { bg: string; fg: string }> = {
-  pending: { bg: 'hsl(40 90% 94%)', fg: 'hsl(35 80% 38%)' },
-  approved: { bg: 'hsl(150 50% 93%)', fg: 'hsl(150 60% 30%)' },
-  rejected: { bg: 'hsl(0 70% 95%)', fg: 'hsl(0 65% 45%)' },
-  suspended: { bg: 'hsl(28 85% 93%)', fg: 'hsl(24 80% 40%)' },
+  pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
+  approved: { bg: 'var(--c-h150-50-93)', fg: 'var(--c-h150-60-30)' },
+  rejected: { bg: 'var(--c-h0-70-95)', fg: 'var(--c-h0-65-45)' },
+  suspended: { bg: 'var(--c-h28-85-93)', fg: 'var(--c-h24-80-40)' },
 }
 
 const btn = (kind: 'danger' | 'ok' | 'muted'): CSSProperties => ({
   border: kind === 'muted' ? '1px solid hsl(var(--line))' : 0,
   borderRadius: 10, padding: '7px 12px', fontWeight: 600, fontSize: 12, cursor: 'pointer',
   color: kind === 'muted' ? 'hsl(var(--ink-2))' : '#fff',
-  background: kind === 'danger' ? 'linear-gradient(135deg, hsl(24 80% 52%), hsl(20 80% 44%))'
-    : kind === 'ok' ? 'linear-gradient(135deg, hsl(150 55% 42%), hsl(150 60% 34%))'
-    : 'rgba(255,255,255,0.7)',
+  background: kind === 'danger' ? 'linear-gradient(135deg, var(--c-h24-80-52), var(--c-h20-80-44))'
+    : kind === 'ok' ? 'linear-gradient(135deg, var(--c-h150-55-42), var(--c-h150-60-34))'
+    : 'var(--c-w70)',
 })
 
 export default function Brokers() {
@@ -76,7 +76,7 @@ export default function Brokers() {
                 <div key={b.id} style={{ display: 'grid', gap: suspendId === b.id ? 8 : 0 }}>
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                    padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.55)', border: '1px solid var(--glass-brd)',
+                    padding: '12px 14px', borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)',
                   }}>
                     <div style={{ fontSize: 14, lineHeight: 1.5, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -112,7 +112,7 @@ export default function Brokers() {
                     </div>
                   </div>
                   {suspendId === b.id && (
-                    <div style={{ padding: '12px 14px', borderRadius: 12, background: 'hsl(28 85% 97%)', border: '1px solid hsl(28 70% 88%)', display: 'grid', gap: 8 }}>
+                    <div style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-h28-85-97)', border: '1px solid var(--c-h28-70-88)', display: 'grid', gap: 8 }}>
                       <label className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Reason for suspension (shown to the customer)')}</label>
                       <textarea className="ktc-input" rows={2} value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
                         placeholder={t('e.g. Pending document re-verification.')} />

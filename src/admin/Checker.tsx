@@ -153,7 +153,7 @@ export default function Checker() {
     const confirmable = can('confirm_xray') && !o.xray_performed_at && ['submitted', 'processing', 'on_hold'].includes(o.status)
     return (
       <div style={{
-        padding: '16px 18px', borderRadius: 16, background: 'rgba(255,255,255,0.6)',
+        padding: '16px 18px', borderRadius: 16, background: 'var(--c-w60)',
         border: highlight ? '1px solid rgb(var(--acc-rgb) / 0.45)' : '1px solid var(--glass-brd)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -173,7 +173,7 @@ export default function Checker() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
           {(xrayLines.length ? xrayLines : o.lines ?? []).map((l, i) => (
-            <span key={i} className="ktc-mono" style={{ fontSize: 13.5, fontWeight: 600, padding: '6px 12px', borderRadius: 9, background: 'rgba(255,255,255,0.7)', border: '1px solid var(--glass-brd)' }}>
+            <span key={i} className="ktc-mono" style={{ fontSize: 13.5, fontWeight: 600, padding: '6px 12px', borderRadius: 9, background: 'var(--c-w70)', border: '1px solid var(--glass-brd)' }}>
               {l.container_number}
               <span className="ktc-label" style={{ fontSize: 11, marginLeft: 8, fontFamily: 'var(--font-sans)' }}>{l.service_request}</span>
             </span>
@@ -247,7 +247,7 @@ export default function Checker() {
       </div>
 
       {error && (
-        <div role="alert" style={{ marginBottom: 14, fontSize: 13.5, fontWeight: 500, color: 'var(--acc-2)', padding: '11px 14px', borderRadius: 10, background: 'hsl(0 75% 97%)', border: '1px solid hsl(0 70% 88%)' }}>
+        <div role="alert" style={{ marginBottom: 14, fontSize: 13.5, fontWeight: 500, color: 'var(--acc-2)', padding: '11px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>
           {error}
         </div>
       )}
