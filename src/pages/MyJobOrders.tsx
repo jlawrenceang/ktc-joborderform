@@ -233,18 +233,19 @@ export default function MyJobOrders() {
         </div>
 
         {/* Views — server-side filters, 10 per page */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className={`ktc-nav-link${filter === f.key ? ' is-active' : ''}`}
-              onClick={() => changeFilter(f.key)}
-              style={{ fontSize: 12.5 }}
-            >
-              {t(f.label)}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
+          <span className="ktc-label" style={{ fontSize: 12.5, fontWeight: 600 }}>{t('Show')}</span>
+          <select
+            className="ktc-input"
+            value={filter}
+            onChange={(e) => changeFilter(e.target.value as Filter)}
+            style={{ width: 'auto', minWidth: 180, padding: '8px 12px', fontSize: 13 }}
+            aria-label={t('Filter job orders')}
+          >
+            {FILTERS.map((f) => (
+              <option key={f.key} value={f.key}>{t(f.label)}</option>
+            ))}
+          </select>
           {!loading && total > 0 && (
             <span className="ktc-label" style={{ fontSize: 12, marginLeft: 'auto' }}>
               {t('{total} order(s)', { total })}

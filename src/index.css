@@ -552,7 +552,8 @@
   .ktc-drawer-link.is-active { background: rgb(var(--acc-rgb) / 0.12); color: var(--acc-2); font-weight: 650; }
   .ktc-drawer-link:active { background: rgba(0, 0, 0, 0.05); }
   .ktc-drawer-sep { height: 1px; background: var(--glass-brd); margin: 6px 4px; }
-  .ktc-drawer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--ink-2)); padding: 10px 14px 4px; }
+  .ktc-drawer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--ink-3)); padding: 12px 14px 6px; }
+  .ktc-drawer-toggles { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 6px 14px 8px; }
 
   /* ---- Page footer (customer shell) ---- */
   .ktc-foot {

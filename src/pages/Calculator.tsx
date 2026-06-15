@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { computeCharges, peso, type PricingConfig } from '../lib/pricing'
+import { usePageTour } from '../components/TourProvider'
+import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 
 // Rate calculator — estimate charges before filing: pick container counts per
@@ -10,6 +12,7 @@ import { useT } from '../lib/i18n'
 
 export default function Calculator() {
   const { t } = useT()
+  usePageTour('calculator', calculatorSteps)
   const [cfg, setCfg] = useState<PricingConfig | null>(null)
   const [counts, setCounts] = useState<Map<string, number>>(new Map())
 
@@ -51,7 +54,7 @@ export default function Calculator() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, alignItems: 'start' }}>
-        <div className="ktc-glass" style={{ padding: 24 }}>
+        <div className="ktc-glass" style={{ padding: 24 }} data-tour="calc-inputs">
           <h2 style={{ margin: '0 0 12px', fontSize: 15.5, fontWeight: 650 }}>{t('Containers per service')}</h2>
           {!cfg ? (
             <div className="ktc-skeleton" style={{ height: 180 }} />
@@ -83,7 +86,7 @@ export default function Calculator() {
           )}
         </div>
 
-        <div className="ktc-glass" style={{ padding: 24, position: 'sticky', top: 86 }}>
+        <div className="ktc-glass" style={{ padding: 24, position: 'sticky', top: 86 }} data-tour="calc-estimate">
           <h2 style={{ margin: '0 0 12px', fontSize: 15.5, fontWeight: 650 }}>{t('Estimate')}</h2>
           {!charges || !anyQty ? (
             <p className="ktc-label" style={{ fontSize: 13.5 }}>{t('Enter container counts to see the breakdown.')}</p>

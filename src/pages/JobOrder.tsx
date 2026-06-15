@@ -132,8 +132,7 @@ export default function JobOrder() {
       setError(lineErr.message)
       return
     }
-    // Redirect to the list and auto-expand the order we just filed.
-    sessionStorage.setItem('ktc_jo_filed_id', (jo as { id: string }).id)
+    // Redirect to the orders list (no auto-open — the new order shows at the top).
     navigate('/job-orders')
   }
 

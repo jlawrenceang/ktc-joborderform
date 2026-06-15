@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { useAuth } from '../lib/AuthContext'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
+import { usePageTour } from '../components/TourProvider'
+import { accountSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 
 type Msg = { tone: NoticeTone; text: string } | null
@@ -25,6 +27,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 
 export default function Account() {
   const { t } = useT()
+  usePageTour('account', accountSteps)
   const { broker, loading } = useBroker()
   const { session } = useAuth()
 

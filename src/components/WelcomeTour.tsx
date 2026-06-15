@@ -64,10 +64,28 @@ export const myJobOrdersSteps: TourStep[] = [
 export const vesselsCustomerSteps: TourStep[] = [
   {
     icon: '🚢', title: 'Vessel schedule', target: '[data-tour="vessels-intro"]',
-    body: 'The current vessel calls at KTC, maintained by operations. Check your vessel & voyage before filing, and watch the Last Free Day — the last day of free storage before charges start.',
+    body: 'The current vessel calls at KTC, updated by our operations team. Please be advised that all vessel schedules are subject to change (delays, advances, etc.) depending on the situation. Check your vessel & voyage before filing, and watch the Last Free Day — the last day of free storage before charges start.',
   },
   {
     icon: '🗓️', title: 'Table or calendar', target: '[data-tour="vessels-view"]',
-    body: 'Switch between a table and a month calendar (vessels shown on their arrival date). Tick "Show past/cancelled" to see the full history. View only — KTC keeps the schedule up to date.',
+    body: 'Switch between the table and the month calendar view. Tick "Show past/cancelled" to see the full history.',
+  },
+]
+
+export const calculatorSteps: TourStep[] = [
+  {
+    icon: '🧮', title: 'Estimate your charges', target: '[data-tour="calc-inputs"]',
+    body: 'Enter how many containers need each service — the estimate updates as you type. Rates are set by KTC.',
+  },
+  {
+    icon: '🧾', title: 'See the breakdown', target: '[data-tour="calc-estimate"]',
+    body: 'Your running estimate — service charges + VAT + fees. This is a guide only; the official amount is confirmed on the Service Invoice at the KTC office.',
+  },
+]
+
+export const accountSteps: TourStep[] = [
+  {
+    icon: '👤', title: 'Your account',
+    body: 'Manage your profile here — update your name and contact number, change your email, or reset your password. Changing your legal name needs re-verification by a KTC admin, since it’s matched to your valid ID.',
   },
 ]

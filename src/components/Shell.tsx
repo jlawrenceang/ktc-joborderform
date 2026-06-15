@@ -99,14 +99,7 @@ export default function Shell({ children }: { children: ReactNode }) {
         <NavDrawer>
           {(close) => (
             <>
-              <div className="ktc-drawer-lang">
-                <span className="ktc-drawer-label" style={{ padding: '0 0 8px' }}>{t('Language & theme')}</span>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <LangToggle />
-                  <ThemeToggle />
-                </div>
-              </div>
-              <div className="ktc-drawer-sep" />
+              <span className="ktc-drawer-label">{t('Menu')}</span>
               {NAV.map((n) => (
                 <NavLink key={n.to} to={n.to} end={n.end} onClick={close}
                   className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
@@ -117,9 +110,17 @@ export default function Shell({ children }: { children: ReactNode }) {
                 className={({ isActive }) => `ktc-drawer-link${isActive ? ' is-active' : ''}`}>
                 {t('User Manual')}
               </NavLink>
+
               <div className="ktc-drawer-sep" />
-              {/* Tour replay lives only on the top-rail ? button now (de-duplicated). */}
+              <span className="ktc-drawer-label">{t('Account')}</span>
               <button type="button" className="ktc-drawer-link" onClick={handleSignOut}>{t('Sign out')}</button>
+
+              <div className="ktc-drawer-sep" />
+              <span className="ktc-drawer-label">{t('Language & theme')}</span>
+              <div className="ktc-drawer-toggles">
+                <LangToggle />
+                <ThemeToggle />
+              </div>
             </>
           )}
         </NavDrawer>
