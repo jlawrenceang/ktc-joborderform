@@ -14,28 +14,24 @@ export const homeSteps: TourStep[] = [
     body: 'Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they\'re held until a KTC admin reviews and approves your account.',
   },
   {
-    icon: '📝', title: 'File a Job Order', target: '[data-tour="home-job-order"]',
-    body: 'File a new Job Order. We\'ll walk you through the form the first time you open it.',
+    icon: '📊', title: 'Your dashboard', target: '[data-tour="home-stats"]',
+    body: 'See your active orders and anything that needs your attention at a glance — tap a tile to jump straight to those orders.',
   },
   {
-    icon: '📦', title: 'Track your orders', target: '[data-tour="home-job-orders"]',
-    body: 'After you file, follow every order here — live status, your serving number, View charges & pay, and Print slip once approved.',
+    icon: '📝', title: 'File a Job Order', target: '[data-tour="tab-new"]',
+    body: 'Tap New on the bar at the bottom to file a Job Order — from any screen. We\'ll walk you through the form the first time.',
   },
   {
-    icon: '🚢', title: 'Vessel schedule', target: '[data-tour="home-vessels"]',
-    body: 'Check the current vessel calls, berths, and Last Free Day before you file — so you know your free-storage deadline.',
+    icon: '📦', title: 'Track your orders', target: '[data-tour="tab-orders"]',
+    body: 'Open Orders to follow every job — live status, your serving number, View charges & pay, and Print slip once approved.',
   },
   {
-    icon: '🧮', title: 'Estimate charges', target: '[data-tour="home-calculator"]',
-    body: 'The Rate Calculator estimates your fees — pick services and container counts to see the estimated total, inclusive of VAT and fees.',
+    icon: '🧭', title: 'Explore the app', target: '[data-tour="tab-menu"]',
+    body: 'For other features & information — vessel schedule, rate calculator, the user manual, language and sign out — tap Menu to explore the app.',
   },
   {
-    icon: '👤', title: 'Your account', target: '[data-tour="home-account"]',
-    body: 'Edit or update your personal details anytime. Changing your legal name needs re-verification by a KTC admin (since it\'s matched to your ID).',
-  },
-  {
-    icon: '🔄', title: 'Replay anytime', target: '[data-tour="nav-menu"]',
-    body: 'That\'s the quick tour! To watch it again anytime, open the ☰ Menu (top-right) and tap "Quick tour".',
+    icon: '🔄', title: 'Replay anytime',
+    body: 'That\'s the quick tour! To watch it again, open Menu and tap ✨ Quick tour.',
   },
 ]
 

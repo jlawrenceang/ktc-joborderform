@@ -442,6 +442,9 @@
     padding: 14px 20px 60px;
   }
   .ktc-page--wide { max-width: 1040px; }
+  /* Clear the floating bottom tab bar (customer shell). Two-class selector so it
+     wins over the base + mobile .ktc-page padding regardless of source order. */
+  .ktc-page.ktc-page--tabbar { padding-bottom: 104px; }
 
   /* ---- Responsive field grid ----
      Two columns on desktop so forms use the width and stay short (one screen);
@@ -526,10 +529,11 @@
     /* Denser glass cards on phones (opt-in via .ktc-pad-mobile on a .ktc-glass). */
     .ktc-pad-mobile { padding: 18px !important; }
 
-    /* Floating sticky action bar — primary button always within thumb reach. */
+    /* Floating sticky action bar — primary button always within thumb reach.
+       Sits ABOVE the bottom tab bar so they don't overlap. */
     .ktc-actionbar {
       position: sticky;
-      bottom: 10px;
+      bottom: 88px;
       z-index: 30;
       margin: 18px -6px 0;
       padding: 10px;
@@ -696,6 +700,123 @@
   .ktc-home-tile-title { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15.5px; font-weight: 650; letter-spacing: -0.01em; }
   .ktc-home-tile-chev { display: none; } /* clean launcher look — the whole tile is the affordance */
   .ktc-home-tile-desc { display: block; font-size: 12.5px; margin-top: 5px; line-height: 1.45; max-width: 24ch; }
+
+  /* ---- Bottom tab bar (single nav, all widths) + ⊞ Menu grid popup ---- */
+  .ktc-tabbar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 45;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 20px;
+    width: auto;
+    max-width: min(560px, calc(100% - 16px));
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    border: 1px solid var(--glass-brd);
+    box-shadow: var(--shadow-lg), var(--edge);
+  }
+  .ktc-tab {
+    flex: 1 1 0;
+    min-width: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 7px 6px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    border-radius: 14px;
+    color: hsl(var(--ink-2));
+    text-decoration: none;
+    font: inherit;
+    transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+  }
+  .ktc-tab:hover { background: rgb(var(--acc-rgb) / 0.08); }
+  .ktc-tab.is-active { color: var(--acc-2); background: rgb(var(--acc-rgb) / 0.12); }
+  .ktc-tab-icon { display: grid; place-items: center; }
+  .ktc-tab-label { font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; }
+
+  .ktc-menusheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 48;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 12px 90px;
+    background: rgba(15, 18, 30, 0.42);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    animation: ktc-fade-in var(--dur-fast) ease;
+  }
+  .ktc-menusheet {
+    width: 100%;
+    max-width: 460px;
+    padding: 16px;
+    border-radius: 20px;
+    background: var(--c-w96);
+    border: 1px solid var(--glass-brd);
+    box-shadow: var(--shadow-lg), var(--edge);
+    animation: ktc-rise var(--dur) var(--ease-spring);
+  }
+  .ktc-menusheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ktc-menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ktc-menu-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    background: var(--c-w55);
+    border: 1px solid var(--glass-brd);
+    transition: background var(--dur-fast) ease;
+  }
+  .ktc-menu-tile:hover { background: rgb(var(--acc-rgb) / 0.10); }
+  .ktc-menu-tile-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, rgb(var(--acc-rgb) / 0.16), rgb(var(--acc-rgb) / 0.07));
+    color: var(--acc);
+  }
+  .ktc-menu-tile-label { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.3; }
+  .ktc-menusheet-foot { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--glass-brd); }
+
+  /* ---- Home overview: stat tiles + bulletin ---- */
+  .ktc-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ktc-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .ktc-stat-num { font-size: 30px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.1; }
+  .ktc-stat-label { font-size: 12.5px; font-weight: 550; color: hsl(var(--ink-2)); }
+  .ktc-stat--alert .ktc-stat-num { color: var(--acc-2); }
+  .ktc-bulletin { padding: 20px 22px; }
+  .ktc-bulletin-title { margin: 0 0 10px; font-size: 14.5px; font-weight: 700; }
+  .ktc-bulletin-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: hsl(var(--ink-2)); }
+  .ktc-bulletin-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 
   /* ---- My Job Orders: compact table rows (click → detail modal) ---- */
   .ktc-jo-head {

@@ -77,10 +77,11 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   }
 
   const pad = 6
-  // Featured element rides at the top; the helper card sits at the bottom of the
-  // screen. With no target (welcome step) the card is centered.
+  // The helper card sits opposite the spotlight so it never covers it: target in
+  // the lower half (e.g. the bottom tab bar) → card at the top; otherwise bottom.
+  // With no target (welcome step) the card is centered.
   const cardPos: Record<string, number | string> = rect
-    ? { bottom: 24 }
+    ? (rect.top > (typeof window !== 'undefined' ? window.innerHeight : 800) * 0.5 ? { top: 24 } : { bottom: 24 })
     : { top: '50%', marginTop: -150 }
 
   return (
