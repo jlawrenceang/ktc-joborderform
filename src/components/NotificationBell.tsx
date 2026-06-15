@@ -92,6 +92,7 @@ export default function NotificationBell() {
       <button
         type="button"
         className="ktc-nav-bell"
+        data-tour="nav-bell"
         aria-label={unread > 0 ? t('Notifications ({n} unread)', { n: unread }) : t('Notifications')}
         aria-expanded={open}
         title={t('Notifications')}

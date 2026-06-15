@@ -39,8 +39,10 @@ export default function Manual() {
             {t('How the KTC Online Portal works — from sign-up to claiming your service, step by step.')}
           </p>
 
-          {/* Flow overview — two left-to-right phases linked by a connector */}
-          <div className="ktc-phases" aria-hidden>
+          {/* Flow overview — highlighted window, two left-to-right phases */}
+          <div className="ktc-flow-window">
+            <span className="ktc-flow-window-label">🗺️ {t('The process at a glance')}</span>
+            <div className="ktc-phases" aria-hidden>
             {PHASES.map((ph, pi) => (
               <Fragment key={pi}>
                 <div className="ktc-phase">
@@ -65,6 +67,7 @@ export default function Manual() {
                 )}
               </Fragment>
             ))}
+            </div>
           </div>
 
           {/* Detailed steps */}

@@ -15,15 +15,27 @@ export const homeSteps: TourStep[] = [
   },
   {
     icon: '📌', title: 'Bulletin board', target: '[data-tour="home-bulletin"]',
-    body: 'KTC posts announcements here — tap any topic to read the full message. Anything needing your action shows as a badge on the Orders tab.',
+    body: 'KTC posts announcements here — tap any topic to read the full message.',
+  },
+  {
+    icon: '🔔', title: 'Notifications', target: '[data-tour="nav-bell"]',
+    body: 'Updates on your orders land here — KTC replies, approvals, on-hold notices and payment results. The number is how many are unread.',
   },
   {
     icon: '📦', title: 'File & track orders', target: '[data-tour="tab-orders"]',
-    body: 'Tap Orders to file a new Job Order or follow your existing ones — live status, your serving number, View charges & pay, and Print slip once approved.',
+    body: 'Tap Orders to file a new Job Order or follow your existing ones — live status, your serving number, View charges & pay, and Print slip once approved. A badge shows anything needing your action.',
+  },
+  {
+    icon: '🚢', title: 'Vessel schedule', target: '[data-tour="tab-vessels"]',
+    body: 'Check the current vessel calls, berths, and the Last Free Day before you file — so you know your free-storage deadline.',
+  },
+  {
+    icon: '🧮', title: 'Rate calculator', target: '[data-tour="tab-rates"]',
+    body: 'Estimate your charges before filing — pick the trade, container counts and services to see the total, VAT and fees included.',
   },
   {
     icon: '🧭', title: 'Explore the app', target: '[data-tour="tab-menu"]',
-    body: 'For other features & information — vessel schedule, rate calculator, the user manual, language and sign out — tap Menu to explore the app.',
+    body: 'My Account, the user manual, and Settings (language, dark mode, replay this tour) all live under Menu — tap it to explore.',
   },
   {
     icon: '🔄', title: 'Replay anytime',

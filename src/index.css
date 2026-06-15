@@ -807,7 +807,15 @@
     color: var(--acc);
   }
   .ktc-menu-tile-label { font-size: 12px; font-weight: 600; text-align: center; line-height: 1.3; }
-  .ktc-menusheet-foot { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--glass-brd); }
+  .ktc-menusheet-foot { display: flex; flex-direction: column; gap: 2px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--glass-brd); }
+  /* Settings rows in the ⊞ Menu — label left, control right; full-width tap target. */
+  .ktc-menu-setting {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    min-height: 44px; padding: 7px 10px; border-radius: 10px;
+    border: 0; background: none; cursor: pointer; font: inherit; text-align: left;
+    color: hsl(var(--ink)); font-size: 14px; font-weight: 550;
+  }
+  .ktc-menu-setting:hover { background: rgb(var(--acc-rgb) / 0.08); }
 
   /* ---- Home overview: stat tiles + bulletin ---- */
   .ktc-stat-grid {
@@ -867,10 +875,18 @@
   }
   .ktc-print-only { display: none; }
 
-  /* ---- Customer Guide: two-phase flow overview + step timeline ---- */
+  /* ---- Customer Guide: two-phase flow overview (in a window) + step timeline ---- */
+  .ktc-flow-window {
+    margin: 16px 0 24px;
+    padding: 16px 18px 18px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgb(var(--acc-rgb) / 0.07), var(--c-w35));
+    border: 1px solid rgb(var(--acc-rgb) / 0.22);
+  }
+  .ktc-flow-window-label { display: block; margin-bottom: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--acc-2); }
   .ktc-chart-num { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: linear-gradient(135deg, var(--acc), var(--acc-2)); color: #fff; font-size: 12px; font-weight: 800; flex: 0 0 auto; }
   .ktc-snake-label { font-size: 11.5px; font-weight: 650; line-height: 1.25; }
-  .ktc-phases { display: grid; gap: 0; margin: 18px 0 26px; }
+  .ktc-phases { display: grid; gap: 0; margin: 0; }
   .ktc-phase-label { display: block; margin: 0 0 8px 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--acc-2); }
   .ktc-phase-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 5px; }
   .ktc-phase-box {

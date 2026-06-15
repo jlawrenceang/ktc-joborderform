@@ -129,13 +129,24 @@ export default function BottomNav() {
               ))}
             </div>
             <div className="ktc-menusheet-foot">
+              <span className="ktc-drawer-label" style={{ padding: '0 0 8px 2px' }}>{t('Settings')}</span>
               {hasPageTour && (
-                <button type="button" className="ktc-drawer-link" onClick={() => { setSheet(null); replayPageTour() }}>
-                  ✨ {t('Quick tour')}
+                <button type="button" className="ktc-menu-setting" onClick={() => { setSheet(null); replayPageTour() }}>
+                  <span className="ktc-nav-help-q" aria-hidden>?</span>
+                  <span style={{ flex: 1 }}>{t('Quick tour')}</span>
                 </button>
               )}
-              <div className="ktc-drawer-toggles"><LangToggle /><ThemeToggle /></div>
-              <button type="button" className="ktc-drawer-link" onClick={() => void handleSignOut()}>{t('Sign out')}</button>
+              <div className="ktc-menu-setting">
+                <span style={{ flex: 1 }}>{t('Language')}</span>
+                <LangToggle />
+              </div>
+              <div className="ktc-menu-setting">
+                <span style={{ flex: 1 }}>{t('Dark mode')}</span>
+                <ThemeToggle />
+              </div>
+              <button type="button" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
+                <span style={{ flex: 1 }}>{t('Sign out')}</span>
+              </button>
             </div>
           </div>
         </div>,
