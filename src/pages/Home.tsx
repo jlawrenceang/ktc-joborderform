@@ -25,16 +25,20 @@ export default function Home() {
   const [attention, setAttention] = useState<number | null>(null)
   const [completed, setCompleted] = useState<number | null>(null)
 
+  // One round-trip: pull the few status columns for the customer's own orders
+  // (RLS-scoped) and tally the three counts client-side, instead of 3 queries.
   useEffect(() => {
-    void supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .in('status', ['held', 'submitted', 'processing', 'on_hold'])
-      .then(({ count }) => setActive(count ?? 0))
-    void supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
-      .then(({ count }) => setAttention(count ?? 0))
-    void supabase.from('job_orders').select('id', { count: 'exact', head: true })
-      .eq('status', 'completed')
-      .then(({ count }) => setCompleted(count ?? 0))
+    void supabase.from('job_orders').select('status, payment_status, rejected_recoverable')
+      .then(({ data }) => {
+        const rows = (data ?? []) as { status: string; payment_status: string | null; rejected_recoverable: boolean | null }[]
+        setActive(rows.filter((r) => ['held', 'submitted', 'processing', 'on_hold'].includes(r.status)).length)
+        setCompleted(rows.filter((r) => r.status === 'completed').length)
+        setAttention(rows.filter((r) =>
+          r.status === 'on_hold' ||
+          (r.status === 'rejected' && !!r.rejected_recoverable) ||
+          (r.payment_status === 'rejected' && ['submitted', 'processing', 'completed'].includes(r.status)),
+        ).length)
+      })
   }, [])
 
   const stat = (n: number | null) => (n === null ? '—' : String(n))

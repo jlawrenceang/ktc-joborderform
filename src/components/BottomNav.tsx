@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useTour } from './TourProvider'
@@ -8,9 +8,10 @@ import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 
 // Persistent bottom tab bar — the single navigation on ALL widths (a centered
-// floating bar on desktop too). Core destinations are tabs; the ⊞ Menu opens a
-// phone-style grid popup with everything else (Vessels, Rate Calculator,
-// Manual) plus language/theme/sign out — it replaces the old hamburger drawer.
+// floating bar on desktop too). 5 icons: Home · Orders · Vessels · Rates · ⊞ Menu.
+//   * Orders opens a small popup (New Order / My Orders).
+//   * ⊞ Menu opens a phone-style grid popup with everything else (My Account,
+//     Manual) + language/theme/sign out — it replaces the old hamburger drawer.
 const ip = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 const HomeIcon = () => (<svg {...ip}><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9 21v-6h6v6" /></svg>)
 const NewIcon = () => (<svg {...ip}><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" /><path d="M12 11v6M9 14h6" /></svg>)
@@ -21,12 +22,9 @@ const VesselIcon = () => (<svg {...ip}><path d="M3 18a3 3 0 0 0 2.5 1.5h13A3 3 0
 const CalcIcon = () => (<svg {...ip}><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></svg>)
 const ManualIcon = () => (<svg {...ip}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>)
 
-const TABS = [
-  { to: '/', label: 'Home', end: true, icon: <HomeIcon />, tour: 'tab-home' },
-  { to: '/job-order', label: 'New', icon: <NewIcon />, tour: 'tab-new' },
-  { to: '/job-orders', label: 'Orders', icon: <OrdersIcon />, tour: 'tab-orders' },
-  { to: '/vessels', label: 'Vessels', icon: <VesselIcon />, tour: 'tab-vessels' },
-  { to: '/calculator', label: 'Rates', icon: <CalcIcon />, tour: 'tab-rates' },
+const ORDER_LINKS = [
+  { to: '/job-order', label: 'New Order', icon: <NewIcon /> },
+  { to: '/job-orders', label: 'My Orders', icon: <OrdersIcon /> },
 ]
 const GRID = [
   { to: '/job-order', label: 'New Job Order', icon: <NewIcon /> },
@@ -41,11 +39,14 @@ export default function BottomNav() {
   const { t } = useT()
   const { signOut } = useAuth()
   const navigate = useNavigate()
+  const loc = useLocation()
   const { replayPageTour, hasPageTour } = useTour()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [sheet, setSheet] = useState<null | 'orders' | 'menu'>(null)
+
+  const ordersActive = loc.pathname.startsWith('/job-order') // /job-order, /job-orders, detail routes
 
   async function handleSignOut() {
-    setMenuOpen(false)
+    setSheet(null)
     await signOut()
     navigate('/login', { replace: true })
   }
@@ -53,31 +54,62 @@ export default function BottomNav() {
   return (
     <>
       <nav className="ktc-tabbar" aria-label={t('Sections')}>
-        {TABS.map((tb) => (
-          <NavLink key={tb.to} to={tb.to} end={tb.end} data-tour={tb.tour}
-            className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
-            <span className="ktc-tab-icon">{tb.icon}</span>
-            <span className="ktc-tab-label">{t(tb.label)}</span>
-          </NavLink>
-        ))}
-        <button type="button" className={`ktc-tab${menuOpen ? ' is-active' : ''}`} data-tour="tab-menu"
-          aria-expanded={menuOpen} aria-label={t('Menu')} onClick={() => setMenuOpen(true)}>
+        <NavLink to="/" end data-tour="tab-home" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
+          <span className="ktc-tab-icon"><HomeIcon /></span>
+          <span className="ktc-tab-label">{t('Home')}</span>
+        </NavLink>
+        <button type="button" className={`ktc-tab${ordersActive || sheet === 'orders' ? ' is-active' : ''}`}
+          data-tour="tab-orders" aria-expanded={sheet === 'orders'} onClick={() => setSheet(sheet === 'orders' ? null : 'orders')}>
+          <span className="ktc-tab-icon"><OrdersIcon /></span>
+          <span className="ktc-tab-label">{t('Orders')}</span>
+        </button>
+        <NavLink to="/vessels" data-tour="tab-vessels" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
+          <span className="ktc-tab-icon"><VesselIcon /></span>
+          <span className="ktc-tab-label">{t('Vessels')}</span>
+        </NavLink>
+        <NavLink to="/calculator" data-tour="tab-rates" className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
+          <span className="ktc-tab-icon"><CalcIcon /></span>
+          <span className="ktc-tab-label">{t('Rates')}</span>
+        </NavLink>
+        <button type="button" className={`ktc-tab${sheet === 'menu' ? ' is-active' : ''}`}
+          data-tour="tab-menu" aria-expanded={sheet === 'menu'} aria-label={t('Menu')} onClick={() => setSheet('menu')}>
           <span className="ktc-tab-icon"><MenuIcon /></span>
           <span className="ktc-tab-label">{t('Menu')}</span>
         </button>
       </nav>
 
-      {menuOpen && createPortal(
-        <div className="ktc-menusheet-backdrop" onClick={() => setMenuOpen(false)}>
+      {sheet === 'orders' && createPortal(
+        <div className="ktc-menusheet-backdrop" onClick={() => setSheet(null)}>
+          <div className="ktc-menusheet" role="dialog" aria-label={t('Job Orders')} onClick={(e) => e.stopPropagation()}>
+            <div className="ktc-menusheet-head">
+              <span style={{ fontSize: 14, fontWeight: 700 }}>{t('Job Orders')}</span>
+              <button type="button" aria-label={t('Close')} onClick={() => setSheet(null)}
+                style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
+            </div>
+            <div className="ktc-menu-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              {ORDER_LINKS.map((g) => (
+                <Link key={g.to} to={g.to} className="ktc-menu-tile" onClick={() => setSheet(null)}>
+                  <span className="ktc-menu-tile-icon">{g.icon}</span>
+                  <span className="ktc-menu-tile-label">{t(g.label)}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {sheet === 'menu' && createPortal(
+        <div className="ktc-menusheet-backdrop" onClick={() => setSheet(null)}>
           <div className="ktc-menusheet" role="dialog" aria-label={t('Menu')} onClick={(e) => e.stopPropagation()}>
             <div className="ktc-menusheet-head">
               <span style={{ fontSize: 14, fontWeight: 700 }}>{t('Explore the app')}</span>
-              <button type="button" aria-label={t('Close')} onClick={() => setMenuOpen(false)}
+              <button type="button" aria-label={t('Close')} onClick={() => setSheet(null)}
                 style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
             </div>
             <div className="ktc-menu-grid">
               {GRID.map((g) => (
-                <Link key={g.to + g.label} to={g.to} className="ktc-menu-tile" onClick={() => setMenuOpen(false)}>
+                <Link key={g.to + g.label} to={g.to} className="ktc-menu-tile" onClick={() => setSheet(null)}>
                   <span className="ktc-menu-tile-icon">{g.icon}</span>
                   <span className="ktc-menu-tile-label">{t(g.label)}</span>
                 </Link>
@@ -85,7 +117,7 @@ export default function BottomNav() {
             </div>
             <div className="ktc-menusheet-foot">
               {hasPageTour && (
-                <button type="button" className="ktc-drawer-link" onClick={() => { setMenuOpen(false); replayPageTour() }}>
+                <button type="button" className="ktc-drawer-link" onClick={() => { setSheet(null); replayPageTour() }}>
                   ✨ {t('Quick tour')}
                 </button>
               )}
