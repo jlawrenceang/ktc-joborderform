@@ -35,6 +35,7 @@ export default function JobOrder() {
   // Ref guard: state updates are async, so a rapid double-click can pass a
   // `busy` check twice and file the order twice.
   const submittingRef = useRef(false)
+  const [reviewing, setReviewing] = useState(false)
 
   // Vessel + voyage (required) — picked from the current vessel schedule, with
   // an escape hatch for a call not yet listed (operations reconciles it later).
@@ -63,6 +64,19 @@ export default function JobOrder() {
     if (notListed) return (!mVessel.trim() || !mVoyage.trim()) ? t('Enter the vessel name and voyage number.') : null
     return !vessels.find((v) => v.vessel_visit === vesselVisit) ? t('Select the vessel & voyage (or tick “not listed”).') : null
   }
+
+  // Show a "review everything before submitting" confirmation. Validates the
+  // same fields submit() does, jumping to the offending step if something's off.
+  function openReview() {
+    setError(null)
+    const e1 = step1Error(); if (e1) { setError(e1); setWizStep(0); return }
+    const ev = vesselError(); if (ev) { setError(ev); setWizStep(1); return }
+    if (lines.filter((l) => l.container_number.trim()).length === 0) { setError(t('Add at least one container.')); setWizStep(2); return }
+    setReviewing(true)
+  }
+  const reviewVessel = notListed
+    ? `${mVessel.trim().toUpperCase()} — ${mVoyage.trim().toUpperCase()}`
+    : (() => { const s = vessels.find((v) => v.vessel_visit === vesselVisit); return s ? `${s.vessel_name.toUpperCase()} — ${s.voyage_number.toUpperCase()}` : '' })()
 
   async function submit() {
     if (submittingRef.current) return
@@ -222,13 +236,47 @@ export default function JobOrder() {
           steps={wizardSteps}
           step={wizStep}
           onStepChange={setWizStep}
-          onSubmit={submit}
+          onSubmit={openReview}
           busy={busy}
           error={error}
           footer={pendingNotice}
           submitLabel={busy ? (approved ? t('Submitting…') : t('Filing…')) : approved ? t('Submit Job Order') : t('File Job Order')}
         />
       </div>
+
+      {reviewing && (
+        <div className="ktc-modal-backdrop" onClick={() => setReviewing(false)}>
+          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 460, padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '85vh' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{t('Review before submitting')}</div>
+              <div className="ktc-label" style={{ fontSize: 12, marginTop: 2 }}>{t('Please double-check everything before you file.')}</div>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '14px 20px', display: 'grid', gap: 10, fontSize: 13.5 }}>
+              <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Consignee')}</span><div style={{ fontWeight: 600 }}>{consignee?.title}{consignee?.sub ? ` — ${consignee.sub}` : ''}</div></div>
+              <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Entry Number')}</span><div style={{ fontWeight: 600 }}>{entryNumber.trim().toUpperCase()}</div></div>
+              <div><span className="ktc-label" style={{ fontSize: 12 }}>{t('Vessel & Voyage')}</span><div style={{ fontWeight: 600 }}>{reviewVessel}</div></div>
+              <div>
+                <span className="ktc-label" style={{ fontSize: 12 }}>{t('Containers')}</span>
+                <div style={{ display: 'grid', gap: 4, marginTop: 4 }}>
+                  {lines.filter((l) => l.container_number.trim()).map((l, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '6px 10px', borderRadius: 8, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                      <span className="ktc-mono">{l.container_number.trim().toUpperCase()}</span>
+                      <span className="ktc-label" style={{ fontSize: 12 }}>{l.service_request}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '14px 20px', borderTop: '1px solid var(--glass-brd)' }}>
+              <button type="button" className="ktc-btn" disabled={busy} onClick={() => { setReviewing(false); void submit() }} style={{ width: 'auto', padding: '10px 18px' }}>
+                {approved ? t('Confirm & submit') : t('Confirm & file')}
+              </button>
+              <button type="button" className="ktc-link" disabled={busy} onClick={() => setReviewing(false)}>{t('← Go back & edit')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   )
 }

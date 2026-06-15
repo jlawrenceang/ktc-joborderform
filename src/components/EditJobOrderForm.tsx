@@ -37,6 +37,7 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
   const [mVessel, setMVessel] = useState(order.vessel_visit ? '' : (order.vessel_name ?? ''))
   const [mVoyage, setMVoyage] = useState(order.vessel_visit ? '' : (order.voyage_number ?? ''))
   const [busy, setBusy] = useState(false)
+  const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
     void supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number').eq('is_current', true).order('vessel_name')
@@ -89,8 +90,8 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
         {t('Editing this order. You can change it while it’s still waiting — once KTC accepts it, it locks.')}
       </div>
       {order.status === 'submitted' && (
-        <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--tone-warning-bg)', color: 'var(--tone-warning-ink)', border: '1px solid var(--glass-brd)' }}>
-          {t('Heads up: saving changes sends this filed order to the back of the queue so KTC can re-review it — your serving number will be reissued.')}
+        <div style={{ fontSize: 12.5, lineHeight: 1.5, padding: '9px 12px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+          {t('This order is already filed and has a queue number. Saving keeps your place in line — KTC will just re-review your changes.')}
         </div>
       )}
 
@@ -129,12 +130,25 @@ export default function EditJobOrderForm({ order, onDone, onError, onCancel }: {
 
       <ContainerLinesEditor lines={lines} onChange={setLines} />
 
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void save()} style={{ display: 'inline-flex' }}>
-          {busy ? t('Saving…') : t('Save changes')}
-        </button>
-        <button type="button" className="ktc-link" disabled={busy} onClick={onCancel}>{t('Cancel')}</button>
-      </div>
+      {order.status === 'submitted' && confirming ? (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div className="ktc-label" style={{ fontSize: 12.5 }}>{t('Save these changes? KTC keeps your place in line and re-reviews the update.')}</div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void save()} style={{ display: 'inline-flex' }}>
+              {busy ? t('Saving…') : t('Yes, save changes')}
+            </button>
+            <button type="button" className="ktc-link" disabled={busy} onClick={() => setConfirming(false)}>{t('Keep editing')}</button>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy}
+            onClick={() => { if (order.status === 'submitted') setConfirming(true); else void save() }} style={{ display: 'inline-flex' }}>
+            {busy ? t('Saving…') : t('Save changes')}
+          </button>
+          <button type="button" className="ktc-link" disabled={busy} onClick={onCancel}>{t('Cancel')}</button>
+        </div>
+      )}
     </div>
   )
 }
