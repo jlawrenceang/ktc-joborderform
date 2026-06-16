@@ -3,7 +3,7 @@ import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePageTour } from '../components/TourProvider'
 import { vesselSteps } from './AdminTour'
-import { MonthCalendar, Badge, fmt, type VesselRow } from '../components/VesselCalendar'
+import { MonthCalendar, Badge, fmt, fmtDT, type VesselRow } from '../components/VesselCalendar'
 import { useT } from '../lib/i18n'
 
 // ── Vessel schedule (operations) ──────────────────────────────────────────
@@ -12,13 +12,17 @@ import { useT } from '../lib/i18n'
 // today). Operations add calls one-by-one or via the CSV template import.
 // Free-days per line are set by ADMIN in Settings (decision A1).
 
-const COLUMNS = ['vessel_visit', 'vessel_name', 'voyage_number', 'shipping_line', 'actual_arrival', 'finish_discharging', 'berth', 'remarks'] as const
+const COLUMNS = ['shipping_line', 'vessel_name', 'voyage_number', 'actual_arrival', 'arrival_time', 'finish_discharging', 'discharge_time', 'departure', 'departure_time', 'berth', 'week', 'remarks'] as const
 type Col = (typeof COLUMNS)[number]
 
 const blankForm = (): Record<Col, string> => ({
-  vessel_visit: '', vessel_name: '', voyage_number: '', shipping_line: '',
-  actual_arrival: '', finish_discharging: '', berth: '', remarks: '',
+  shipping_line: '', vessel_name: '', voyage_number: '', actual_arrival: '', arrival_time: '',
+  finish_discharging: '', discharge_time: '', departure: '', departure_time: '', berth: '', week: '', remarks: '',
 })
+
+// vessel_visit is no longer entered — derive the stable key JOs link on from
+// vessel name + voyage (mirrors the sync's deriveVisit).
+const deriveVisit = (name: string, voy: string) => `${name} ${voy}`.trim().toUpperCase().replace(/\s+/g, ' ')
 
 // Minimal RFC-4180-ish CSV parser (mirrors Consignees.tsx).
 function parseCsv(text: string): string[][] {
@@ -66,7 +70,7 @@ export default function VesselSchedule() {
   const [showAll, setShowAll] = useState(false)
   const [view, setView] = useState<'table' | 'calendar'>('table')
   const [form, setForm] = useState<Record<Col, string>>(blankForm())
-  const [editing, setEditing] = useState<string | null>(null) // vessel_visit being edited
+  const [editing, setEditing] = useState<string | null>(null) // row id being edited
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [err, setErr] = useState<string | null>(null)
@@ -136,11 +140,13 @@ export default function VesselSchedule() {
   const visible = useMemo(() => (showAll ? rows : rows.filter((r) => r.is_current)), [rows, showAll])
 
   function startEdit(r: VesselRow) {
-    setEditing(r.vessel_visit)
+    setEditing(r.id)
     setForm({
-      vessel_visit: r.vessel_visit, vessel_name: r.vessel_name, voyage_number: r.voyage_number,
-      shipping_line: r.shipping_line ?? '', actual_arrival: r.actual_arrival ?? '',
-      finish_discharging: r.finish_discharging ?? '', berth: r.berth ?? '', remarks: r.remarks ?? '',
+      shipping_line: r.shipping_line ?? '', vessel_name: r.vessel_name, voyage_number: r.voyage_number,
+      actual_arrival: r.actual_arrival ?? '', arrival_time: r.arrival_time ?? '',
+      finish_discharging: r.finish_discharging ?? '', discharge_time: r.discharge_time ?? '',
+      departure: r.departure ?? '', departure_time: r.departure_time ?? '',
+      berth: r.berth ?? '', week: r.week != null ? String(r.week) : '', remarks: r.remarks ?? '',
     })
     setErr(null); setMsg(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -150,19 +156,26 @@ export default function VesselSchedule() {
   async function save(e: FormEvent) {
     e.preventDefault()
     setErr(null); setMsg(null)
-    if (!form.vessel_visit.trim() || !form.vessel_name.trim() || !form.voyage_number.trim()) {
-      setErr(t('Vessel Visit, Vessel Name and Voyage Number are required.')); return
+    if (!form.vessel_name.trim() || !form.voyage_number.trim()) {
+      setErr(t('Vessel Name and Voyage Number are required.')); return
     }
-    const aa = normDate(form.actual_arrival), fd = normDate(form.finish_discharging)
-    if (aa === undefined || fd === undefined) { setErr(t('Dates must be YYYY-MM-DD or M/D/YYYY.')); return }
+    const aa = normDate(form.actual_arrival), fd = normDate(form.finish_discharging), dp = normDate(form.departure)
+    if (aa === undefined || fd === undefined || dp === undefined) { setErr(t('Dates must be YYYY-MM-DD or M/D/YYYY.')); return }
+    const wkRaw = form.week.trim(); const wk = wkRaw ? parseInt(wkRaw, 10) : null
     setSaving(true)
     const payload = {
-      vessel_visit: form.vessel_visit.trim(), vessel_name: form.vessel_name.trim(),
-      voyage_number: form.voyage_number.trim(), shipping_line: form.shipping_line.trim() || null,
-      actual_arrival: aa, finish_discharging: fd, berth: form.berth.trim() || null,
+      vessel_visit: deriveVisit(form.vessel_name, form.voyage_number),
+      vessel_name: form.vessel_name.trim(), voyage_number: form.voyage_number.trim(),
+      shipping_line: form.shipping_line.trim() || null,
+      actual_arrival: aa, arrival_time: form.arrival_time.trim() || null,
+      finish_discharging: fd, discharge_time: form.discharge_time.trim() || null,
+      departure: dp, departure_time: form.departure_time.trim() || null,
+      berth: form.berth.trim() || null, week: wk != null && Number.isFinite(wk) ? wk : null,
       remarks: form.remarks.trim() || null,
     }
-    const { error } = await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
+    const { error } = editing
+      ? await supabase.from('vessel_schedule').update(payload).eq('id', editing)
+      : await supabase.from('vessel_schedule').upsert(payload, { onConflict: 'vessel_visit' })
     setSaving(false)
     if (error) { setErr(friendly(error)); return }
     setMsg(editing ? t('Call updated.') : t('Call added.'))
@@ -176,7 +189,7 @@ export default function VesselSchedule() {
 
   function downloadTemplate() {
     const header = COLUMNS.join(',')
-    const sample = ['26RUH02', 'SITC HUSHENG', '2606S', 'SITC', '2026-03-28', '2026-03-29', '4', 'optional notes'].join(',')
+    const sample = ['SITC', 'SITC HUSHENG', '2606S', '2026-03-28', '1200H', '2026-03-29', '1800H', '2026-03-30', '0600H', '4', '13', 'optional notes'].join(',')
     const blob = new Blob([header + '\n' + sample + '\n'], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
@@ -191,22 +204,27 @@ export default function VesselSchedule() {
     if (grid.length < 2) { setErr(t('That file has no data rows.')); return }
     const header = grid[0].map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'))
     const idx = (c: Col) => header.indexOf(c)
-    if (idx('vessel_visit') < 0 || idx('vessel_name') < 0 || idx('voyage_number') < 0) {
+    if (idx('vessel_name') < 0 || idx('voyage_number') < 0) {
       setErr(t('Missing required columns. Download the template for the exact headers.')); return
     }
     const payload: Record<string, unknown>[] = []
     const errors: string[] = []
     grid.slice(1).forEach((r, n) => {
       const get = (c: Col) => (idx(c) >= 0 ? (r[idx(c)] ?? '').trim() : '')
-      const visit = get('vessel_visit')
-      if (!visit && r.every((c) => !c.trim())) return // skip blank lines
-      if (!visit || !get('vessel_name') || !get('voyage_number')) { errors.push(t('Row {row}: missing vessel_visit / vessel_name / voyage_number', { row: n + 2 })); return }
-      const aa = normDate(get('actual_arrival')), fd = normDate(get('finish_discharging'))
-      if (aa === undefined || fd === undefined) { errors.push(t('Row {row} ({visit}): bad date — use YYYY-MM-DD', { row: n + 2, visit })); return }
+      const name = get('vessel_name'), voy = get('voyage_number')
+      if (!name && r.every((c) => !c.trim())) return // skip blank lines
+      if (!name || !voy) { errors.push(t('Row {row}: missing vessel_name / voyage_number', { row: n + 2 })); return }
+      const aa = normDate(get('actual_arrival')), fd = normDate(get('finish_discharging')), dp = normDate(get('departure'))
+      if (aa === undefined || fd === undefined || dp === undefined) { errors.push(t('Row {row} ({name}): bad date — use YYYY-MM-DD', { row: n + 2, name })); return }
+      const wkRaw = get('week'); const wk = wkRaw ? parseInt(wkRaw, 10) : null
       payload.push({
-        vessel_visit: visit, vessel_name: get('vessel_name'), voyage_number: get('voyage_number'),
-        shipping_line: get('shipping_line') || null, actual_arrival: aa, finish_discharging: fd,
-        berth: get('berth') || null, remarks: get('remarks') || null,
+        vessel_visit: deriveVisit(name, voy), vessel_name: name, voyage_number: voy,
+        shipping_line: get('shipping_line') || null,
+        actual_arrival: aa, arrival_time: get('arrival_time') || null,
+        finish_discharging: fd, discharge_time: get('discharge_time') || null,
+        departure: dp, departure_time: get('departure_time') || null,
+        berth: get('berth') || null, week: wk != null && Number.isFinite(wk) ? wk : null,
+        remarks: get('remarks') || null,
       })
     })
     if (!payload.length) { setErr(t('No valid rows to import.') + '\n' + errors.join('\n')); return }
@@ -226,7 +244,7 @@ export default function VesselSchedule() {
     const active = rows.filter((r) => r.is_current && !r.cancelled)
       .sort((a, b) => (a.actual_arrival ?? '').localeCompare(b.actual_arrival ?? ''))
     const trunc = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
-    const cols: [string, number][] = [['VISIT', 20], ['VESSEL', 140], ['VOYAGE', 360], ['ARRIVAL', 450], ['LAST FREE DAY', 575], ['BERTH', 770]]
+    const cols: [string, number][] = [['LINE', 20], ['VESSEL', 140], ['VOYAGE', 360], ['ARRIVAL', 450], ['LAST FREE DAY', 575], ['BERTH', 770]]
     const W = 840, headerH = 64, rowH = 30
     const H = headerH + 44 + active.length * rowH + 30
     const scale = 2
@@ -249,7 +267,7 @@ export default function VesselSchedule() {
       if (i % 2 === 1) { ctx.fillStyle = '#f4f5f7'; ctx.fillRect(0, yTop, W, rowH) }
       const base = yTop + 20
       ctx.font = '13px sans-serif'; ctx.fillStyle = '#1a1a1a'
-      ctx.fillText(r.vessel_visit, 20, base)
+      ctx.fillText(trunc(r.shipping_line ?? '—', 16), 20, base)
       ctx.fillText(trunc(r.vessel_name, 26), 140, base)
       ctx.fillText(r.voyage_number, 360, base)
       ctx.fillText(fmt(r.actual_arrival), 450, base)
@@ -293,9 +311,9 @@ export default function VesselSchedule() {
       {/* Add / edit */}
       <form onSubmit={save} className="ktc-glass ktc-glass--flat" style={{ padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-          <label className="ktc-label">{t('Vessel Visit*')}
-            <input className="ktc-input" value={form.vessel_visit} disabled={!!editing}
-              onChange={(e) => setForm({ ...form, vessel_visit: e.target.value })} placeholder="26RUH02" />
+          <label className="ktc-label">{t('Shipping Line')}
+            <input className="ktc-input" list="ktc-lines" value={form.shipping_line} onChange={(e) => setForm({ ...form, shipping_line: e.target.value })} placeholder="SITC" />
+            <datalist id="ktc-lines">{lines.map((l) => <option key={l} value={l} />)}</datalist>
           </label>
           <label className="ktc-label">{t('Vessel Name*')}
             <input className="ktc-input" value={form.vessel_name} onChange={(e) => setForm({ ...form, vessel_name: e.target.value })} placeholder="SITC HUSHENG" />
@@ -303,21 +321,32 @@ export default function VesselSchedule() {
           <label className="ktc-label">{t('Voyage Number*')}
             <input className="ktc-input" value={form.voyage_number} onChange={(e) => setForm({ ...form, voyage_number: e.target.value })} placeholder="2606S" />
           </label>
-          <label className="ktc-label">{t('Shipping Line')}
-            <input className="ktc-input" list="ktc-lines" value={form.shipping_line} onChange={(e) => setForm({ ...form, shipping_line: e.target.value })} placeholder="SITC" />
-            <datalist id="ktc-lines">{lines.map((l) => <option key={l} value={l} />)}</datalist>
-          </label>
-          <label className="ktc-label">{t('Actual Arrival')}
+          <label className="ktc-label">{t('Arrival')}
             <input className="ktc-input" type="date" value={form.actual_arrival} onChange={(e) => setForm({ ...form, actual_arrival: e.target.value })} />
           </label>
-          <label className="ktc-label">{t('Finish Discharging')}
+          <label className="ktc-label">{t('Arrival Time')}
+            <input className="ktc-input" value={form.arrival_time} onChange={(e) => setForm({ ...form, arrival_time: e.target.value })} placeholder="1653H" />
+          </label>
+          <label className="ktc-label">{t('Last Discharge')}
             <input className="ktc-input" type="date" value={form.finish_discharging} onChange={(e) => setForm({ ...form, finish_discharging: e.target.value })} />
+          </label>
+          <label className="ktc-label">{t('Discharge Time')}
+            <input className="ktc-input" value={form.discharge_time} onChange={(e) => setForm({ ...form, discharge_time: e.target.value })} placeholder="1800H" />
+          </label>
+          <label className="ktc-label">{t('Departure')}
+            <input className="ktc-input" type="date" value={form.departure} onChange={(e) => setForm({ ...form, departure: e.target.value })} />
+          </label>
+          <label className="ktc-label">{t('Departure Time')}
+            <input className="ktc-input" value={form.departure_time} onChange={(e) => setForm({ ...form, departure_time: e.target.value })} placeholder="0823H" />
           </label>
           <label className="ktc-label">{t('Berth')}
             <input className="ktc-input" value={form.berth} onChange={(e) => setForm({ ...form, berth: e.target.value })} placeholder="4" />
           </label>
+          <label className="ktc-label">{t('Week')}
+            <input className="ktc-input" type="number" min="1" max="53" value={form.week} onChange={(e) => setForm({ ...form, week: e.target.value })} placeholder="23" />
+          </label>
           <label className="ktc-label">{t('Remarks')}
-            <input className="ktc-input" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
+            <input className="ktc-input" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} placeholder={t('e.g. IA8')} />
           </label>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -394,7 +423,7 @@ export default function VesselSchedule() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'hsl(var(--ink-2))' }}>
-                {['Visit', 'Vessel', 'Voyage', 'Line', 'Arrival', 'Finish Disch.', 'Last Free Day', 'Berth', '', ''].map((h, i) => (
+                {['Line', 'Vessel', 'Voyage', 'Arrival', 'Last Disch.', 'Last Free Day', 'Departure', 'Berth', 'Wk', '', ''].map((h, i) => (
                   <th key={i} style={{ padding: '9px 10px', borderBottom: '1px solid var(--glass-brd)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h ? t(h) : ''}</th>
                 ))}
               </tr>
@@ -402,16 +431,17 @@ export default function VesselSchedule() {
             <tbody>
               {visible.map((r) => (
                 <tr key={r.id} style={{ opacity: r.cancelled ? 0.5 : 1 }}>
-                  <td style={{ padding: '8px 10px', fontWeight: 600, whiteSpace: 'nowrap' }}>{r.vessel_visit}</td>
-                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{r.vessel_name}</td>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{r.shipping_line ?? '—'}</td>
+                  <td style={{ padding: '8px 10px', fontWeight: 600, whiteSpace: 'nowrap' }}>{r.vessel_name}</td>
                   <td style={{ padding: '8px 10px' }}>{r.voyage_number}</td>
-                  <td style={{ padding: '8px 10px' }}>{r.shipping_line ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.actual_arrival)}</td>
-                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmt(r.finish_discharging)}</td>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmtDT(r.actual_arrival, r.arrival_time)}</td>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmtDT(r.finish_discharging, r.discharge_time)}</td>
                   <td style={{ padding: '8px 10px', whiteSpace: 'nowrap', fontWeight: 600 }}>
                     {r.last_free_day ? fmt(r.last_free_day) : <span style={{ color: 'hsl(var(--ink-2))', fontWeight: 400 }}>{t('set line')}</span>}
                   </td>
+                  <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{fmtDT(r.departure, r.departure_time)}</td>
                   <td style={{ padding: '8px 10px' }}>{r.berth ?? '—'}</td>
+                  <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.week ?? '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
                     {r.cancelled ? <Badge bg="var(--c-h0-70-95)" fg="var(--c-h0-65-45)">{t('cancelled')}</Badge>
                       : r.is_current ? <Badge bg="var(--c-h150-50-93)" fg="var(--c-h150-60-30)">{t('current')}</Badge>
@@ -424,7 +454,7 @@ export default function VesselSchedule() {
                 </tr>
               ))}
               {visible.length === 0 && (
-                <tr><td colSpan={10} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>
+                <tr><td colSpan={11} style={{ padding: 18, textAlign: 'center', color: 'hsl(var(--ink-2))' }}>
                   {showAll ? t('No calls. Add one above or import the template.') : t('No current calls. Add one above or import the template.')}
                 </td></tr>
               )}

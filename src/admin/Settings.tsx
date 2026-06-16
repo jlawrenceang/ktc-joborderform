@@ -61,23 +61,27 @@ export default function Settings() {
 
   // Free storage days per shipping line — drives the vessel schedule's computed
   // Last Free Day (admin-only, migration 0058).
-  type ShipLine = { name: string; free_days_import: number; free_days_export: number }
+  type ShipLine = { name: string; free_days_import: number; free_days_export: number; internal: boolean }
   const [shipLines, setShipLines] = useState<ShipLine[]>([])
   const [slBusy, setSlBusy] = useState(false)
   const [slMsg, setSlMsg] = useState<string | null>(null)
   const [newLine, setNewLine] = useState('')
   useEffect(() => {
-    void supabase.from('shipping_lines').select('name, free_days_import, free_days_export').order('name')
+    void supabase.from('shipping_lines').select('name, free_days_import, free_days_export, internal').order('name')
       .then(({ data }) => setShipLines((data ?? []) as ShipLine[]))
   }, [])
   function setSl(name: string, field: 'free_days_import' | 'free_days_export', v: number) {
     setShipLines((xs) => xs.map((x) => (x.name === name ? { ...x, [field]: v } : x)))
   }
+  // In-house lines: their vessels are hidden from customers (enforced server-side).
+  function toggleInternal(name: string) {
+    setShipLines((xs) => xs.map((x) => (x.name === name ? { ...x, internal: !x.internal } : x)))
+  }
   function addLine() {
     const n = newLine.trim()
     if (!n) { setSlMsg(t('Enter the shipping line name first.')); return }
     if (shipLines.some((x) => x.name.toLowerCase() === n.toLowerCase())) { setSlMsg(t('That line already exists.')); return }
-    setShipLines((xs) => [...xs, { name: n, free_days_import: 5, free_days_export: 7 }].sort((a, b) => a.name.localeCompare(b.name)))
+    setShipLines((xs) => [...xs, { name: n, free_days_import: 5, free_days_export: 7, internal: false }].sort((a, b) => a.name.localeCompare(b.name)))
     setNewLine(''); setSlMsg(t('"{n}" added — set its free-days and Save.', { n }))
   }
   async function saveLines() {
@@ -863,6 +867,7 @@ export default function Settings() {
             <span style={{ flex: 1 }}>{t('Shipping line')}</span>
             <span style={{ width: 90, textAlign: 'center' }}>{t('Import days')}</span>
             <span style={{ width: 90, textAlign: 'center' }}>{t('Export days')}</span>
+            <span style={{ width: 96, textAlign: 'center' }}>{t('In-house')}</span>
             <span style={{ width: 24 }} />
           </div>
           {shipLines.map((l) => (
@@ -870,6 +875,9 @@ export default function Settings() {
               <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{l.name}</span>
               <input className="ktc-input" type="number" min="0" value={l.free_days_import} onChange={(e) => setSl(l.name, 'free_days_import', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
               <input className="ktc-input" type="number" min="0" value={l.free_days_export} onChange={(e) => setSl(l.name, 'free_days_export', Number(e.target.value))} style={{ width: 90, padding: '7px 10px', textAlign: 'center' }} />
+              <label style={{ width: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 12 }} title={t('In-house line — hide its vessels from customers')}>
+                <input type="checkbox" checked={l.internal} onChange={() => toggleInternal(l.name)} /> {t('Hide')}
+              </label>
               <button type="button" className="ktc-link" title={t('Remove {name}', { name: l.name })} style={{ width: 24, color: 'var(--acc-2)', fontSize: 14 }} onClick={() => void deleteLine(l.name)}>✕</button>
             </div>
           ))}

@@ -1,9 +1,12 @@
-// One-off: format the vessel-schedule Google Sheet — logo banner + title + note,
-// a VISIBLE friendly header row sitting over a HIDDEN canonical schema header row
-// (the sync matches the hidden names, so staff only ever see plain labels), the
-// whole header block locked, sample rows, sensible widths. Preserves existing
-// data rows. The vessel-sync function reads hidden rows too, so hiding the schema
-// header changes nothing on the sync side.
+// One-off: format the vessel-schedule Google Sheet to KTC's "VESSEL MONITORING"
+// layout — logo banner + title + note, a VISIBLE friendly header row over a
+// HIDDEN canonical schema row (the sync matches the hidden names), each event
+// (arrival / last discharge / departure) as a date + a military time cell, a
+// Shipping Line dropdown, a Cancelled TRUE/FALSE dropdown, the auto-filled Last
+// Free Day mirror, and a Week column. Header block + LFD column are locked.
+// vessel_visit is NOT a column — the sync derives it from vessel name + voyage.
+// Preserves & realigns existing data rows (by header name). The sync reads hidden
+// rows too, so hiding the schema row changes nothing on the sync side.
 //
 // Reads .env.local: GOOGLE_SA_EMAIL, GOOGLE_SA_KEY, VESSEL_SHEET_ID.
 // The service account must have EDITOR on the sheet — it formats here AND the
@@ -22,20 +25,27 @@ const saEmail = get('GOOGLE_SA_EMAIL'), saKey = get('GOOGLE_SA_KEY'), sheetId = 
 if (!saEmail || !saKey || !sheetId) { console.error('Need GOOGLE_SA_EMAIL, GOOGLE_SA_KEY, VESSEL_SHEET_ID in .env.local'); process.exit(1) }
 
 // Canonical schema names (HIDDEN row 5 — the sync matches these) and the plain
-// labels staff see (VISIBLE row 4). "last_free_day" is an app-computed mirror the
-// sync writes back; ops never type it. Keep "Vessel Visit ID" distinct from the
-// canonical "vessel_visit" so the friendly row can't be mistaken for the header.
-const HEADERS  = ['vessel_visit', 'vessel_name', 'voyage_number', 'shipping_line', 'actual_arrival', 'finish_discharging', 'last_free_day', 'berth', 'remarks', 'cancelled']
-const FRIENDLY = ['Vessel Visit ID', 'Vessel Name', 'Voyage #', 'Shipping Line', 'Actual Arrival', 'Finished Discharging', 'Last Free Day (auto)', 'Berth', 'Remarks', 'Cancelled? (TRUE to retire)']
+// labels staff see (VISIBLE row 4). Each event is a date + a military clock-time.
+// "last_free_day" is an app-computed mirror the sync writes back; ops never type
+// it. vessel_visit is NOT a column — the sync derives it from vessel_name+voyage.
+const HEADERS  = ['shipping_line', 'vessel_name', 'voyage_number', 'arrival_date', 'arrival_time', 'last_discharge_date', 'last_discharge_time', 'last_free_day', 'departure_date', 'departure_time', 'berth', 'week', 'remarks', 'cancelled']
+const FRIENDLY = ['Shipping Line', 'Vessel Name', 'Voyage', 'Arrival Date', 'Arrival Time', 'Last Discharge Date', 'Last Discharge Time', 'Last Free Day (auto)', 'Departure Date', 'Departure Time', 'Berth', 'Week', 'Remarks', 'Cancelled?']
 const LFD = HEADERS.indexOf('last_free_day') // 0-based column index of the mirror
 const LINE = HEADERS.indexOf('shipping_line')
 const CANCEL = HEADERS.indexOf('cancelled')
+// Date + time (and the LFD mirror) columns kept as PLAIN TEXT so "06/15/26" /
+// "1653H" stay literal (no locale auto-conversion) and the sync parses them
+// deterministically.
+const TEXT_FROM = HEADERS.indexOf('arrival_date')
+const TEXT_TO = HEADERS.indexOf('departure_time') + 1
 // Shipping-line dropdown. For Last Free Day to compute, these names must match
-// the shipping_lines rows configured (with free-days) in admin Settings.
+// the shipping_lines rows (with free-days) configured in admin Settings.
 const LINES = ['Maersk', 'Evergreen', 'SITC', 'MSC', 'CMA', 'MCC', 'Gothong', 'Philcement', 'New Asia']
+// Old->new header aliases so a re-format preserves data across the rename.
+const ALIAS = { actual_arrival: 'arrival_date', finish_discharging: 'last_discharge_date' }
 const SAMPLE = [
-  ['MV-EVERGREEN-001E', 'MV EVER GIVEN', '001E', 'Evergreen', '2026-06-18', '2026-06-19', '', 'Berth 1', '', ''],
-  ['MV-MAERSK-204W', 'MAERSK SEMARANG', '204W', 'Maersk', '2026-06-20', '', '', 'Berth 2', 'ETA only — not yet discharged', ''],
+  ['MCC', 'MARSA PRIDE', '618S-621N', '05/29/26', '1653H', '05/30/26', '1800H', '', '06/01/26', '0823H', '4', '23', 'IA8', 'FALSE'],
+  ['Evergreen', 'EVER CROWN', '0419-082N', '06/02/26', '1154H', '06/02/26', '1330H', '', '06/03/26', '2154H', '2', '23', '', 'FALSE'],
 ]
 
 async function token() {
@@ -62,20 +72,21 @@ const existingProtections = (sheet0meta.protectedRanges ?? []).map((p) => p.prot
 const norm = (c) => String(c ?? '').trim().toLowerCase().replace(/\s+/g, '_')
 const cur = await (await api(`/values/A1:Z100000`)).json()
 const curRows = cur.values ?? []
-const ehi = curRows.findIndex((r) => r.some((c) => norm(c) === 'vessel_visit'))
+const ehi = curRows.findIndex((r) => r.some((c) => norm(c) === 'vessel_name'))
 const oldHeader = ehi >= 0 ? curRows[ehi].map(norm) : []
+const oldIdx = (h) => { let j = oldHeader.indexOf(h); if (j < 0) { const a = Object.keys(ALIAS).find((k) => ALIAS[k] === h); if (a) j = oldHeader.indexOf(a) } return j }
 const existingData = ehi >= 0 ? curRows.slice(ehi + 1).filter((r) => r.some((c) => String(c ?? '').trim())) : []
-// Realign preserved rows to the NEW column order BY NAME (handles the inserted
-// last_free_day column — old data must not shift berth/remarks/cancelled).
+// Realign preserved rows to the NEW column order BY NAME (+ old->new aliases), so
+// a re-format never shifts values when columns are inserted/renamed.
 const dataRows = existingData.length
-  ? existingData.map((r) => HEADERS.map((h) => { const j = oldHeader.indexOf(h); return j >= 0 ? (r[j] ?? '') : '' }))
+  ? existingData.map((r) => HEADERS.map((h) => { const j = oldIdx(h); return j >= 0 ? (r[j] ?? '') : '' }))
   : SAMPLE
 console.log(`preserving ${existingData.length} existing data row(s)` + (existingData.length ? '' : ' (none — adding 2 samples)'))
 
 // 2) layout: row1 logo banner · row2 title (under the logo) · row3 note ·
 //    row4 friendly header (visible) · row5 schema header (hidden) · row6+ data
 const blank = Array(HEADERS.length).fill('')
-const NOTE = "Operations-maintained — synced to the KTC Online Portal hourly (or hit “Sync sheet” in the portal). Type vessel rows below the blue header. “Last Free Day” is filled automatically by the system — leave it blank. Put TRUE under “Cancelled?” to retire a visit. The header block is locked; don't insert rows above it."
+const NOTE = "Operations-maintained — synced to the KTC Online Portal hourly (or hit “Sync sheet” in the portal). Type vessel rows below the blue header (dates like 06/15/26, times like 1653H). Pick the Shipping Line and Cancelled values from their dropdowns. “Last Free Day” is filled automatically by the system — leave it blank. The header block is locked; don't insert rows above it."
 const grid = [
   blank.slice(),                                   // row1 — logo banner (paste logo over A1)
   ['KTC VESSEL SCHEDULE', ...blank.slice(1)],       // row2 — title, under the logo
@@ -91,7 +102,7 @@ if (!wr.ok) { console.error(`write failed: ${wr.status} ${await wr.text()}`); pr
 // 3) formatting
 const teal = { red: 0.06, green: 0.36, blue: 0.36 }
 const gray = { red: 0.95, green: 0.95, blue: 0.95 }
-const NC = HEADERS.length // 10 columns (A..J)
+const NC = HEADERS.length // 14 columns (A..N)
 const reqs = [
   // freeze the header block (rows 1-5; the hidden schema row collapses)
   { updateSheetProperties: { properties: { sheetId: gid, gridProperties: { frozenRowCount: 5 } }, fields: 'gridProperties.frozenRowCount' } },
@@ -115,6 +126,8 @@ const reqs = [
   { updateDimensionProperties: { range: { sheetId: gid, dimension: 'ROWS', startIndex: 4, endIndex: 5 }, properties: { hiddenByUser: true }, fields: 'hiddenByUser' } },
   // Last Free Day column (auto-filled mirror): gray italic so it reads as read-only
   { repeatCell: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LFD, endColumnIndex: LFD + 1 }, cell: { userEnteredFormat: { backgroundColor: gray, textFormat: { italic: true, foregroundColor: { red: 0.45, green: 0.45, blue: 0.45 } } } }, fields: 'userEnteredFormat(backgroundColor,textFormat)' } },
+  // keep date/time (+ the LFD mirror) columns as plain text so values stay literal
+  { repeatCell: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: TEXT_FROM, endColumnIndex: TEXT_TO }, cell: { userEnteredFormat: { numberFormat: { type: 'TEXT' } } }, fields: 'userEnteredFormat.numberFormat' } },
   // data-row dropdowns: Shipping Line (known lines) + Cancelled (TRUE/FALSE only)
   { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LINE, endColumnIndex: LINE + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: LINES.map((l) => ({ userEnteredValue: l })) }, strict: true, showCustomUi: true } } },
   { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: CANCEL, endColumnIndex: CANCEL + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'TRUE' }, { userEnteredValue: 'FALSE' }] }, strict: true, showCustomUi: true } } },
@@ -136,4 +149,4 @@ const reqs = [
 ]
 const fr = await api(':batchUpdate', { method: 'POST', body: JSON.stringify({ requests: reqs }) })
 if (!fr.ok) { console.error(`format failed: ${fr.status} ${await fr.text()}`); process.exit(1) }
-console.log('✓ vessel sheet formatted — logo banner (row 1) · title (row 2) · friendly header (row 4) · hidden schema (row 5) · data from row 6. Last Free Day is locked + auto-filled. Paste your logo over row 1.')
+console.log(`✓ vessel sheet formatted (${NC} cols) — logo (row 1) · title (row 2) · friendly header (row 4) · hidden schema (row 5) · data from row 6. Shipping Line + Cancelled dropdowns; Last Free Day locked + auto-filled. Paste your logo over row 1.`)

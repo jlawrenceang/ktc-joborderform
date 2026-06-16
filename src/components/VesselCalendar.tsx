@@ -12,19 +12,33 @@ export interface VesselRow {
   voyage_number: string
   shipping_line: string | null
   actual_arrival: string | null
+  arrival_time: string | null
   finish_discharging: string | null
+  discharge_time: string | null
+  departure: string | null
+  departure_time: string | null
   berth: string | null
+  week: number | null
   cancelled: boolean
   remarks: string | null
   free_days_import: number | null
   last_free_day: string | null
+  line_internal: boolean
   is_current: boolean
 }
 
 export function fmt(d: string | null): string {
   if (!d) return '—'
-  const dt = new Date(d + 'T00:00:00')
+  // date-only string ("YYYY-MM-DD"); guard against a full timestamp sneaking in.
+  const dt = new Date(d.slice(0, 10) + 'T00:00:00')
   return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Date + the ops military clock-time combined for display, e.g. "Jun 15, 2026 · 1653H".
+export function fmtDT(d: string | null, time: string | null): string {
+  const date = fmt(d)
+  if (date === '—') return '—'
+  return time ? `${date} · ${time}` : date
 }
 
 export function Badge({ bg, fg, children }: { bg: string; fg: string; children: ReactNode }) {
