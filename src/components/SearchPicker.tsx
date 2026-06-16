@@ -21,7 +21,7 @@ export default function SearchPicker({
   selected,
   onSelect,
   search,
-  minChars = 2,
+  minChars = 5,
 }: {
   inputId: string
   placeholder: string
