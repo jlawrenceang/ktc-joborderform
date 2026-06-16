@@ -198,7 +198,7 @@ export default function JobOrderPrint() {
             {xrayDone.length > 0 && (
               <div style={{ marginTop: 8, border: `1px solid ${LINE}` }}>
                 <div style={{ background: HEADFILL, borderBottom: `1px solid ${LINE}`, padding: '3px 7px', fontSize: 8, fontWeight: 800, letterSpacing: '0.06em', color: '#33455f' }}>
-                  X-RAY CLEARANCE · e-SIGNATURE
+                  X-RAY CONFIRMATION · e-SIGNATURE
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 8 }}>
                   <tbody>

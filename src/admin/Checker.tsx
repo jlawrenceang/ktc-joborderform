@@ -66,7 +66,7 @@ export default function Checker() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CheckerOrder[] | null>(null)
   const [busyLine, setBusyLine] = useState<string | null>(null)
-  const [confirmLine, setConfirmLine] = useState<string | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; container: string; jo: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // RPS assessment (operations / admin). Move types + rates come from move_rates.
@@ -142,7 +142,7 @@ export default function Checker() {
   async function confirmVan(lineId: string) {
     setBusyLine(lineId); setError(null)
     const { error: rpcErr } = await supabase.rpc('record_van_xray', { p_line_id: lineId })
-    setBusyLine(null); setConfirmLine(null)
+    setBusyLine(null); setConfirmTarget(null)
     if (rpcErr) { setError(rpcErr.message); return }
     setQuery(''); setResults(null)
     await load()
@@ -179,20 +179,15 @@ export default function Checker() {
               <span className="ktc-label" style={{ fontSize: 11.5 }}>{l.service_request}</span>
               {l.xray_done_at ? (
                 <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>
-                  ✓ {t('X-ray done')} · {new Date(l.xray_done_at).toLocaleString()}{l.xray_done_by_name ? ` · ${t('by {name}', { name: l.xray_done_by_name })}` : ''}
+                  ✓ {t('X-ray confirmed')} · {new Date(l.xray_done_at).toLocaleString()}{l.xray_done_by_name ? ` · ${t('by {name}', { name: l.xray_done_by_name })}` : ''}
                 </span>
               ) : !open ? (
                 <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(o.status)}</span>
               ) : can('confirm_xray') ? (
-                confirmLine === l.id ? (
-                  <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{t('Mark X-ray done now ({time})?', { time: new Date().toLocaleTimeString() })}</span>
-                    <button className="ktc-btn ktc-btn--sm" disabled={busyLine === l.id} onClick={() => void confirmVan(l.id)}>{busyLine === l.id ? t('Saving…') : t('✓ Yes')}</button>
-                    <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => setConfirmLine(null)}>{t('Back')}</button>
-                  </span>
-                ) : (
-                  <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setConfirmLine(l.id)}>{t('✓ X-ray done')}</button>
-                )
+                <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto' }}
+                  onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: o.jo_number ?? '—' })}>
+                  ✓ {t('Confirm X-ray')}
+                </button>
               ) : (
                 <span className="ktc-chip ktc-chip--danger" style={{ marginLeft: 'auto' }}>{t('X-ray pending')}</span>
               )}
@@ -294,6 +289,21 @@ export default function Checker() {
           )}
         </div>
       </div>
+      {confirmTarget && (
+        <div className="ktc-modal-backdrop" onClick={() => { if (!busyLine) setConfirmTarget(null) }}>
+          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, padding: 22 }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 700 }}>{t('Confirm X-ray?')}</h3>
+            <p className="ktc-label" style={{ fontSize: 13.5, lineHeight: 1.55, margin: '0 0 16px' }}>
+              {t('Confirm that container {c} ({jo}) has entered the X-ray division for BOC X-ray. This records your e-signature with the date and time.', { c: confirmTarget.container, jo: confirmTarget.jo })}
+            </p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button className="ktc-btn" style={{ width: 'auto', padding: '11px 22px' }} disabled={!!busyLine}
+                onClick={() => void confirmVan(confirmTarget.id)}>{busyLine ? t('Saving…') : t('✓ Yes, confirm')}</button>
+              <button className="ktc-btn-secondary" style={{ padding: '11px 18px' }} disabled={!!busyLine} onClick={() => setConfirmTarget(null)}>{t('Cancel')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminShell>
   )
 }
