@@ -151,13 +151,14 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, has_open_supplement, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
     else if (f === 'action')
-      // On hold, fixable rejection, or a rejected payment proof on a live order.
-      q = q.or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))')
+      // On hold, fixable rejection, a rejected payment proof on a live order, or
+      // an unpaid additional charge ("under review") on a live order.
+      q = q.or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed)),and(has_open_supplement.eq.true,status.in.(submitted,processing,on_hold))')
     else if (f === 'completed') q = q.eq('status', 'completed')
     else if (f === 'closed') q = q.in('status', ['rejected', 'cancelled'])
     const { data, count } = await q
