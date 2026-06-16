@@ -409,7 +409,7 @@ export default function AllJobOrders() {
                         </button>
                       ))}
                     {/* Complete is two-gated: every service done AND payment confirmed. */}
-                    {can('complete_orders') && o.status === 'processing' && o.payment_status === 'confirmed' && serviceProgress(o).every((p) => p.done) && (
+                    {can('complete_orders') && o.status === 'processing' && o.payment_status === 'confirmed' && (o.rps_status !== 'needed' || o.rps_payment_status === 'confirmed') && serviceProgress(o).every((p) => p.done) && (
                       <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>{t('Mark completed')}</button>
                     )}
                     {can('hold_reject_orders') && (o.status === 'submitted' || o.status === 'processing') && (

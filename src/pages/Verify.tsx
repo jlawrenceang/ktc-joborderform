@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 // whether a Job Order is paid + its status. The printed text is cosmetic — this
 // scan is the proof, so an edited image can't fake a paid invoice. The JO number
 // + container numbers shown here are the cross-check against a copied QR.
-type V = { jo_number: string | null; status: string; payment_status: string | null; completed_at: string | null; consignee: string | null; containers: string[] | null }
+type V = { jo_number: string | null; status: string; payment_status: string | null; rps_status: string | null; rps_payment_status: string | null; completed_at: string | null; consignee: string | null; containers: string[] | null }
 
 const STATUS_LABEL: Record<string, string> = {
   completed: 'Completed', processing: 'In process', on_hold: 'On hold',
@@ -28,7 +28,8 @@ export default function Verify() {
     })
   }, [id])
 
-  const paid = v?.payment_status === 'confirmed'
+  // Fully paid = base confirmed AND (no RPS due OR RPS confirmed).
+  const paid = v?.payment_status === 'confirmed' && (v?.rps_status !== 'needed' || v?.rps_payment_status === 'confirmed')
   const headTone = phase === 'notfound' ? { bg: '#fdecea', brd: '#f3b6ad', ink: '#a31708' }
     : paid ? { bg: '#e9f7ee', brd: '#b3e3c4', ink: '#13682f' }
     : { bg: '#fff6e6', brd: '#f4c89a', ink: '#a35a16' }
