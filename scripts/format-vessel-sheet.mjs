@@ -86,11 +86,12 @@ const existingData = ehi >= 0
 // Realign preserved rows to the NEW column order BY NAME (+ old->new aliases), so
 // a re-format never shifts values when columns are inserted/renamed. Pass --fresh
 // to discard existing rows and write the clean sample set instead.
-const FRESH = process.argv.includes('--fresh')
-const dataRows = (!FRESH && existingData.length)
+const FRESH = process.argv.includes('--fresh') // discard existing rows, write clean samples
+const EMPTY = process.argv.includes('--empty') // restore layout/dropdowns/locks with NO data rows
+const dataRows = EMPTY ? [] : (!FRESH && existingData.length)
   ? existingData.map((r) => HEADERS.map((h) => { const j = oldIdx(h); return j >= 0 ? (r[j] ?? '') : '' }))
   : SAMPLE
-console.log(FRESH ? `--fresh: wrote ${SAMPLE.length} clean sample row(s)` : `preserving ${existingData.length} existing data row(s)` + (existingData.length ? '' : ' (none — adding 2 samples)'))
+console.log(EMPTY ? '--empty: header + dropdowns + locks only (no data rows)' : FRESH ? `--fresh: wrote ${SAMPLE.length} clean sample row(s)` : `preserving ${existingData.length} existing data row(s)` + (existingData.length ? '' : ' (none — adding 2 samples)'))
 
 // 2) layout: row1 logo banner · row2 title (under the logo) · row3 note ·
 //    row4 friendly header (visible) · row5 schema header (hidden) · row6+ data
@@ -139,6 +140,10 @@ const reqs = [
   { repeatCell: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LFD, endColumnIndex: LFD + 1 }, cell: { userEnteredFormat: { backgroundColor: gray, textFormat: { italic: true, foregroundColor: { red: 0.45, green: 0.45, blue: 0.45 } } } }, fields: 'userEnteredFormat(backgroundColor,textFormat)' } },
   // keep date/time (+ the LFD mirror) columns as plain text so values stay literal
   { repeatCell: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: TEXT_FROM, endColumnIndex: TEXT_TO }, cell: { userEnteredFormat: { numberFormat: { type: 'TEXT' } } }, fields: 'userEnteredFormat.numberFormat' } },
+  // clear ANY stale validation across the whole data region first — older layouts
+  // put the dropdowns on different columns (10-col: line=col4, cancelled=col10);
+  // a setDataValidation with no rule wipes them so no orphan dropdowns remain.
+  { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: NC } } },
   // data-row dropdowns: Shipping Line (known lines) + Cancelled (TRUE/FALSE only)
   { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: LINE, endColumnIndex: LINE + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: LINES.map((l) => ({ userEnteredValue: l })) }, strict: true, showCustomUi: true } } },
   { setDataValidation: { range: { sheetId: gid, startRowIndex: 5, endRowIndex: 1000, startColumnIndex: CANCEL, endColumnIndex: CANCEL + 1 }, rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'TRUE' }, { userEnteredValue: 'FALSE' }] }, strict: true, showCustomUi: true } } },
