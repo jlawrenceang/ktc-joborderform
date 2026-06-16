@@ -192,10 +192,11 @@ export default function AllJobOrders() {
 
   async function apply(id: string, status: string, adminNote?: string | null, rejectedRecoverable?: boolean) {
     setBusyId(id)
-    const patch: Record<string, unknown> = { status }
-    if (adminNote !== undefined) patch.admin_note = adminNote
-    if (rejectedRecoverable !== undefined) patch.rejected_recoverable = rejectedRecoverable
-    const { error } = await supabase.from('job_orders').update(patch).eq('id', id)
+    // Permission-checked, stage-gated transition (0086). Completion is two-gated
+    // (all services done + payment confirmed) server-side.
+    const { error } = await supabase.rpc('staff_transition_order', {
+      p_id: id, p_status: status, p_note: adminNote ?? null, p_recoverable: rejectedRecoverable ?? null,
+    })
     if (error) { setBusyId(null); alert(error.message); return }
     await load()
     setBusyId(null)
@@ -396,29 +397,26 @@ export default function AllJobOrders() {
                         ↩ {t('Restore {line} #{no}', { line: t(SERVICE_LINE_LABEL[r.line]), no: r.no })}
                       </button>
                     ))}
-                    {can('process_job_orders') && (
-                      <>
-                        {(o.status === 'submitted' || o.status === 'on_hold') && (
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>{t('Approve & process')}</button>
-                        )}
-                        {o.status === 'processing' && serviceProgress(o).filter((p) => !p.done).length <= 1 && (
-                          <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>{t('Mark completed')}</button>
-                        )}
-                        {['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
-                          serviceProgress(o).filter((p) => !p.done).map((p) => (
-                            <button key={p.line} style={btn('solid')} disabled={isBusy}
-                              title={t('Marks the {line} service done — the order completes when every service is done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
-                              onClick={() => void markServiceDone(o.id, p.line)}>
-                              ✓ {t('{line} done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
-                            </button>
-                          ))}
-                        {(o.status === 'submitted' || o.status === 'processing') && (
-                          <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>{t('Hold for info')}</button>
-                        )}
-                        {(o.status === 'submitted' || o.status === 'processing' || o.status === 'on_hold') && (
-                          <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>{t('Reject')}</button>
-                        )}
-                      </>
+                    {can('accept_orders') && (o.status === 'submitted' || o.status === 'on_hold') && (
+                      <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'processing', null)}>{t('Approve & process')}</button>
+                    )}
+                    {can('process_job_orders') && ['submitted', 'processing', 'on_hold'].includes(o.status) && serviceProgress(o).length > 1 &&
+                      serviceProgress(o).filter((p) => !p.done).map((p) => (
+                        <button key={p.line} style={btn('solid')} disabled={isBusy}
+                          title={t('Marks the {line} service done — the order completes when every service is done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
+                          onClick={() => void markServiceDone(o.id, p.line)}>
+                          ✓ {t('{line} done', { line: t(SERVICE_LINE_LABEL[p.line]) })}
+                        </button>
+                      ))}
+                    {/* Complete is two-gated: every service done AND payment confirmed. */}
+                    {can('complete_orders') && o.status === 'processing' && o.payment_status === 'confirmed' && serviceProgress(o).every((p) => p.done) && (
+                      <button style={btn('solid')} disabled={isBusy} onClick={() => void apply(o.id, 'completed')}>{t('Mark completed')}</button>
+                    )}
+                    {can('hold_reject_orders') && (o.status === 'submitted' || o.status === 'processing') && (
+                      <button style={btn('ghost')} disabled={isBusy} onClick={() => openNote(o, 'on_hold')}>{t('Hold for info')}</button>
+                    )}
+                    {can('hold_reject_orders') && (o.status === 'submitted' || o.status === 'processing' || o.status === 'on_hold') && (
+                      <button style={btn('danger')} disabled={isBusy} onClick={() => openNote(o, 'rejected')}>{t('Reject')}</button>
                     )}
                     {can('review_payments') && o.payment_status === 'submitted' && (
                       payReject?.id === o.id && payRejectKind === 'base' ? (

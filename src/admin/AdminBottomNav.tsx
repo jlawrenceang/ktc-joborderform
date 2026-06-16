@@ -60,12 +60,14 @@ export default function AdminBottomNav() {
 
   const home = broker?.staff_role === 'checker' || broker?.staff_role === 'operations' ? '/admin/checker'
     : broker?.staff_role === 'cashier' ? '/admin/job-orders'
+    : broker?.staff_role === 'csr' ? '/admin/support'
     : '/admin'
 
   // Primary tabs: Home + up to 3 of the most-used destinations the role can
   // reach (deduped against Home), then ⊞ Menu. Everything else lives in Menu.
   const candidates: Dest[] = [
     { to: '/admin/job-orders', label: 'Orders', perm: 'view_job_orders', icon: <OrdersIcon /> },
+    { to: '/admin/support', label: 'Support', perm: 'manage_support', icon: <SupportIcon /> },
     { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
     { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
     { to: '/admin/checker', label: 'Checker', perm: 'confirm_xray', icon: <CheckerIcon /> },

@@ -23,7 +23,7 @@ export default function Settings() {
   const [suUser, setSuUser] = useState('')
   const [suPass, setSuPass] = useState('')
   const [suName, setSuName] = useState('')
-  const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker' | 'operations'>('admin')
+  const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker' | 'operations' | 'csr'>('admin')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -455,11 +455,12 @@ export default function Settings() {
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suRole">{t('Role')}</label>
-                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations')} style={{ width: 130 }}>
+                <select id="suRole" className="ktc-input" value={suRole} onChange={(e) => setSuRole(e.target.value as 'admin' | 'cashier' | 'checker' | 'operations' | 'csr')} style={{ width: 130 }}>
                   <option value="admin">{t('Admin')}</option>
                   <option value="operations">{t('Operations')}</option>
                   <option value="cashier">{t('Cashier')}</option>
                   <option value="checker">{t('Checker')}</option>
+                  <option value="csr">{t('CSR')}</option>
                 </select>
               </div>
               <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Create staff')}</button>

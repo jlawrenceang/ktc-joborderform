@@ -52,9 +52,11 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
     : broker?.staff_role === 'cashier' ? 'Cashier'
     : broker?.staff_role === 'checker' ? 'Checker'
     : broker?.staff_role === 'operations' ? 'Operations'
+    : broker?.staff_role === 'csr' ? 'CSR'
     : broker?.is_admin ? 'Admin' : ''
   const home = broker?.staff_role === 'checker' || broker?.staff_role === 'operations' ? '/admin/checker'
     : broker?.staff_role === 'cashier' ? '/admin/job-orders'
+    : broker?.staff_role === 'csr' ? '/admin/support'
     : '/admin'
 
   return (
