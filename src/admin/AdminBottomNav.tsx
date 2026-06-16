@@ -3,8 +3,15 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../lib/AuthContext'
 import { usePermissions, type Permission } from '../lib/usePermissions'
+import { useAdminCounts } from '../lib/useAdminCounts'
 import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
+
+// A small "needs attention" pill (capped at 9+).
+function Pill({ n }: { n: number }) {
+  if (!n) return null
+  return <span aria-hidden className="ktc-tab-badge">{n > 9 ? '9+' : n}</span>
+}
 import LangToggle from '../components/LangToggle'
 import ThemeToggle from '../components/ThemeToggle'
 
@@ -60,6 +67,7 @@ export default function AdminBottomNav() {
   const { t } = useT()
   const { signOut } = useAuth()
   const { can, broker } = usePermissions()
+  const counts = useAdminCounts()
   const navigate = useNavigate()
   const { replayPageTour, hasPageTour } = useTour()
   const [open, setOpen] = useState(false)
@@ -104,7 +112,7 @@ export default function AdminBottomNav() {
           {tabs.map((tab) => (
             <NavLink key={tab.to} to={tab.to} end={tab.end}
               className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>
-              <span className="ktc-tab-icon">{tab.icon}</span>
+              <span className="ktc-tab-icon">{tab.icon}<Pill n={counts[tab.to] ?? 0} /></span>
               <span className="ktc-tab-label">{t(tab.label)}</span>
             </NavLink>
           ))}
@@ -126,13 +134,17 @@ export default function AdminBottomNav() {
                 style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))' }}>✕</button>
             </div>
             <div className="ktc-menu-grid">
-              {grid.map((g) => (
-                <NavLink key={g.to} to={g.to} end={g.end} onClick={() => setOpen(false)}
-                  className="ktc-menu-tile">
-                  <span className="ktc-menu-tile-icon">{g.icon}</span>
-                  <span className="ktc-menu-tile-label">{t(g.label)}</span>
-                </NavLink>
-              ))}
+              {grid.map((g) => {
+                const n = counts[g.to] ?? 0
+                return (
+                  <NavLink key={g.to} to={g.to} end={g.end} onClick={() => setOpen(false)}
+                    className="ktc-menu-tile">
+                    {n > 0 && <span aria-hidden className="ktc-menu-tile-badge">{n > 99 ? '99+' : n}</span>}
+                    <span className="ktc-menu-tile-icon">{g.icon}</span>
+                    <span className="ktc-menu-tile-label">{t(g.label)}</span>
+                  </NavLink>
+                )
+              })}
             </div>
             <div className="ktc-menusheet-foot">
               <span className="ktc-drawer-label" style={{ padding: '0 0 8px 2px' }}>{t('Settings')}</span>
