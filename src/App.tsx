@@ -23,6 +23,7 @@ import AdminRoute from './admin/AdminRoute'
 // Code-split: customers never download the admin portal (and vice versa for
 // the rarely-visited print view) — keeps the first paint lean.
 const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
+const Verify = lazy(() => import('./pages/Verify'))
 const Payment = lazy(() => import('./pages/Payment'))
 const Calculator = lazy(() => import('./pages/Calculator'))
 const Vessels = lazy(() => import('./pages/Vessels'))
@@ -91,6 +92,8 @@ export default function App() {
           <Route path="/confirmed" element={<Confirmed />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Public — slip QR target: anyone can verify a Job Order is genuine + completed (no login) */}
+          <Route path="/verify/:id" element={<Verify />} />
           {/* Public — readable before registering and linked from the registration consent */}
           <Route path="/agreement" element={<Agreement />} />
           {/* Old split docs now folded into the one agreement */}

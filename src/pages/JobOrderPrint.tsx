@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 
 interface PrintOrder {
@@ -62,6 +63,7 @@ export default function JobOrderPrint() {
 
   const approved = order && (order.status === 'processing' || order.status === 'completed')
   const processing = !!order && order.status === 'processing'
+  const completed = !!order && order.status === 'completed'
   const count = order?.lines?.length ?? 0
   // X-rayed vans carry the confirming checker's e-signature (name + time).
   const xrayDone = (order?.lines ?? []).filter((l) => /x-?ray/i.test(l.service_request) && l.xray_done_at)
@@ -98,10 +100,10 @@ export default function JobOrderPrint() {
             WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact',
           }}
         >
-          {processing && (
+          {(processing || completed) && (
             <div aria-hidden style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', zIndex: 1 }}>
-              <span style={{ transform: 'rotate(-32deg)', fontSize: 44, fontWeight: 800, letterSpacing: '0.06em', color: '#f26a21', opacity: 0.12, whiteSpace: 'nowrap' }}>
-                ON&nbsp;PROCESS
+              <span style={{ transform: 'rotate(-30deg)', fontSize: 54, fontWeight: 800, letterSpacing: '0.10em', color: processing ? '#e0341d' : '#1a8a3c', opacity: 0.17, whiteSpace: 'nowrap' }}>
+                {processing ? 'PENDING' : 'COMPLETED'}
               </span>
             </div>
           )}
@@ -140,8 +142,13 @@ export default function JobOrderPrint() {
             </div>
 
             {processing && (
-              <div style={{ marginTop: 7, fontSize: 8.5, fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center', color: '#b25a16', background: '#fff3e6', border: '1px solid #f4c89a', borderRadius: 4, padding: '4px 6px' }}>
-                STILL ON PROCESS — NOT YET COMPLETED
+              <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#a31708', background: '#fdecea', border: '1px solid #f3b6ad', borderRadius: 4, padding: '5px 6px' }}>
+                PENDING — NOT YET COMPLETED
+              </div>
+            )}
+            {completed && (
+              <div style={{ marginTop: 7, fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', textAlign: 'center', color: '#13682f', background: '#e9f7ee', border: '1px solid #b3e3c4', borderRadius: 4, padding: '5px 6px' }}>
+                COMPLETED — PAID &amp; X-RAY CONFIRMED
               </div>
             )}
 
@@ -221,6 +228,18 @@ export default function JobOrderPrint() {
               <SignLine label="Prepared by" />
               <SignLine label="Received by" />
             </div>
+
+            {completed && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${LINE}` }}>
+                <div style={{ background: '#fff', padding: 4, border: `1px solid ${LINE}`, borderRadius: 4, lineHeight: 0 }}>
+                  <QRCodeSVG value={`${window.location.origin}/verify/${order.id}`} size={66} level="M" />
+                </div>
+                <div style={{ fontSize: 7.5, color: '#5a6678', lineHeight: 1.45 }}>
+                  <div style={{ fontWeight: 800, fontSize: 9, color: '#15233a', letterSpacing: '0.05em' }}>SCAN TO VERIFY</div>
+                  Confirm this Job Order is genuine and completed, live in the KTC system.
+                </div>
+              </div>
+            )}
 
             <div style={{ marginTop: 9, fontSize: 6.5, fontStyle: 'italic', color: '#8893a4', lineHeight: 1.4 }}>
               Please notify KTC within 5 days of any discrepancy; otherwise this job order is considered final and correct.
