@@ -22,6 +22,8 @@ type Row = {
   doc_path: string | null
   doc_filename: string | null
   deletable: boolean
+  visibility: 'public' | 'staff_only'
+  flagged: boolean
   at: string
 }
 
@@ -29,12 +31,13 @@ function fmtWhen(iso: string): string {
   return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
-export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
-  orderId: string; userId: string; canComment: boolean; canAttach: boolean
+export default function JoTimeline({ orderId, userId, canComment, canAttach, staff = false }: {
+  orderId: string; userId: string; canComment: boolean; canAttach: boolean; staff?: boolean
 }) {
   const { t } = useT()
   const [rows, setRows] = useState<Row[]>([])
   const [text, setText] = useState('')
+  const [internal, setInternal] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -49,6 +52,11 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
   async function send() {
     if (!text.trim() && !file) { setErr(t('Write a comment or attach a document.')); return }
     setBusy(true); setErr(null)
+    if (staff && internal && !file) {
+      const { error: rErr } = await supabase.rpc('add_jo_staff_note', { p_jo: orderId, p_text: text.trim() })
+      if (rErr) { setBusy(false); setErr(rErr.message); return }
+      setBusy(false); setText(''); void load(); return
+    }
     if (file) {
       const prepared = await prepareUpload(file)
       if ('error' in prepared) { setBusy(false); setErr(prepared.error); return }
@@ -69,6 +77,12 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
   async function remove(r: Row) {
     if (!window.confirm(t('Delete this entry? This can’t be undone.'))) return
     const { error } = await supabase.rpc('delete_jo_entry', { p_source: r.source, p_id: r.row_id })
+    if (error) { setErr(error.message); return }
+    void load()
+  }
+
+  async function flag(r: Row) {
+    const { error } = await supabase.rpc('flag_jo_comment', { p_id: r.row_id, p_flagged: !r.flagged })
     if (error) { setErr(error.message); return }
     void load()
   }
@@ -103,10 +117,24 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 12.5, fontWeight: 600 }}>{r.who}</span>
                     <span className="ktc-label" style={{ fontSize: 11, opacity: 0.7 }}>{fmtWhen(r.at)}</span>
+                    {/* staff-only signals; customers never receive these rows */}
+                    {r.visibility === 'staff_only' && (
+                      <span className="ktc-chip" style={{ fontSize: 10.5 }}>{t('internal')}</span>
+                    )}
+                    {r.flagged && (
+                      <span className="ktc-chip" style={{ fontSize: 10.5, color: 'var(--acc-2)' }}>🚩 {t('complaint')}</span>
+                    )}
+                    {staff && r.kind === 'comment' && (
+                      <button type="button" className="ktc-link" title={r.flagged ? t('Remove flag') : t('Flag as complaint')}
+                        onClick={() => void flag(r)}
+                        style={{ fontSize: 11.5, marginLeft: r.deletable ? 0 : 'auto', opacity: 0.8 }}>
+                        {r.flagged ? t('Unflag') : t('🚩 Flag')}
+                      </button>
+                    )}
                     {r.deletable && (
                       <button type="button" className="ktc-link" title={t('Delete')} aria-label={t('Delete')}
                         onClick={() => void remove(r)}
-                        style={{ fontSize: 11.5, marginLeft: 'auto', color: 'var(--acc-2)', opacity: 0.8 }}>
+                        style={{ fontSize: 11.5, marginLeft: staff && r.kind === 'comment' ? 0 : 'auto', color: 'var(--acc-2)', opacity: 0.8 }}>
                         {t('Delete')}
                       </button>
                     )}
@@ -130,9 +158,16 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
       {canComment && (
         <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
           {err && <div style={{ fontSize: 12.5, color: 'var(--acc-2)' }} role="alert">{err}</div>}
-          <textarea className="ktc-input" rows={2} placeholder={canAttach ? t('Add a comment, or attach a document (note optional)…') : t('Add a comment…')}
+          {staff && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5 }}>
+              <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />
+              <span>{t('Internal note (staff only — not shown to the customer)')}</span>
+            </label>
+          )}
+          <textarea className="ktc-input" rows={2}
+            placeholder={staff && internal ? t('Add an internal note…') : canAttach ? t('Add a comment, or attach a document (note optional)…') : t('Add a comment…')}
             value={text} onChange={(e) => setText(e.target.value)} />
-          {canAttach && (file ? (
+          {canAttach && !(staff && internal) && (file ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, padding: '8px 12px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
               <span style={{ flex: '1 1 auto', wordBreak: 'break-all' }}>📎 {file.name}</span>
               <button type="button" className="ktc-link" style={{ fontSize: 12.5, color: 'var(--acc-2)' }} onClick={() => setFile(null)}>{t('Remove')}</button>
@@ -142,7 +177,7 @@ export default function JoTimeline({ orderId, userId, canComment, canAttach }: {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} />
           ))}
           <button type="button" className="ktc-btn ktc-btn--sm" disabled={busy} onClick={() => void send()} style={{ justifySelf: 'start' }}>
-            {busy ? t('Sending…') : file ? t('Attach & send') : t('Add comment')}
+            {busy ? t('Sending…') : staff && internal ? t('Add internal note') : file ? t('Attach & send') : t('Add comment')}
           </button>
         </div>
       )}

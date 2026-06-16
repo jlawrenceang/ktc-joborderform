@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
+import { usePageTour } from '../components/TourProvider'
+import { supportSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
 
 // Staff support inbox — gated on the manage_support permission. Lists every
@@ -79,6 +81,7 @@ function StatusChip({ status }: { status: string }) {
 
 export default function SupportInbox() {
   const { t } = useT()
+  usePageTour('support', supportSteps)
   const { can, loading: permLoading } = usePermissions()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)

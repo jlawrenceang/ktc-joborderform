@@ -2,6 +2,10 @@ import { useEffect, useState, type ReactNode } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
+import { usePageTour } from '../components/TourProvider'
+import { cashierSteps } from './AdminTour'
+import { peso } from '../lib/pricing'
+import type { JoSupplement } from '../lib/types'
 import { useT } from '../lib/i18n'
 
 // Cashier station — a focused desk for the money work, instead of the cluttered
@@ -25,9 +29,13 @@ interface CashOrder {
   completed_at: string | null
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
+  supplements?: JoSupplement[]
 }
 
-const SELECT = 'id, jo_number, entry_number, status, payment_status, payment_proof_path, rps_payment_status, rps_payment_proof_path, rps_status, service_invoice_no, completed_at, broker:customers(full_name), consignee:consignees(code, name)'
+// A supplement flattened with its parent JO's identity, for the cashier desk.
+interface SuppRow extends JoSupplement { jo_number: string | null; who: string }
+
+const SELECT = 'id, jo_number, entry_number, status, payment_status, payment_proof_path, rps_payment_status, rps_payment_proof_path, rps_status, service_invoice_no, completed_at, broker:customers(full_name), consignee:consignees(code, name), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path)'
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -37,6 +45,7 @@ const dangerBtn: React.CSSProperties = { background: 'linear-gradient(135deg,#e0
 
 export default function CashierStation() {
   const { t } = useT()
+  usePageTour('cashier', cashierSteps)
   const [orders, setOrders] = useState<CashOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,6 +56,9 @@ export default function CashierStation() {
   const [invNo, setInvNo] = useState('')
   const [padNo, setPadNo] = useState('')
   const [office, setOffice] = useState<{ id: string; kind: 'base' | 'rps'; label: string } | null>(null)
+  // Additional-charge (supplement) review: the supplement being rejected.
+  const [suppReject, setSuppReject] = useState<string | null>(null)
+  const [suppNote, setSuppNote] = useState('')
 
   async function load() {
     const { data, error } = await supabase.from('job_orders').select(SELECT)
@@ -87,9 +99,29 @@ export default function CashierStation() {
     await load()
   }
 
+  async function reviewSupp(id: string, confirm: boolean, note?: string) {
+    setBusyId(id); setError(null)
+    const { error } = await supabase.rpc('review_supplement_payment', { p_supp: id, p_confirm: confirm, p_note: note ?? null })
+    setBusyId(null); setSuppReject(null); setSuppNote('')
+    if (error) { setError(error.message); return }
+    await load()
+  }
+  async function recordSuppOffice(id: string) {
+    setBusyId(id); setError(null)
+    const { error } = await supabase.rpc('record_supplement_office_payment', { p_supp: id })
+    setBusyId(null)
+    if (error) { setError(error.message); return }
+    await load()
+  }
+
   const toReview = orders.filter((o) => o.payment_status === 'submitted' || o.rps_payment_status === 'submitted')
   const toCollect = orders.filter((o) => o.status === 'processing' && (o.payment_status === 'unpaid' || o.payment_status === 'rejected'))
   const toInvoice = orders.filter((o) => o.status === 'completed' && !o.service_invoice_no)
+  // Outstanding additional charges across all orders, flattened with JO identity.
+  const supps: SuppRow[] = orders.flatMap((o) =>
+    (o.supplements ?? [])
+      .filter((s) => s.payment_status !== 'confirmed')
+      .map((s) => ({ ...s, jo_number: o.jo_number, who: o.broker?.full_name ?? t('Unknown') })))
 
   const who = (o: CashOrder) => `${o.broker?.full_name ?? t('Unknown')}${o.consignee ? ` · ${o.consignee.code}` : ''}`
 
@@ -195,6 +227,41 @@ export default function CashierStation() {
                   </>
                 )}
               </Card>
+            ))}
+          </Section>
+
+          {/* 4 — Additional charges (supplements) */}
+          <Section title={t('Additional charges')} count={supps.length} sub={t('Extra charges tagged onto orders — review the customer’s proof or collect at the window. The order stays under review until it’s settled.')}>
+            {supps.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No additional charges outstanding.')}</span> : supps.map((s) => (
+              <div key={s.id} style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <b className="ktc-mono" style={{ fontSize: 15 }}>{s.jo_number ?? '—'}-{s.suffix}</b>
+                  <span style={{ fontSize: 13.5 }}>{s.label}</span>
+                  <span className="ktc-mono" style={{ fontWeight: 700 }}>{peso(s.amount)}</span>
+                  <span className="ktc-label" style={{ fontSize: 12 }}>· {s.who}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {suppReject === s.id ? (
+                    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input className="ktc-input" value={suppNote} onChange={(e) => setSuppNote(e.target.value)} placeholder={t('Why? (shown to the customer)')} autoFocus style={{ maxWidth: 230, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                      <button style={dangerBtn} disabled={busyId === s.id || !suppNote.trim()} onClick={() => void reviewSupp(s.id, false, suppNote.trim())}>{t('Reject proof')}</button>
+                      <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setSuppReject(null); setSuppNote('') }}>{t('Cancel')}</button>
+                    </span>
+                  ) : s.payment_status === 'submitted' ? (
+                    <>
+                      <span className="ktc-chip ktc-chip--warning">{t('Proof to review')}</span>
+                      <button className="ktc-btn-secondary ktc-btn--sm" onClick={() => void viewProof(s.payment_proof_path ?? null)}>{t('View slip')}</button>
+                      <button className="ktc-btn ktc-btn--sm" disabled={busyId === s.id} onClick={() => void reviewSupp(s.id, true)}>{t('Confirm payment')}</button>
+                      <button style={dangerBtn} disabled={busyId === s.id} onClick={() => { setSuppReject(s.id); setSuppNote('') }}>{t('Reject')}</button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="ktc-chip">{s.payment_status === 'rejected' ? t('Proof rejected') : t('Unpaid')}</span>
+                      <button className="ktc-btn ktc-btn--sm" disabled={busyId === s.id} onClick={() => void recordSuppOffice(s.id)}>{t('Record office payment')}</button>
+                    </>
+                  )}
+                </div>
+              </div>
             ))}
           </Section>
         </>

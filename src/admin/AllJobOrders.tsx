@@ -5,8 +5,11 @@ import { supabase } from '../lib/supabase'
 import { usePermissions } from '../lib/usePermissions'
 import { useFileViewer } from '../components/FileViewerModal'
 import JoTimeline from '../components/JoTimeline'
-import { SERVICE_LINE_LABEL, serviceLineOf, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
+import { SERVICE_LINE_LABEL, serviceLineOf, hasOutstandingSupplements, type JobOrder, type ServiceLine, type ServingNumber } from '../lib/types'
 import { isCreditInvoice } from '../lib/eventLabels'
+import { usePageTour } from '../components/TourProvider'
+import { operationsSteps } from './AdminTour'
+import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 
 interface AdminJobOrder extends JobOrder {
@@ -35,7 +38,7 @@ const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
 }
 
 const SELECT =
-  'id, jo_number, entry_number, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at)'
+  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -117,6 +120,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 
 export default function AllJobOrders() {
   const { t } = useT()
+  usePageTour('operations', operationsSteps)
   const { can } = usePermissions()
   const [orders, setOrders] = useState<AdminJobOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -144,6 +148,13 @@ export default function AllJobOrders() {
   const [archiveMsg, setArchiveMsg] = useState<string | null>(null)
   // Timeline (events + docs + comments) expander — the JO whose timeline is open.
   const [historyId, setHistoryId] = useState<string | null>(null)
+  // Add-charge (supplement) prompt — the JO being charged + the new line.
+  const [charge, setCharge] = useState<{ id: string; jo: string } | null>(null)
+  const [chargeLabel, setChargeLabel] = useState('')
+  const [chargeAmount, setChargeAmount] = useState('')
+  // Staff edit of the operational header (entry / vessel / voyage).
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editFields, setEditFields] = useState({ entry: '', vessel: '', voyage: '' })
 
   function load(f: Filter = filter, p: number = page) {
     let q = supabase
@@ -258,6 +269,37 @@ export default function AllJobOrders() {
     await load()
   }
 
+  async function addCharge() {
+    if (!charge || !chargeLabel.trim()) return
+    setBusyId(charge.id)
+    const { error } = await supabase.rpc('add_supplement', {
+      p_jo: charge.id, p_label: chargeLabel.trim(), p_amount: Number(chargeAmount) || 0,
+    })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    setCharge(null); setChargeLabel(''); setChargeAmount('')
+    await load()
+  }
+
+  function openEdit(o: AdminJobOrder) {
+    setEditId(o.id)
+    setEditFields({ entry: o.entry_number ?? '', vessel: o.vessel_name ?? '', voyage: o.voyage_number ?? '' })
+  }
+  async function saveEdit() {
+    if (!editId) return
+    setBusyId(editId)
+    const { error } = await supabase.rpc('staff_edit_job_order', {
+      p_id: editId,
+      p_entry: editFields.entry.trim() || null,
+      p_vessel_name: editFields.vessel.trim() || null,
+      p_voyage: editFields.voyage.trim() || null,
+    })
+    setBusyId(null)
+    if (error) { alert(error.message); return }
+    setEditId(null)
+    await load()
+  }
+
   async function copyMessage() {
     if (!msgOrder) return
     try {
@@ -336,6 +378,11 @@ export default function AllJobOrders() {
                           ✎ {t('Edited after filing')}
                         </span>
                       )}
+                      {hasOutstandingSupplements(o) && (
+                        <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is still unpaid — the order can’t complete until it’s settled.')}>
+                          ⏳ {t('Under review · additional charge')}
+                        </span>
+                      )}
                       {!o.service_invoice_no && o.payment_status === 'submitted' && (
                         <span className="ktc-chip ktc-chip--warning">{t('X-ray payment to review')}</span>
                       )}
@@ -375,6 +422,41 @@ export default function AllJobOrders() {
                     <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13 }}>
                       {o.lines.map((l, i) => (<li key={i}>{l.container_number} — {l.service_request}</li>))}
                     </ul>
+                  )}
+                  {o.supplements && o.supplements.length > 0 && (
+                    <div style={{ marginTop: 10, display: 'grid', gap: 6 }}>
+                      {o.supplements.map((s) => {
+                        const tone = s.payment_status === 'confirmed' ? 'ktc-chip--success'
+                          : s.payment_status === 'submitted' ? 'ktc-chip--warning'
+                          : s.payment_status === 'rejected' ? 'ktc-chip--danger' : ''
+                        const label = s.payment_status === 'confirmed' ? t('paid')
+                          : s.payment_status === 'submitted' ? t('proof to review')
+                          : s.payment_status === 'rejected' ? t('rejected') : t('unpaid')
+                        return (
+                          <div key={s.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', fontSize: 12.5, padding: '6px 10px', borderRadius: 9, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+                            <b className="ktc-mono">{o.jo_number ?? '—'}-{s.suffix}</b>
+                            <span>{s.label}</span>
+                            <span className="ktc-mono" style={{ fontWeight: 600 }}>{peso(s.amount)}</span>
+                            <span className={`ktc-chip ${tone}`} style={{ marginLeft: 'auto' }}>{label}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {editId === o.id && (
+                    <div style={{ marginTop: 10, display: 'grid', gap: 8, padding: '12px 14px', borderRadius: 10, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
+                      <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Edit operational details')}</span>
+                      <input className="ktc-input" value={editFields.entry} placeholder={t('Entry number')}
+                        onChange={(e) => setEditFields((f) => ({ ...f, entry: e.target.value.toUpperCase() }))} style={{ textTransform: 'uppercase', fontSize: 13 }} />
+                      <input className="ktc-input" value={editFields.vessel} placeholder={t('Vessel name')}
+                        onChange={(e) => setEditFields((f) => ({ ...f, vessel: e.target.value }))} style={{ fontSize: 13 }} />
+                      <input className="ktc-input" value={editFields.voyage} placeholder={t('Voyage number')}
+                        onChange={(e) => setEditFields((f) => ({ ...f, voyage: e.target.value }))} style={{ fontSize: 13 }} />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button style={btn('solid')} disabled={isBusy} onClick={() => void saveEdit()}>{t('Save details')}</button>
+                        <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => setEditId(null)}>{t('Cancel')}</button>
+                      </div>
+                    </div>
                   )}
                   {o.admin_note && (o.status === 'on_hold' || o.status === 'rejected') && (
                     <div style={{ marginTop: 10, fontSize: 12.5, padding: '8px 12px', borderRadius: 9, background: 'var(--c-h40-90-96)', border: '1px solid var(--c-h35-85-84)', color: 'var(--c-h30-60-32)' }}>
@@ -481,6 +563,17 @@ export default function AllJobOrders() {
                         </button>
                       )
                     )}
+                    {can('process_job_orders') && !['cancelled', 'rejected', 'held'].includes(o.status) && (
+                      <button style={btn('ghost')} disabled={isBusy} onClick={() => { setCharge({ id: o.id, jo: o.jo_number ?? '—' }); setChargeLabel(''); setChargeAmount('') }}
+                        title={t('Tag an additional charge (JO-…-A/B/C) — the customer settles it before the order can complete')}>
+                        ＋ {t('Add charge')}
+                      </button>
+                    )}
+                    {(can('process_job_orders') || can('review_payments') || can('manage_support')) && !['cancelled', 'rejected', 'held'].includes(o.status) && editId !== o.id && (
+                      <button style={btn('ghost')} disabled={isBusy} onClick={() => openEdit(o)} title={t('Correct the entry / vessel / voyage')}>
+                        ✎ {t('Edit details')}
+                      </button>
+                    )}
                     {printable && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" style={{ ...btn('ghost'), textDecoration: 'none' }}>{t('Print slip ↗')}</Link>
                     )}
@@ -493,7 +586,7 @@ export default function AllJobOrders() {
                   </div>
 
                   {historyId === o.id && (
-                    <JoTimeline orderId={o.id} userId="" canComment canAttach={false} />
+                    <JoTimeline orderId={o.id} userId="" canComment canAttach={false} staff />
                   )}
                 </div>
               )
@@ -514,6 +607,27 @@ export default function AllJobOrders() {
       </div>
 
       {viewerModal}
+
+      {charge && (
+        <div className="ktc-modal-backdrop" onClick={() => { if (!busyId) setCharge(null) }}>
+          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 430, width: '100%', padding: 24 }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>{t('Add a charge')} · <span className="ktc-mono">{charge.jo}</span></h2>
+            <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.5 }}>
+              {t('Tags an additional charge onto this order. The customer pays it separately; the order can’t complete until it’s settled.')}
+            </p>
+            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+              <input className="ktc-input" value={chargeLabel} autoFocus placeholder={t('What is the charge for? (e.g. Extra X-ray container)')}
+                onChange={(e) => setChargeLabel(e.target.value)} style={{ fontSize: 13.5 }} />
+              <input className="ktc-input ktc-mono" value={chargeAmount} inputMode="decimal" placeholder={t('Amount (₱)')}
+                onChange={(e) => setChargeAmount(e.target.value.replace(/[^0-9.]/g, ''))} style={{ fontSize: 13.5 }} />
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+              <button style={btn('solid')} disabled={!!busyId || !chargeLabel.trim()} onClick={() => void addCharge()}>{busyId ? t('Adding…') : t('Add charge')}</button>
+              <button type="button" className="ktc-link" onClick={() => setCharge(null)}>{t('Cancel')}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modal && (
         <div onClick={() => setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>

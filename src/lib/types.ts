@@ -92,6 +92,31 @@ export interface ServiceCompletion {
   completed_at: string
 }
 
+/** An additional charge line tagged onto a JO after filing (JO-####-A/B/C…),
+ *  with its own payment proof + confirm. Every supplement must be paid before
+ *  the order can complete (0101). */
+export interface JoSupplement {
+  id: string
+  job_order_id?: string
+  suffix: string
+  label: string
+  amount: number
+  payment_status: 'unpaid' | 'submitted' | 'confirmed' | 'rejected'
+  payment_proof_path?: string | null
+  payment_submitted_at?: string | null
+  payment_confirmed_at?: string | null
+  payment_note?: string | null
+  created_at?: string
+}
+
+/** True when an order carries an additional charge that isn't yet paid —
+ *  the order is "under review" until it's settled. */
+export function hasOutstandingSupplements(
+  o: { supplements?: JoSupplement[] | null },
+): boolean {
+  return (o.supplements ?? []).some((s) => s.payment_status !== 'confirmed')
+}
+
 export interface JobOrderEvent {
   id: string
   event: string
@@ -144,6 +169,7 @@ export interface JobOrder {
   lines?: JobOrderLine[]
   serving?: ServingNumber[]
   completions?: ServiceCompletion[]
+  supplements?: JoSupplement[]
 }
 
 // Last-resort fallback only — the live catalogue is service_rates

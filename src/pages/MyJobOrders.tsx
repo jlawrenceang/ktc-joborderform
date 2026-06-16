@@ -4,7 +4,7 @@ import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import NowServing from '../components/NowServing'
-import { SERVICE_LINE_LABEL, type JobOrder } from '../lib/types'
+import { SERVICE_LINE_LABEL, hasOutstandingSupplements, type JobOrder } from '../lib/types'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
@@ -151,7 +151,7 @@ export default function MyJobOrders() {
     let q = supabase
       .from('job_orders')
       .select(
-        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)',
+        'id, jo_number, entry_number, consignee_id, vessel_visit, vessel_name, voyage_number, status, admin_note, customer_note, rejected_recoverable, payment_status, service_invoice_no, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), supplements:jo_supplements(id, suffix, label, amount, payment_status)',
         { count: 'exact' },
       )
     if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
@@ -197,6 +197,7 @@ export default function MyJobOrders() {
 
   // Pay button label mirrors the JO's billing/payment state.
   function payLabel(o: JobOrder): string {
+    if (hasOutstandingSupplements(o)) return t('Additional charge to pay')
     if (o.service_invoice_no?.toUpperCase().startsWith('BI')) return t('✓ Billed · view charges')
     if (o.payment_status === 'confirmed' || o.service_invoice_no) return t('✓ Paid · view charges')
     if (o.payment_status === 'submitted') return t('Payment under review')
@@ -295,6 +296,9 @@ export default function MyJobOrders() {
                         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
                           <StatusBadge status={o.status} />
+                          {hasOutstandingSupplements(o) && (
+                            <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')}>⏳ {t('Under review')}</span>
+                          )}
                         </span>
                         <span className="ktc-label" style={{ display: 'block', fontSize: 12, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
@@ -341,6 +345,9 @@ export default function MyJobOrders() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
                   <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
                   <StatusBadge status={o.status} />
+                  {hasOutstandingSupplements(o) && (
+                    <span className="ktc-chip ktc-chip--warning" title={t('An additional charge is awaiting payment')}>⏳ {t('Under review')}</span>
+                  )}
                 </div>
                 <button type="button" aria-label={t('Close')} onClick={close}
                   style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>

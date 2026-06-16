@@ -26,14 +26,16 @@ export default function Payment() {
   const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [rpsFile, setRpsFile] = useState<File | null>(null)
+  const [suppFiles, setSuppFiles] = useState<Record<string, File | null>>({})
   const [busy, setBusy] = useState(false)
+  const [suppBusy, setSuppBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
     if (!id) return
     const [{ data: jo }, pricing, { data: pi }, { data: rm }] = await Promise.all([
       supabase.from('job_orders')
-        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request)')
+        .select('id, jo_number, status, payment_status, payment_note, payment_submitted_at, service_invoice_no, invoice_pad_no, xray_performed_at, rps_status, rps_payment_status, rps_payment_note, rps_payment_submitted_at, created_at, consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_note, payment_submitted_at)')
         .eq('id', id).maybeSingle(),
       loadPricingConfig(),
       supabase.from('payment_info').select('key, value, label'),
@@ -85,6 +87,23 @@ export default function Payment() {
     await load()
   }
 
+  async function submitSuppProof(suppId: string) {
+    const theFile = suppFiles[suppId]
+    if (!order || !theFile || !broker) return
+    setSuppBusy(suppId); setError(null)
+    const prepared = await prepareUpload(theFile)
+    if ('error' in prepared) { setSuppBusy(null); setError(prepared.error); return }
+    const ext = prepared.file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `${broker.user_id}/jo-${order.id}-supp-${suppId}.${ext}`
+    const { error: upErr } = await supabase.storage.from('payment-slips').upload(path, prepared.file, { upsert: true })
+    if (upErr) { setSuppBusy(null); setError(upErr.message); return }
+    const { error: rpcErr } = await supabase.rpc('submit_supplement_proof', { p_supp: suppId, p_path: path })
+    setSuppBusy(null)
+    if (rpcErr) { setError(rpcErr.message); return }
+    setSuppFiles((m) => ({ ...m, [suppId]: null }))
+    await load()
+  }
+
   if (loading) {
     return (
       <Shell>
@@ -108,7 +127,10 @@ export default function Payment() {
   const rpsDue = order.rps_status === 'needed' && (breakdown?.rpsAmount ?? 0) > 0
   const rpsConfirmed = order.rps_payment_status === 'confirmed'
   const fullySettled = !!breakdown && breakdown.total > 0 && breakdown.balance <= 0.005
-  const clearedForRelease = !!order.xray_performed_at && fullySettled
+  const supplements = order.supplements ?? []
+  const outstandingSupps = supplements.filter((s) => s.payment_status !== 'confirmed')
+  const clearedForRelease = !!order.xray_performed_at && fullySettled && outstandingSupps.length === 0
+  const anythingToPay = !fullySettled || outstandingSupps.length > 0
   const qrPath = info.get('qr_path')
   const qrUrl = qrPath ? supabase.storage.from('payment-qr').getPublicUrl(qrPath).data.publicUrl : null
 
@@ -127,6 +149,11 @@ export default function Payment() {
       {clearedForRelease && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
           ✓ <b>{t('Cleared for release')}</b> — {t('X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.')}
+        </Notice>
+      )}
+      {outstandingSupps.length > 0 && (
+        <Notice tone="warning" style={{ marginBottom: 16 }}>
+          ⏳ <b>{t('Under review')}</b> — {t('KTC added an additional charge to this order. Please settle it below; the order can’t be completed until it’s paid.')}
         </Notice>
       )}
       {order.service_invoice_no && (
@@ -189,7 +216,7 @@ export default function Payment() {
         )}
       </div>
 
-      {!fullySettled && (
+      {anythingToPay && (
         <>
           {/* How to pay (shared) */}
           <div className="ktc-glass" style={{ padding: 26, marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
@@ -218,19 +245,21 @@ export default function Payment() {
 
           {error && <Notice tone="error" style={{ marginBottom: 16 }}>{error}</Notice>}
 
-          <PaySection
-            title={t('X-ray charges')}
-            amount={breakdown?.baseTotal ?? 0}
-            status={baseConfirmed ? 'confirmed' : (order.payment_status ?? 'unpaid')}
-            note={order.payment_note ?? null}
-            submittedAt={order.payment_submitted_at ?? null}
-            file={file}
-            setFile={setFile}
-            onSubmit={() => void submitProof('base', file)}
-            busy={busy}
-          />
+          {!fullySettled && (
+            <PaySection
+              title={t('X-ray charges')}
+              amount={breakdown?.baseTotal ?? 0}
+              status={baseConfirmed ? 'confirmed' : (order.payment_status ?? 'unpaid')}
+              note={order.payment_note ?? null}
+              submittedAt={order.payment_submitted_at ?? null}
+              file={file}
+              setFile={setFile}
+              onSubmit={() => void submitProof('base', file)}
+              busy={busy}
+            />
+          )}
 
-          {rpsDue && (
+          {!fullySettled && rpsDue && (
             <PaySection
               title={t('Port-services (RPS) charges')}
               amount={breakdown?.rpsAmount ?? 0}
@@ -243,6 +272,22 @@ export default function Payment() {
               busy={busy}
             />
           )}
+
+          {/* Additional charges (supplements) — each settled separately. */}
+          {outstandingSupps.map((s) => (
+            <PaySection
+              key={s.id}
+              title={`${t('Additional charge')} · ${order.jo_number ?? ''}-${s.suffix} — ${s.label}`}
+              amount={s.amount}
+              status={s.payment_status}
+              note={s.payment_note ?? null}
+              submittedAt={s.payment_submitted_at ?? null}
+              file={suppFiles[s.id] ?? null}
+              setFile={(f) => setSuppFiles((m) => ({ ...m, [s.id]: f }))}
+              onSubmit={() => void submitSuppProof(s.id)}
+              busy={suppBusy === s.id}
+            />
+          ))}
         </>
       )}
 
