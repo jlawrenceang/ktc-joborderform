@@ -927,7 +927,7 @@ export default function Settings() {
                 <thead>
                   <tr>
                     <th style={{ textAlign: 'left', padding: '6px 14px 6px 0', fontWeight: 600 }} className="ktc-label">{t('Gate')}</th>
-                    {['admin', 'operations', 'cashier', 'checker'].map((r) => (
+                    {['admin', 'operations', 'cashier', 'checker', 'csr'].map((r) => (
                       <th key={r} style={{ padding: '6px 14px', fontWeight: 650, textTransform: 'capitalize' }}>{t(r)}</th>
                     ))}
                   </tr>
@@ -936,20 +936,24 @@ export default function Settings() {
                   {([
                     ['view_job_orders', 'View job orders'],
                     ['file_job_orders', 'File JO on behalf of a customer (walk-ins / in-house)'],
-                    ['process_job_orders', 'Process job orders (approve / hold / reject / complete)'],
-                    ['confirm_xray', 'Confirm X-ray done (checker station)'],
-                    ['record_invoice', 'Record Service Invoice no. (= PAID)'],
-                    ['review_payments', 'Review payment proofs (confirm / reject)'],
+                    ['accept_orders', 'Accept order (submitted → processing)'],
+                    ['complete_orders', 'Complete order (needs X-ray + payment done)'],
+                    ['hold_reject_orders', 'Hold / reject an order'],
+                    ['process_job_orders', 'Mark DEA/OOG service done · requeue / restore'],
+                    ['confirm_xray', 'Confirm X-ray per van (checker station)'],
+                    ['assess_rps', 'Assess RPS (port-services moves)'],
+                    ['review_payments', 'Review payment proofs / record walk-in'],
+                    ['record_invoice', 'Record ERP Service Invoice no. (= PAID)'],
+                    ['manage_support', 'Support inbox'],
                     ['manage_approvals', 'Account approvals + dashboard'],
                     ['manage_customers', 'Manage customers'],
                     ['manage_consignees', 'Manage consignees'],
                     ['manage_vessel_schedule', 'Vessel schedule'],
-                    ['assess_rps', 'Assess RPS (confirm X-ray / port-services moves)'],
                     ['manage_pricing', 'Settings · rates & fees'],
                   ] as const).map(([perm, label]) => (
                     <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
                       <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{t(label)}</td>
-                      {['admin', 'operations', 'cashier', 'checker'].map((r) => {
+                      {['admin', 'operations', 'cashier', 'checker', 'csr'].map((r) => {
                         const g = gates.find((x) => x.role === r && x.permission === perm)
                         return (
                           <td key={r} style={{ textAlign: 'center', padding: '8px 14px' }}>
