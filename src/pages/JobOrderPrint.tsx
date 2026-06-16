@@ -10,7 +10,7 @@ interface PrintOrder {
   created_at: string
   customer?: { full_name: string | null; customer_code: string | null } | null
   consignee?: { code: string; name: string } | null
-  lines?: { container_number: string; service_request: string }[]
+  lines?: { container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
   serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
 }
 
@@ -48,7 +48,7 @@ export default function JobOrderPrint() {
     if (!id) return
     supabase
       .from('job_orders')
-      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, vacated_at)')
+      .select('id, jo_number, entry_number, status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)')
       .eq('id', id)
       .maybeSingle()
       .then(({ data }) => {
@@ -63,6 +63,8 @@ export default function JobOrderPrint() {
   const approved = order && (order.status === 'processing' || order.status === 'completed')
   const processing = !!order && order.status === 'processing'
   const count = order?.lines?.length ?? 0
+  // X-rayed vans carry the confirming checker's e-signature (name + time).
+  const xrayDone = (order?.lines ?? []).filter((l) => /x-?ray/i.test(l.service_request) && l.xray_done_at)
 
   return (
     <div style={{ minHeight: '100%', background: 'hsl(220 16% 96%)', padding: 24 }}>
@@ -191,6 +193,28 @@ export default function JobOrderPrint() {
                 </tr>
               </tfoot>
             </table>
+
+            {/* X-ray clearance — the checker's e-signature per van (who + when) */}
+            {xrayDone.length > 0 && (
+              <div style={{ marginTop: 8, border: `1px solid ${LINE}` }}>
+                <div style={{ background: HEADFILL, borderBottom: `1px solid ${LINE}`, padding: '3px 7px', fontSize: 8, fontWeight: 800, letterSpacing: '0.06em', color: '#33455f' }}>
+                  X-RAY CLEARANCE · e-SIGNATURE
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 8 }}>
+                  <tbody>
+                    {xrayDone.map((l, i) => (
+                      <tr key={i} style={i < xrayDone.length - 1 ? { borderBottom: '1px solid #e2e8f0' } : undefined}>
+                        <td style={{ padding: '2.5px 7px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top' }}>{l.container_number}</td>
+                        <td style={{ padding: '2.5px 7px' }}>
+                          <span style={{ fontWeight: 700 }}>✓ {l.xray_done_by_name || 'KTC Checker'}</span>
+                          <span style={{ color: '#5a6678' }}> · {new Date(l.xray_done_at!).toLocaleString()}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Signature footer (mirrors Prepared by / Received by) */}
             <div style={{ display: 'flex', gap: 14, marginTop: 16 }}>

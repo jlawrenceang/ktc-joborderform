@@ -25,7 +25,7 @@ interface CheckerOrder {
   created_at: string
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
-  lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null }[]
+  lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
   serving?: ServingNumber[]
 }
 
@@ -38,7 +38,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
@@ -179,7 +179,7 @@ export default function Checker() {
               <span className="ktc-label" style={{ fontSize: 11.5 }}>{l.service_request}</span>
               {l.xray_done_at ? (
                 <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>
-                  ✓ {t('X-ray done')} · {new Date(l.xray_done_at).toLocaleString()}
+                  ✓ {t('X-ray done')} · {new Date(l.xray_done_at).toLocaleString()}{l.xray_done_by_name ? ` · ${t('by {name}', { name: l.xray_done_by_name })}` : ''}
                 </span>
               ) : !open ? (
                 <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(o.status)}</span>
