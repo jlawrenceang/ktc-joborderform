@@ -29,9 +29,9 @@ interface CheckerOrder {
   serving?: ServingNumber[]
 }
 
-// This week's active X-ray line number (the queue sorts by it).
+// This week's generalized priority number (one queue per JO; the queue sorts by it).
 const xrayNo = (o: CheckerOrder) =>
-  o.serving?.find((s) => s.service_line === 'xray' && !s.vacated_at)?.serving_no ?? null
+  o.serving?.find((s) => !s.vacated_at)?.serving_no ?? null
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -249,7 +249,7 @@ export default function Checker() {
         </div>
       )}
 
-      <NowServing only={['xray']} />
+      <NowServing only={['queue']} />
 
       {/* Lookup */}
       <div className="ktc-glass" style={{ padding: 22, marginBottom: 18 }}>
