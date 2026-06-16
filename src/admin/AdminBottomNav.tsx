@@ -27,6 +27,7 @@ const BuildingIcon = () => (<svg {...ip}><rect x="4" y="2" width="16" height="20
 const GearIcon = () => (<svg {...ip}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 14a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>)
 const LogsIcon = () => (<svg {...ip}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>)
 const ShieldIcon = () => (<svg {...ip}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>)
+const CashIcon = () => (<svg {...ip}><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></svg>)
 const ManualIcon = () => (<svg {...ip}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>)
 const SupportIcon = () => (<svg {...ip}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>)
 const DashIcon = GridIcon
@@ -39,6 +40,7 @@ const GRID: Dest[] = [
   { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders', icon: <OrdersIcon /> },
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders', icon: <NewIcon /> },
   { to: '/admin/checker', label: 'X-ray Checker', perm: 'confirm_xray', icon: <CheckerIcon /> },
+  { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
   { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
   { to: '/admin/customers', label: 'Customers', perm: 'manage_customers', icon: <UsersIcon /> },
   { to: '/admin/consignees', label: 'Consignees', perm: 'manage_consignees', icon: <BuildingIcon /> },
@@ -59,7 +61,7 @@ export default function AdminBottomNav() {
   const [open, setOpen] = useState(false)
 
   const home = broker?.staff_role === 'checker' || broker?.staff_role === 'operations' ? '/admin/checker'
-    : broker?.staff_role === 'cashier' ? '/admin/job-orders'
+    : broker?.staff_role === 'cashier' ? '/admin/cashier'
     : broker?.staff_role === 'csr' ? '/admin/support'
     : '/admin'
 
@@ -68,6 +70,7 @@ export default function AdminBottomNav() {
   const candidates: Dest[] = [
     { to: '/admin/job-orders', label: 'Orders', perm: 'view_job_orders', icon: <OrdersIcon /> },
     { to: '/admin/support', label: 'Support', perm: 'manage_support', icon: <SupportIcon /> },
+    { to: '/admin/cashier', label: 'Cashier', perm: 'review_payments', icon: <CashIcon /> },
     { to: '/admin/approvals', label: 'Approvals', perm: 'manage_approvals', icon: <ApprovalsIcon /> },
     { to: '/admin/vessel-schedule', label: 'Vessels', perm: 'manage_vessel_schedule', icon: <VesselIcon /> },
     { to: '/admin/checker', label: 'Checker', perm: 'confirm_xray', icon: <CheckerIcon /> },

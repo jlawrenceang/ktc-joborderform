@@ -39,6 +39,7 @@ const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
 const AdminNewJobOrder = lazy(() => import('./admin/NewJobOrder'))
 const Settings = lazy(() => import('./admin/Settings'))
 const Checker = lazy(() => import('./admin/Checker'))
+const CashierStation = lazy(() => import('./admin/CashierStation'))
 const VesselSchedule = lazy(() => import('./admin/VesselSchedule'))
 const Logs = lazy(() => import('./admin/Logs'))
 const Security = lazy(() => import('./admin/Security'))
@@ -67,7 +68,7 @@ function RoleLanding() {
     )
   }
   if (broker?.staff_role === 'checker' || broker?.staff_role === 'operations') return <Navigate to="/admin/checker" replace />
-  if (broker?.staff_role === 'cashier') return <Navigate to="/admin/job-orders" replace />
+  if (broker?.staff_role === 'cashier') return <Navigate to="/admin/cashier" replace />
   if (hasAdminAccess(broker)) return <Navigate to="/admin" replace />
   return <Home />
 }
@@ -125,6 +126,7 @@ export default function App() {
           <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
           <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
           <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
+          <Route path="/admin/cashier" element={<Admin><CashierStation /></Admin>} />
           <Route path="/admin/vessel-schedule" element={<Admin><VesselSchedule /></Admin>} />
           <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
           <Route path="/admin/security" element={<Admin><Security /></Admin>} />
