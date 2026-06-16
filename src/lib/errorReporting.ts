@@ -46,11 +46,43 @@ export function reportError(err: unknown) {
   report(e?.message ?? String(err), e?.stack)
 }
 
+// A failed code-split chunk load — almost always a STALE DEPLOY: this tab was
+// open when a new build replaced the hashed asset files, so the old chunk now
+// 404s (the SPA rewrite returns index.html → "MIME type text/html" / "Failed to
+// fetch dynamically imported module"). The cure is to reload and pick up the
+// fresh index.html + chunk hashes.
+export function isChunkLoadError(err: unknown): boolean {
+  const msg = (err as { message?: string } | null)?.message ?? String(err ?? '')
+  return /dynamically imported module|module script failed|error loading dynamically imported|Loading (?:CSS )?chunk|ChunkLoadError|Importing a module script failed/i.test(msg)
+}
+
+// Reload ONCE to recover from a stale chunk. Guarded by a sessionStorage stamp
+// so a genuinely-broken build can't trap the page in a reload loop.
+export function reloadForStaleChunk(): boolean {
+  try {
+    const KEY = 'ktc_chunk_reload_at'
+    const last = Number(sessionStorage.getItem(KEY) || 0)
+    if (Date.now() - last < 20_000) return false // already tried just now — don't loop
+    sessionStorage.setItem(KEY, String(Date.now()))
+    window.location.reload()
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function installErrorReporting() {
+  // Vite fires this when a lazily-imported chunk fails to load (stale deploy).
+  // Auto-recover before it bubbles to the error boundary as a hard crash.
+  window.addEventListener('vite:preloadError', (e) => {
+    e.preventDefault()
+    if (!reloadForStaleChunk()) report('vite:preloadError (reload guard hit)')
+  })
   window.addEventListener('error', (e) => {
     report(e.message || 'Unknown error', (e.error as Error | undefined)?.stack)
   })
   window.addEventListener('unhandledrejection', (e) => {
+    if (isChunkLoadError(e.reason) && reloadForStaleChunk()) return
     const r = e.reason as { message?: string; stack?: string } | null
     report(r?.message ?? String(e.reason), r?.stack)
   })
