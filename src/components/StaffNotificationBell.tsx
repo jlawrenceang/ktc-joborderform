@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
+import PushToggle from './PushToggle'
 import { useT } from '../lib/i18n'
 
 // Staff-side notification center — the mirror of the customer NotificationBell,
@@ -163,6 +164,7 @@ export default function StaffNotificationBell() {
               })}
             </div>
           )}
+          <PushToggle variant="bell" />
         </div>
       )}
     </span>

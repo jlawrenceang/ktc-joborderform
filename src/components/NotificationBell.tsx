@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
+import PushToggle from './PushToggle'
 import { useT } from '../lib/i18n'
 
 // Persistent notification center in the top nav (every page). Shows an unread
@@ -157,6 +158,7 @@ export default function NotificationBell() {
               ))}
             </div>
           )}
+          <PushToggle variant="bell" />
         </div>
       )}
     </span>
