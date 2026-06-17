@@ -14,6 +14,7 @@ import { useT } from '../lib/i18n'
 import NotificationBell from './NotificationBell'
 import BottomNav from './BottomNav'
 import Clock from './Clock'
+import PushPrompt from './PushPrompt'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -83,6 +84,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       </footer>
 
       {!locked && <BottomNav />}
+      {!locked && <PushPrompt />}
       {idleWarning && <IdleWarning />}
     </div>
   )
