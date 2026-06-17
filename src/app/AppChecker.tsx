@@ -8,7 +8,8 @@ import { useT } from '../lib/i18n'
 
 // Checker app screen: scan the slip QR (encodes /verify/<jo-id>) with the
 // camera, or type the JO number, then confirm X-ray per van. Reuses the same
-// record_van_xray RPC (idempotent + permission-gated) as the desktop Checker.
+// record_van_xray RPC (idempotent + permission-gated) as the desktop Checker,
+// including the confirm-before-e-signature modal.
 interface Line { id: string; container_number: string; service_request: string; xray_done_at: string | null }
 interface Order {
   id: string; jo_number: string | null; status: string
@@ -24,6 +25,13 @@ function one<T>(v: T | T[] | null | undefined): T | null { return Array.isArray(
 function shape(o: Order): Order { return { ...o, broker: one(o.broker), consignee: one(o.consignee) } }
 const servingNo = (o: Order) => o.serving?.find((s) => !s.vacated_at)?.serving_no ?? null
 
+// Map the raw DB status token to a friendly, translatable label (mirrors the
+// other pages so the chip never shows a bare lowercase token).
+const STATUS_LABEL: Record<string, string> = {
+  submitted: 'Submitted', processing: 'Processing', on_hold: 'On hold',
+  completed: 'Completed', rejected: 'Rejected', cancelled: 'Cancelled', held: 'Held',
+}
+
 type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> }
 const hasBarcode = typeof window !== 'undefined' && 'BarcodeDetector' in window
 
@@ -38,11 +46,14 @@ export default function AppChecker() {
   const [scanning, setScanning] = useState(false)
   const [manual, setManual] = useState('')
   const [busyLine, setBusyLine] = useState<string | null>(null)
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; container: string; jo: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<number | null>(null)
+  const mountedRef = useRef(true)
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('job_orders').select(SELECT)
@@ -62,16 +73,25 @@ export default function AppChecker() {
     if (!data) { setError(t('No job order found for that code.')); return }
     setActive(shape(data as unknown as Order))
   }, [t])
+  // Keep the latest openOrder in a ref so the scan loop doesn't tear down when
+  // the i18n `t` identity changes (e.g. a language switch mid-scan).
+  const openOrderRef = useRef(openOrder)
+  useEffect(() => { openOrderRef.current = openOrder }, [openOrder])
 
   async function openByJo(jo: string) {
     setError(null)
-    const q = jo.trim()
-    if (!q) return
-    const { data } = await supabase.from('job_orders').select(SELECT).ilike('jo_number', `%${q}%`).limit(1)
-    const row = (data ?? [])[0] as unknown as Order | undefined
-    if (!row) { setError(t('No job order found for “{q}”.', { q })); return }
-    setActive(shape(row))
-    setManual('')
+    const raw = jo.trim().toUpperCase()
+    if (!raw) return
+    // Exact match only (no substring/wildcard) so a short entry can't open the
+    // wrong van. Accept a bare number too → canonical JO-######.
+    const candidates = [raw]
+    const digits = raw.replace(/\D/g, '')
+    if (digits) candidates.push('JO-' + digits.padStart(6, '0'))
+    const { data } = await supabase.from('job_orders').select(SELECT).in('jo_number', candidates).limit(2)
+    const rows = (data ?? []) as unknown as Order[]
+    if (rows.length === 0) { setError(t('No job order found for “{q}”.', { q: jo.trim() })); return }
+    if (rows.length > 1) { setError(t('More than one order matches — type the full JO number.')); return }
+    setActive(shape(rows[0])); setManual('')
   }
 
   function stopScan() {
@@ -85,6 +105,8 @@ export default function AppChecker() {
     if (!hasBarcode) { setError(t('Scanning isn’t supported on this browser — type the JO number instead.')); return }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
+      // The user may have navigated away while the permission prompt was open.
+      if (!mountedRef.current) { stream.getTracks().forEach((tr) => tr.stop()); return }
       streamRef.current = stream
       setScanning(true)
     } catch {
@@ -92,7 +114,7 @@ export default function AppChecker() {
     }
   }
 
-  // Drive the camera + QR detection loop while scanning.
+  // Drive the camera + QR detection loop while scanning (deps: scanning only).
   useEffect(() => {
     if (!scanning) return
     const video = videoRef.current
@@ -106,12 +128,12 @@ export default function AppChecker() {
         const codes = await detector.detect(video)
         if (codes.length) {
           const m = codes[0].rawValue.match(/verify\/([0-9a-fA-F-]{36})/)
-          if (m) { stopScan(); void openOrder(m[1]) }
+          if (m) { stopScan(); void openOrderRef.current(m[1]) }
         }
       } catch { /* transient detect errors are fine */ }
     }, 500)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [scanning, openOrder])
+  }, [scanning])
 
   // Stop the camera if the component unmounts.
   useEffect(() => () => stopScan(), [])
@@ -119,13 +141,14 @@ export default function AppChecker() {
   async function confirmVan(lineId: string) {
     setBusyLine(lineId); setError(null)
     const { error: rpcErr } = await supabase.rpc('record_van_xray', { p_line_id: lineId })
-    setBusyLine(null)
+    setBusyLine(null); setConfirmTarget(null)
     if (rpcErr) { setError(rpcErr.message); return }
     if (active) await openOrder(active.id)
     void load()
   }
 
   const xrayLines = (active?.lines ?? []).filter((l) => isXray(l.service_request))
+  const statusChip = (s: string) => t(STATUS_LABEL[s] ?? s)
 
   return (
     <AppLayout title="X-ray Checker">
@@ -136,15 +159,15 @@ export default function AppChecker() {
       ) : (
         <>
           {error && (
-            <div role="alert" style={{ margin: '12px 0', fontSize: 13.5, fontWeight: 500, color: 'var(--acc-2)', padding: '11px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>{error}</div>
+            <div role="alert" style={{ margin: '12px 0', fontSize: 14, fontWeight: 600, color: 'var(--c-h0-65-40)', padding: '11px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>{error}</div>
           )}
 
           {/* Scan / lookup */}
           <div className="ktc-glass" style={{ padding: 18, marginTop: 14 }}>
             {scanning ? (
               <div style={{ display: 'grid', gap: 12 }}>
-                <video ref={videoRef} playsInline muted style={{ width: '100%', maxHeight: '50vh', borderRadius: 12, background: '#000', objectFit: 'cover' }} />
-                <button type="button" className="ktc-btn-secondary" onClick={stopScan}>{t('Cancel scan')}</button>
+                <video ref={videoRef} playsInline muted aria-label={t('Camera — point at the slip QR')} style={{ width: '100%', maxHeight: '50vh', borderRadius: 12, background: '#000', objectFit: 'cover' }} />
+                <button type="button" className="ktc-btn-secondary" style={{ padding: '14px' }} onClick={stopScan}>{t('Cancel scan')}</button>
                 <p className="ktc-label" style={{ fontSize: 12.5, textAlign: 'center' }}>{t('Point the camera at the QR on the Job Order slip.')}</p>
               </div>
             ) : (
@@ -154,9 +177,9 @@ export default function AppChecker() {
                 </button>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input className="ktc-input ktc-mono" value={manual} onChange={(e) => setManual(e.target.value)}
-                    placeholder={t('or type JO number')} style={{ flex: 1, fontSize: 16, padding: '12px 14px' }}
+                    aria-label={t('JO number')} placeholder={t('or type JO number')} style={{ flex: 1, fontSize: 16, padding: '14px' }}
                     onKeyDown={(e) => { if (e.key === 'Enter') void openByJo(manual) }} />
-                  <button type="button" className="ktc-btn-secondary" onClick={() => void openByJo(manual)}>{t('Find')}</button>
+                  <button type="button" className="ktc-btn-secondary" style={{ padding: '14px 18px' }} onClick={() => void openByJo(manual)}>{t('Find')}</button>
                 </div>
               </div>
             )}
@@ -168,7 +191,8 @@ export default function AppChecker() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 {servingNo(active) != null && <span className="ktc-mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--acc-2)' }}>#{servingNo(active)}</span>}
                 <b className="ktc-mono" style={{ fontSize: 18 }}>{active.jo_number ?? '—'}</b>
-                <button type="button" className="ktc-link" style={{ marginLeft: 'auto', fontSize: 13 }} onClick={() => setActive(null)}>{t('Close')}</button>
+                <span className="ktc-chip">{statusChip(active.status)}</span>
+                <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ marginLeft: 'auto', padding: '8px 14px' }} onClick={() => setActive(null)}>{t('Close')}</button>
               </div>
               <div className="ktc-label" style={{ fontSize: 13.5, marginTop: 4 }}>
                 {active.broker?.full_name || t('Unknown customer')} · {active.consignee ? `${active.consignee.code} – ${active.consignee.name}` : t('no consignee')}
@@ -184,11 +208,11 @@ export default function AppChecker() {
                         <span className="ktc-chip ktc-chip--success" style={{ marginLeft: 'auto' }}>✓ {t('X-ray confirmed')}</span>
                       ) : ['submitted', 'processing', 'on_hold'].includes(active.status) ? (
                         <button className="ktc-btn ktc-btn--sm" style={{ marginLeft: 'auto', fontSize: 15, padding: '10px 18px' }}
-                          disabled={busyLine === l.id} onClick={() => void confirmVan(l.id)}>
-                          {busyLine === l.id ? t('Saving…') : `✓ ${t('Confirm X-ray')}`}
+                          onClick={() => setConfirmTarget({ id: l.id, container: l.container_number, jo: active.jo_number ?? '—' })}>
+                          ✓ {t('Confirm X-ray')}
                         </button>
                       ) : (
-                        <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{t(active.status)}</span>
+                        <span className="ktc-chip" style={{ marginLeft: 'auto' }}>{statusChip(active.status)}</span>
                       )}
                     </div>
                   ))}
@@ -215,6 +239,24 @@ export default function AppChecker() {
                 ))}
             </div>
           </div>
+
+          {/* Confirm-before-e-signature modal (mirrors the desktop Checker). */}
+          {confirmTarget && (
+            <div className="ktc-modal-backdrop" onClick={() => { if (!busyLine) setConfirmTarget(null) }}>
+              <div className="ktc-glass ktc-modal-panel" role="dialog" aria-modal="true" aria-label={t('Confirm X-ray?')}
+                onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 380, padding: 22 }}>
+                <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 700 }}>{t('Confirm X-ray?')}</h3>
+                <p className="ktc-label" style={{ fontSize: 13.5, lineHeight: 1.55, margin: '0 0 16px' }}>
+                  {t('Confirm that container {c} ({jo}) has entered the X-ray division for BOC X-ray. This records your e-signature with the date and time.', { c: confirmTarget.container, jo: confirmTarget.jo })}
+                </p>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button className="ktc-btn" style={{ width: 'auto', padding: '12px 22px' }} disabled={!!busyLine}
+                    onClick={() => void confirmVan(confirmTarget.id)}>{busyLine ? t('Saving…') : t('✓ Yes, confirm')}</button>
+                  <button className="ktc-btn-secondary" style={{ padding: '12px 18px' }} disabled={!!busyLine} onClick={() => setConfirmTarget(null)}>{t('Cancel')}</button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </AppLayout>

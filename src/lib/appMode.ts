@@ -5,13 +5,13 @@
 export function isAppMode(): boolean {
   if (typeof window === 'undefined') return false
   try {
-    if (new URLSearchParams(window.location.search).get('app') === '1') {
-      localStorage.setItem('ktc_app_mode', '1')
-      return true
-    }
+    // Re-evaluated every call (no sticky localStorage latch): an installed/
+    // standalone launch, the iOS standalone flag, or the current ?app=1 entry.
+    // This avoids a device used as both a kiosk and a normal browser getting
+    // stuck in app mode after one ?app=1 visit.
     if (window.matchMedia('(display-mode: standalone)').matches) return true
     if ((window.navigator as unknown as { standalone?: boolean }).standalone) return true
-    return localStorage.getItem('ktc_app_mode') === '1'
+    return new URLSearchParams(window.location.search).get('app') === '1'
   } catch {
     return false
   }

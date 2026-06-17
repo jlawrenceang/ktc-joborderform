@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useBroker } from '../lib/useBroker'
 import { hasAdminAccess } from '../lib/types'
+import { useT } from '../lib/i18n'
 
 // App launch router: send each role to its focused screen. Checker gets the
 // custom scan app (/app/checker); other staff land on their existing portal
@@ -8,10 +9,11 @@ import { hasAdminAccess } from '../lib/types'
 // goes to their home.
 export default function AppHome() {
   const { broker, loading } = useBroker()
+  const { t } = useT()
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <span className="ktc-label">Loading…</span>
+        <span className="ktc-label">{t('Loading…')}</span>
       </div>
     )
   }

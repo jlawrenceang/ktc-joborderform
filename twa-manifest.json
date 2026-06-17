@@ -13,7 +13,7 @@
   "enableNotifications": true,
   "startUrl": "/app?app=1",
   "iconUrl": "https://portal.ktcterminal.com/app-icon-512.png",
-  "maskableIconUrl": "https://portal.ktcterminal.com/app-icon-512.png",
+  "maskableIconUrl": "https://portal.ktcterminal.com/app-icon-maskable.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": { "path": "./android-keystore.jks", "alias": "ktc" },
   "appVersionName": "1.0.0",

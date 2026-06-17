@@ -17,11 +17,9 @@ build box here. Run the steps below on a machine that has them (your laptop or C
 1. **Node 18+** (already have it).
 2. **JDK 17** and **Android SDK** (Android Studio installs both). Bubblewrap can
    also auto-download a JDK + Android SDK on first run if you let it.
-3. A **512×512 PNG** app icon at `https://portal.ktcterminal.com/app-icon-512.png`.
-   We ship an SVG; export it to PNG once and drop it in `public/` (Bubblewrap
-   needs a raster icon for the launcher). Any tool works — e.g. open
-   `public/app-icon.svg`, export 512×512 PNG, save as `public/app-icon-512.png`,
-   commit (it deploys with the next push).
+3. App icons already ship as PNG: `public/app-icon-512.png` (any) and
+   `public/app-icon-maskable.png` (maskable) — `twa-manifest.json` points at them.
+   No icon work needed.
 4. Install the CLI: `npm i -g @bubblewrap/cli`
 
 ## Build

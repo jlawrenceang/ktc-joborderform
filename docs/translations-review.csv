@@ -78,6 +78,7 @@ english,filipino,kept_english
 "✓ Two-factor authentication is ON. From now on, signing in asks for a code from your app.","✓ Naka-ON ang two-factor authentication. Mula ngayon, hihingian ka ng code mula sa iyong app tuwing mag-sign in.",false
 "✓ Valid ID on file","✓ May valid ID na naka-file",false
 "✓ Yes — X-ray done","✓ Oo — tapos na ang X-ray",false
+"✓ Yes, confirm","✓ Oo, kumpirmahin",false
 "✓ Your details were saved.","✓ Na-save ang iyong details.",false
 "✓ Your email is confirmed — please sign in to continue.","✓ Confirmed na ang iyong email — mag-sign in para magpatuloy.",false
 "✓ Your password has been updated — please sign in with your new password.","✓ Na-update na ang iyong password — mag-sign in gamit ang bago mong password.",false
@@ -161,6 +162,7 @@ english,filipino,kept_english
 "and consent to KTC collecting and processing my valid ID for verification under the Data Privacy Act (R.A. 10173).","at pumapayag akong kolektahin at iproseso ng KTC ang aking valid ID para sa verification sa ilalim ng Data Privacy Act (R.A. 10173).",false
 "and you’ll re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime are held until you’re re-approved.","at mag-uupload ka uli ng valid ID para i-re-verify ng KTC admin. Ang mga Job Order na ifa-file mo sa panahong iyon ay naka-hold muna hanggang ma-approve ka uli.",false
 "Announcements shown on every customer’s Home. Each post is a topic customers tap to read in full.","Mga announcement na lumalabas sa Home ng bawat customer. Bawat post ay isang topic na ita-tap ng customer para basahin nang buo.",false
+"App","App",true
 "App / System (bug or system concern)","App / System (bug o system concern)",false
 "Approvals","Approvals",true
 "Approve","I-approve",false
@@ -217,6 +219,7 @@ english,filipino,kept_english
 "Can't scan? Enter this key manually:","Hindi ma-scan? I-type ang key na ito nang manual:",false
 "Cancel","I-cancel",false
 "Cancel edit","I-cancel ang edit",false
+"Cancel scan","Kanselahin ang scan",false
 "Cancel this order","I-cancel ang order na ito",false
 "Cancel this order? This can’t be undone.","I-cancel ang order na ito? Hindi na ito mababawi.",false
 "cancelled","kanselado",false
@@ -260,11 +263,14 @@ english,filipino,kept_english
 "Confirm new password","I-confirm ang bagong password",false
 "Confirm RPS payment","I-confirm ang RPS payment",false
 "Confirm suspension","I-confirm ang suspension",false
+"Confirm that container {c} ({jo}) has entered the X-ray division for BOC X-ray. This records your e-signature with the date and time.","Kumpirmahin na ang container {c} ({jo}) ay pumasok na sa X-ray division para sa BOC X-ray. Itatala nito ang iyong e-signature kasama ang petsa at oras.",false
+"Confirm X-ray","Kumpirmahin ang X-ray",false
 "Confirm X-ray done","I-confirm na tapos na ang X-ray",false
 "Confirm X-ray done (checker station)","I-confirm na tapos na ang X-ray (checker station)",false
 "Confirm X-ray done now ({time})?","I-confirm na tapos na ang X-ray ngayon ({time})?",false
 "Confirm X-ray payment","I-confirm ang X-ray payment",false
 "Confirm X-ray per container","Kumpirmahin ang X-ray bawat container",false
+"Confirm X-ray?","Kumpirmahin ang X-ray?",false
 "Confirmed by KTC.","Na-confirm ng KTC.",false
 "Consignee","Consignee",true
 "Consignee · Entry","Consignee · Entry",true
@@ -292,6 +298,7 @@ english,filipino,kept_english
 "Could not generate the link.","Hindi ma-generate ang link.",false
 "Could not generate the snapshot.","Hindi ma-generate ang snapshot.",false
 "Could not load the file. Please try again.","Hindi ma-load ang file. Subukan ulit.",false
+"Could not open the camera. Allow camera access, or type the JO number.","Hindi mabuksan ang camera. Payagan ang camera, o i-type ang JO number.",false
 "Could not open the file.","Hindi mabuksan ang file.",false
 "Could not start enrollment.","Hindi masimulan ang enrollment.",false
 "Could not start the check.","Hindi masimulan ang check.",false
@@ -418,6 +425,7 @@ english,filipino,kept_english
 "Filing…","Fina-file…",false
 "Filipino","Filipino",true
 "Filter job orders","I-filter ang mga job order",false
+"Find","Hanapin",false
 "Find the van (scan or pick the JO)","Hanapin ang van (i-scan o piliin ang JO)",false
 "Finish Disch.","Tapos Disch.",false
 "Finish Discharging","Finish Discharging",true
@@ -443,6 +451,7 @@ english,filipino,kept_english
 "Good","Maganda",false
 "Grant access","Magbigay ng access",false
 "has been approved and notified by email.","ay na-approve na at na-notify sa email.",false
+"Held","Naka-hold (draft)",false
 "held and can’t be processed until your account is verified","naka-hold at hindi mapoproseso hangga't hindi na-verify ang iyong account",false
 "Here’s what’s happening with your KTC terminal services.","Narito ang nangyayari sa iyong KTC terminal services.",false
 "Hi","Hi",true
@@ -472,9 +481,11 @@ english,filipino,kept_english
 "Inactivity warning","Babala sa inactivity",false
 "Includes","Kasama",false
 "Information needed:","Kailangang impormasyon:",false
+"Install app","I-install ang app",false
 "Internal KTC staff with admin access. Managed separately from brokers.","Internal na KTC staff na may admin access. Hiwalay na pinamamahalaan mula sa mga broker.",false
 "Invoice no. (e.g. 001323)","Invoice no. (hal. 001323)",false
 "is computed (finish discharging + the line's import free-days); a call drops off once its last free day passes. Free-days per line are set by admin in Settings.","ay kinukwenta (tapos ng discharging + import free-days ng line); mawawala ang isang call kapag lumampas na ang huling free day nito. Ang free-days kada line ay ise-set ng admin sa Settings.",false
+"JO number","JO number",true
 "Job order history","History ng Job Order",false
 "Job order not found.","Hindi nahanap ang Job Order.",false
 "Job orders","Job Orders",false
@@ -509,6 +520,8 @@ english,filipino,kept_english
 "Loading history…","Nilo-load ang history…",false
 "Loading job orders","Niloload ang mga job order",false
 "Loading…","Naglo-load…",false
+"Lock","I-lock",false
+"Lock / sign out","I-lock / mag-sign out",false
 "Lock editing again","I-lock ulit ang pag-edit",false
 "Locked against accidental edits.","Naka-lock laban sa di-sinasadyang pagbabago.",false
 "Logs","Logs",true
@@ -527,6 +540,7 @@ english,filipino,kept_english
 "Message","Message",true
 "Messenger doesn’t allow pre-filled messages — use Copy, then paste into the chat. Viber/SMS buttons work on devices with those apps installed.","Hindi pinapayagan ng Messenger ang pre-filled na message — gamitin ang Copy, tapos i-paste sa chat. Gumagana ang Viber/SMS buttons sa mga device na may naka-install na apps na iyon.",false
 "Missing required columns. Download the template for the exact headers.","May kulang na required columns. I-download ang template para sa eksaktong headers.",false
+"More than one order matches — type the full JO number.","Higit sa isang order ang tumugma — i-type ang buong JO number.",false
 "My Account","Aking Account",false
 "My Job Orders","Mga Job Order Ko",false
 "My vessel isn’t listed — enter it manually (operations will match it)","Wala sa listahan ang vessel ko — ilagay nang manual (ima-match ito ng operations)",false
@@ -572,7 +586,9 @@ english,filipino,kept_english
 "No customer accounts yet.","Wala pang customer accounts.",false
 "No email needed — hand them the username + password. They sign in at the login page with the username.","Hindi kailangan ng email — ibigay sa kanila ang username + password. Mag-si-sign in sila sa login page gamit ang username.",false
 "no failures this week 🎉","walang failure ngayong linggo 🎉",false
+"No job order found for “{q}”.","Walang job order na nahanap para sa “{q}”.",false
 "No job order found for “{query}”. No X-ray request on file.","Walang nahanap na Job Order para sa “{query}”. Walang X-ray request na naka-file.",false
+"No job order found for that code.","Walang job order na nahanap para sa code na iyon.",false
 "No job orders in this view.","Walang Job Order sa view na ito.",false
 "No job orders yet.","Wala pang Job Orders.",false
 "No lines yet — add your shipping lines below.","Wala pang lines — idagdag ang iyong shipping lines sa ibaba.",false
@@ -608,6 +624,7 @@ english,filipino,kept_english
 "Official Receipt No. {no} recorded at the KTC office.","Official Receipt No. {no} naitala sa KTC office.",false
 "On","Naka-on",false
 "ON","ON",true
+"On hold","Naka-hold",false
 "On hold · info needed","Naka-hold · may kailangang info",false
 "Onboard & set up","Onboard at setup",false
 "One container number per line (commas or spaces also work)\n\nABCD1234567\nEFGH7654321","Isang container number kada linya (pwede rin ang commas o spaces)\n\nABCD1234567\nEFGH7654321",false
@@ -615,6 +632,7 @@ english,filipino,kept_english
 "Only the owner can change access.","Ang owner lang ang puwedeng magbago ng access.",false
 "Open","Bukas",false
 "Open a ticket and we’ll get back to you. You can also continue with a live agent below.","Magbukas ng ticket at babalikan ka namin. Puwede ka ring magpatuloy sa live agent sa ibaba.",false
+"Open full portal","Buksan ang buong portal",false
 "Open job orders","Mga bukas na Job Order",false
 "Open the X-ray queue","Buksan ang X-ray queue",false
 "Opened","Binuksan",false
@@ -624,6 +642,7 @@ english,filipino,kept_english
 "Optional — added depending on your order.","Optional — idinaragdag depende sa iyong order.",false
 "Optional note to append (e.g. which field to fix)…","Optional na note na idaragdag (hal. aling field ang aayusin)…",false
 "Or grant admin to an existing account","O magbigay ng admin sa isang existing na account",false
+"or type JO number","o i-type ang JO number",false
 "Order clears once all lines are done","Maa-clear ang order kapag tapos na lahat ng linya",false
 "Order is marked paid","Namarkahang bayad ang order",false
 "Orders","Orders",true
@@ -688,6 +707,7 @@ english,filipino,kept_english
 "Please wait…","Sandali lang…",false
 "Plug-in","Plug-in",true
 "Plug-out (est.)","Plug-out (est.)",true
+"Point the camera at the QR on the Job Order slip.","Itutok ang camera sa QR ng Job Order slip.",false
 "port-services (RPS)","port-services (RPS)",true
 "Port-services (RPS) charges","Port-services (RPS) charges",true
 "Post bulletins & announcements","Mag-post ng bulletin at anunsyo",false
@@ -799,7 +819,9 @@ english,filipino,kept_english
 "Save these changes? KTC keeps your place in line and re-reviews the update.","I-save ang mga pagbabagong ito? Pinapanatili ng KTC ang iyong puwesto sa pila at muling rine-review ang update.",false
 "Saved.","Na-save.",false
 "Saving…","Sine-save…",false
+"Scan slip QR","I-scan ang QR ng slip",false
 "Scan to pay","I-scan para magbayad",false
+"Scanning isn’t supported on this browser — type the JO number instead.","Hindi suportado ang pag-scan sa browser na ito — i-type na lang ang JO number.",false
 "Scheduled jobs","Mga scheduled job",false
 "Search by name, customer code, or email…","Maghanap sa pangalan, customer code, o email…",false
 "Search code or name…","Maghanap sa code o pangalan…",false
@@ -924,6 +946,7 @@ english,filipino,kept_english
 "This is the legal name verified against your ID. Changing it requires re-verification (you’ll re-upload an ID for an admin to review).","Ito ang legal na pangalan na na-verify base sa iyong ID. Kapag binago ito, kailangan ng re-verification (mag-uupload ka uli ng ID para suriin ng admin).",false
 "this monitor — emails the owner on failures","itong monitor — nag-e-email sa owner kapag may failure",false
 "this order (untick to close it permanently — they’d have to file a new one)","ang order na ito (alisin ang check para isara ito nang permanente — kailangan nilang mag-file ng bago)",false
+"This order has no X-ray containers.","Walang X-ray container ang order na ito.",false
 "This order is already filed and has a queue number. Saving keeps your place in line — KTC will just re-review your changes.","Naka-file na ang order na ito at may queue number. Ang pag-save ay nagpapanatili ng iyong puwesto sa pila — rine-review lang muli ng KTC ang iyong mga pagbabago.",false
 "This order is closed. If needed, please","Sarado na ang order na ito. Kung kailangan, paki-",false
 "This order was resubmitted and went to the back of the line — restore its original number","Na-resubmit ang order na ito at napunta sa dulo ng linya — ibalik ang orihinal nitong number",false
@@ -989,6 +1012,7 @@ english,filipino,kept_english
 "Valid ID preview","Preview ng valid ID",false
 "Valid ID:","Valid ID:",true
 "Value","Halaga",false
+"van(s)","van",false
 "VAT ({pct}% of vatable services)","VAT ({pct}% ng vatable services)",false
 "VAT ({pct}%)","VAT ({pct}%)",true
 "VAT rate","VAT rate",true
@@ -1050,6 +1074,7 @@ english,filipino,kept_english
 "X-ray charges","X-ray charges",true
 "X-ray Checker","X-ray Checker",true
 "X-ray Checker station","X-ray Checker station",true
+"X-ray confirmed","Na-confirm ang X-ray",false
 "X-ray done","Tapos na ang X-ray",false
 "X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.","Tapos na ang X-ray at bayad na nang buo ang balance. Kunin ang iyong gate pass / official Service Invoice sa KTC office.",false
 "X-ray line — {count} waiting","X-ray line — {count} naghihintay",false
@@ -1067,6 +1092,7 @@ english,filipino,kept_english
 "You can file job orders now, but they","Pwede ka nang mag-file ng Job Orders ngayon, pero",false
 "You can upload your ID later from the banner.","Pwede mong i-upload ang iyong ID mamaya mula sa banner.",false
 "You don’t have access to the support inbox.","Wala kang access sa support inbox.",false
+"You don’t have permission to confirm X-ray.","Wala kang permiso na kumpirmahin ang X-ray.",false
 "You were signed out after {mins} minutes of inactivity. Please sign in again.","Na-sign out ka pagkatapos ng {mins} na minutong walang aktibidad. Mag-sign in ulit.",false
 "You were signed out because this account signed in on another device or browser. If that wasn’t you, change your password now.","Na-sign out ka dahil nag-sign in ang account na ito sa ibang device o browser. Kung hindi ikaw iyon, palitan mo ang iyong password ngayon.",false
 "You’ll see the result here.","Makikita mo ang resulta dito.",false
