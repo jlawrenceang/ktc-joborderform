@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import AdminShell from './AdminShell'
 import { MarkdownBody } from '../components/MarkdownDoc'
+import ManualFlow, { type FlowStep, type FlowPhase } from '../components/ManualFlow'
 import ProtectedDoc from '../components/ProtectedDoc'
 import { usePermissions } from '../lib/usePermissions'
 import { useT } from '../lib/i18n'
@@ -26,6 +27,69 @@ const GUIDES = [
   { key: 'checker', label: 'Checker', en: checkerBody, tl: checkerBodyTl },
   { key: 'customer', label: 'Customer', en: customerBody, tl: customerBodyTl },
 ] as const
+
+// "Process at a glance" flow per role — the same chart style as the customer
+// guide, summarising each role's day-to-day loop above the detailed markdown.
+const ROLE_FLOWS: Record<string, { steps: FlowStep[]; phases: FlowPhase[] }> = {
+  admin: {
+    steps: [
+      { title: 'Approve customer accounts' },
+      { title: 'Manage consignees' },
+      { title: 'Set rates, fees & role access' },
+      { title: 'Process job orders' },
+      { title: 'Oversee payments & invoices' },
+      { title: 'Post bulletins & announcements' },
+    ],
+    phases: [
+      { label: 'Onboard & set up', from: 0, to: 3 },
+      { label: 'Run orders & payments', from: 3, to: 6 },
+    ],
+  },
+  operations: {
+    steps: [
+      { title: 'Keep the vessel schedule current' },
+      { title: 'File or review job orders' },
+      { title: 'Process orders in your scope' },
+      { title: 'Resolve holds & info requests' },
+    ],
+    phases: [{ label: 'Run the floor', from: 0, to: 4 }],
+  },
+  cashier: {
+    steps: [
+      { title: 'Review uploaded payment proofs' },
+      { title: 'Collect office payments' },
+      { title: 'Record the ERP Service Invoice no.' },
+      { title: 'Order is marked paid' },
+    ],
+    phases: [{ label: 'Take payment & invoice', from: 0, to: 4 }],
+  },
+  checker: {
+    steps: [
+      { title: 'Open the X-ray queue' },
+      { title: 'Find the van (scan or pick the JO)' },
+      { title: 'Confirm X-ray per container' },
+      { title: 'Record RPS assessment if flagged' },
+      { title: 'Order clears once all lines are done' },
+    ],
+    phases: [{ label: 'Check & clear', from: 0, to: 5 }],
+  },
+  customer: {
+    steps: [
+      { title: 'Create your account' },
+      { title: 'Confirm your email' },
+      { title: 'Get verified' },
+      { title: 'File a Job Order' },
+      { title: 'Get your serving number' },
+      { title: 'View charges & pay' },
+      { title: 'KTC processes your order' },
+      { title: 'Print & claim' },
+    ],
+    phases: [
+      { label: 'Set up & file', from: 0, to: 4 },
+      { label: 'Track, pay & claim', from: 4, to: 8 },
+    ],
+  },
+}
 
 export default function ManualPage() {
   const { broker } = usePermissions()
@@ -60,6 +124,7 @@ export default function ManualPage() {
       </div>
       <ProtectedDoc>
         <div className="ktc-glass" style={{ padding: '30px 32px' }}>
+          {ROLE_FLOWS[active] && <ManualFlow steps={ROLE_FLOWS[active].steps} phases={ROLE_FLOWS[active].phases} />}
           <MarkdownBody body={lang === 'tl' ? guide.tl : guide.en} />
         </div>
       </ProtectedDoc>
