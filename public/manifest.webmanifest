@@ -1,0 +1,14 @@
+{
+  "name": "KTC Online Portal",
+  "short_name": "KTC Portal",
+  "description": "KTC Container Terminal Corp. — staff & customer portal",
+  "start_url": "/app?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#f26a21",
+  "icons": [
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

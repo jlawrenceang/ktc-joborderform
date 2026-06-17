@@ -6,8 +6,10 @@ import './index.css'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import { installErrorReporting } from './lib/errorReporting'
+import { registerSW } from './lib/registerSW'
 
 installErrorReporting()
+registerSW()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

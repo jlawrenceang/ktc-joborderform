@@ -926,6 +926,7 @@ export const tl: Record<string, string> = {
   "Check & clear": "Suriin at i-clear",
   "Phone alerts": "Phone alerts",
   "Phone alerts on this device": "Phone alerts sa device na ito",
+  "Install app": "I-install ang app",
   "Turn on phone alerts?": "I-on ang phone alerts?",
   "Get notified on this device when there’s an update — replies, approvals, payments and job-order activity.": "Maabisuhan sa device na ito kapag may update — mga reply, approval, bayad at aktibidad sa job order.",
   "Turn on alerts": "I-on ang alerts",

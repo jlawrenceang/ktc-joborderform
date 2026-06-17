@@ -8,6 +8,7 @@ import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
 import ThemeToggle from '../components/ThemeToggle'
+import InstallButton from '../components/InstallButton'
 
 // A small "needs attention" pill (capped at 9+).
 function Pill({ n }: { n: number }) {
@@ -162,6 +163,7 @@ export default function AdminBottomNav() {
                 <span style={{ flex: 1 }}>{t('Dark mode')}</span>
                 <ThemeToggle />
               </div>
+              <InstallButton />
               <button type="button" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
                 <span style={{ flex: 1 }}>{t('Sign out')}</span>
               </button>

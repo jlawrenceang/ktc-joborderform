@@ -33,3 +33,7 @@ Thumbs.db
 
 # agent worktrees (transient)
 .claude/worktrees/
+
+# local screenshot capture (not committed)
+docs/screenshots/
+docs/ktc-screenshots.zip
