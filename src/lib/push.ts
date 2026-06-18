@@ -47,7 +47,7 @@ async function doEnablePush(): Promise<{ ok: boolean; error?: string }> {
   const { data: cfg } = await withTimeout(
     supabase.from('push_config').select('value').eq('key', 'vapid_public').maybeSingle(), 10_000, 'Loading settings')
   const vapid = (cfg as { value: string } | null)?.value
-  if (!vapid) return { ok: false, error: 'Phone alerts aren’t set up yet. Please try again later.' }
+  if (!vapid) return { ok: false, error: 'Notifications aren’t set up yet. Please try again later.' }
 
   const reg = await navigator.serviceWorker.register('/sw.js')
   await withTimeout(navigator.serviceWorker.ready, 10_000, 'Starting the background service')
@@ -74,7 +74,7 @@ async function doEnablePush(): Promise<{ ok: boolean; error?: string }> {
 // Never throws and never hangs — an overall cap guarantees the caller's busy
 // state always clears, even if a step stalls indefinitely.
 export async function enablePush(): Promise<{ ok: boolean; error?: string }> {
-  if (!pushSupported()) return { ok: false, error: 'Phone alerts aren’t supported on this browser.' }
+  if (!pushSupported()) return { ok: false, error: 'Notifications aren’t supported on this browser.' }
   try {
     return await withTimeout(doEnablePush(), 25_000, 'Enabling alerts')
   } catch (e) {

@@ -3,11 +3,11 @@ import { createPortal } from 'react-dom'
 import { pushSupported, isPushOn, enablePush } from '../lib/push'
 import { useT } from '../lib/i18n'
 
-// Soft "turn on phone alerts?" popup shown shortly after login. The actual
+// Soft "turn on notifications?" popup shown shortly after login. The actual
 // browser permission prompt only fires on the explicit "Turn on" tap (a user
 // gesture, as browsers require). Shows at most once per session and never again
 // once the user enables it or taps "Not now". Always re-enableable from the
-// ⊞ Menu → 🔔 Phone alerts.
+// ⊞ Menu → 🔔 Notifications.
 const KEY = 'ktc_push_prompt' // localStorage: 'enabled' | 'dismissed'
 const SEEN = 'ktc_push_prompt_seen' // sessionStorage: shown this session
 
@@ -68,11 +68,11 @@ export default function PushPrompt() {
 
   return createPortal(
     <div className="ktc-modal-backdrop" onClick={() => setOpen(false)}>
-      <div className="ktc-glass ktc-modal-panel" role="dialog" aria-modal="true" aria-label={t('Turn on phone alerts?')}
+      <div className="ktc-glass ktc-modal-panel" role="dialog" aria-modal="true" aria-label={t('Turn on notifications?')}
         onClick={(e) => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 380, padding: 22, textAlign: 'center' }}>
         <div style={{ fontSize: 34, lineHeight: 1 }} aria-hidden>🔔</div>
-        <h2 style={{ margin: '10px 0 4px', fontSize: 18, fontWeight: 700 }}>{t('Turn on phone alerts?')}</h2>
+        <h2 style={{ margin: '10px 0 4px', fontSize: 18, fontWeight: 700 }}>{t('Turn on notifications?')}</h2>
         <p className="ktc-label" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 16px' }}>
           {t('Get notified on this device when there’s an update — replies, approvals, payments and job-order activity.')}
         </p>
