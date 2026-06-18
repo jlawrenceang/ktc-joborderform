@@ -53,7 +53,10 @@ export function reportError(err: unknown) {
 // fresh index.html + chunk hashes.
 export function isChunkLoadError(err: unknown): boolean {
   const msg = (err as { message?: string } | null)?.message ?? String(err ?? '')
-  return /dynamically imported module|module script failed|error loading dynamically imported|Loading (?:CSS )?chunk|ChunkLoadError|Importing a module script failed/i.test(msg)
+  // The last alternative — reading 'default' — is the React.lazy symptom of a
+  // stale chunk that resolved to undefined (see lazyWithReload); treat it as a
+  // chunk error so the boundary auto-reloads instead of showing the error page.
+  return /dynamically imported module|module script failed|error loading dynamically imported|Loading (?:CSS )?chunk|ChunkLoadError|Importing a module script failed|reading ['"]default['"]/i.test(msg)
 }
 
 // Reload ONCE to recover from a stale chunk. Guarded by a sessionStorage stamp

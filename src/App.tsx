@@ -1,4 +1,5 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
+import { lazyWithReload } from './lib/lazyWithReload'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
 import { I18nProvider } from './lib/i18n'
@@ -23,31 +24,31 @@ import AdminRoute from './admin/AdminRoute'
 
 // Code-split: customers never download the admin portal (and vice versa for
 // the rarely-visited print view) — keeps the first paint lean.
-const JobOrderPrint = lazy(() => import('./pages/JobOrderPrint'))
-const Verify = lazy(() => import('./pages/Verify'))
-const Payment = lazy(() => import('./pages/Payment'))
-const Calculator = lazy(() => import('./pages/Calculator'))
-const AppHome = lazy(() => import('./app/AppHome'))
-const AppChecker = lazy(() => import('./app/AppChecker'))
-const Vessels = lazy(() => import('./pages/Vessels'))
-const SupportTickets = lazy(() => import('./pages/SupportTickets'))
-const Manual = lazy(() => import('./pages/Manual'))
-const AdminManual = lazy(() => import('./admin/ManualPage'))
-const Dashboard = lazy(() => import('./admin/Dashboard'))
-const Approvals = lazy(() => import('./admin/Approvals'))
-const Brokers = lazy(() => import('./admin/Brokers'))
-const CustomerDetail = lazy(() => import('./admin/CustomerDetail'))
-const Consignees = lazy(() => import('./admin/Consignees'))
-const AllJobOrders = lazy(() => import('./admin/AllJobOrders'))
-const AdminNewJobOrder = lazy(() => import('./admin/NewJobOrder'))
-const Settings = lazy(() => import('./admin/Settings'))
-const BulletinBoardAdmin = lazy(() => import('./admin/BulletinBoardAdmin'))
-const Checker = lazy(() => import('./admin/Checker'))
-const CashierStation = lazy(() => import('./admin/CashierStation'))
-const VesselSchedule = lazy(() => import('./admin/VesselSchedule'))
-const Logs = lazy(() => import('./admin/Logs'))
-const Security = lazy(() => import('./admin/Security'))
-const SupportInbox = lazy(() => import('./admin/SupportInbox'))
+const JobOrderPrint = lazyWithReload(() => import('./pages/JobOrderPrint'))
+const Verify = lazyWithReload(() => import('./pages/Verify'))
+const Payment = lazyWithReload(() => import('./pages/Payment'))
+const Calculator = lazyWithReload(() => import('./pages/Calculator'))
+const AppHome = lazyWithReload(() => import('./app/AppHome'))
+const AppChecker = lazyWithReload(() => import('./app/AppChecker'))
+const Vessels = lazyWithReload(() => import('./pages/Vessels'))
+const SupportTickets = lazyWithReload(() => import('./pages/SupportTickets'))
+const Manual = lazyWithReload(() => import('./pages/Manual'))
+const AdminManual = lazyWithReload(() => import('./admin/ManualPage'))
+const Dashboard = lazyWithReload(() => import('./admin/Dashboard'))
+const Approvals = lazyWithReload(() => import('./admin/Approvals'))
+const Brokers = lazyWithReload(() => import('./admin/Brokers'))
+const CustomerDetail = lazyWithReload(() => import('./admin/CustomerDetail'))
+const Consignees = lazyWithReload(() => import('./admin/Consignees'))
+const AllJobOrders = lazyWithReload(() => import('./admin/AllJobOrders'))
+const AdminNewJobOrder = lazyWithReload(() => import('./admin/NewJobOrder'))
+const Settings = lazyWithReload(() => import('./admin/Settings'))
+const BulletinBoardAdmin = lazyWithReload(() => import('./admin/BulletinBoardAdmin'))
+const Checker = lazyWithReload(() => import('./admin/Checker'))
+const CashierStation = lazyWithReload(() => import('./admin/CashierStation'))
+const VesselSchedule = lazyWithReload(() => import('./admin/VesselSchedule'))
+const Logs = lazyWithReload(() => import('./admin/Logs'))
+const Security = lazyWithReload(() => import('./admin/Security'))
+const SupportInbox = lazyWithReload(() => import('./admin/SupportInbox'))
 
 function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
