@@ -359,8 +359,13 @@ export default function Settings() {
     const pwIssue = passwordIssue(suPass)
     if (pwIssue) { setError(pwIssue); return }
     setBusy(true); setError(null); setNotice(null)
-    const { error } = await supabase.rpc('create_staff', { p_username: u, p_password: suPass, p_full_name: suName.trim(), p_role: suRole })
+    // Staff are minted via GoTrue's admin API (admin-create-staff edge fn), not a
+    // hand-written auth.users INSERT — Supabase owns the auth-row internals.
+    const { data, error: fnErr } = await supabase.functions.invoke('admin-create-staff', {
+      body: { username: u, password: suPass, full_name: suName.trim(), role: suRole },
+    })
     setBusy(false)
+    const error = fnErr || (data && (data as { error?: string }).error ? { message: (data as { error: string }).error } : null)
     if (error) { setError(error.message); return }
     setSuUser(''); setSuPass(''); setSuName(''); setSuRole('admin')
     setNotice(t('Staff account created ({suRole}). They sign in with username "{u}" and the password you set.', { suRole, u }))
