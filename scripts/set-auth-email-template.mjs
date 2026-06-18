@@ -27,12 +27,16 @@ const ref = new URL(url).host.split('.')[0]
 const readTpl = (f) => readFileSync(path.join(root, 'docs/email-templates', f), 'utf8').replace(/<!--[\s\S]*?-->/, '').trim()
 const confirmHtml = readTpl('confirm-signup.html')
 const resetHtml = readTpl('reset-password.html')
+const inviteHtml = readTpl('invite-staff.html')
 
 const body = {
   mailer_subjects_confirmation: 'Confirm your KTC Online Portal account',
   mailer_templates_confirmation_content: confirmHtml,
   mailer_subjects_recovery: 'Reset your KTC Online Portal password',
   mailer_templates_recovery_content: resetHtml,
+  // Staff invite (GoTrue "Invite user") — the only way a staff role is granted.
+  mailer_subjects_invite: "You've been invited to the KTC Online Portal",
+  mailer_templates_invite_content: inviteHtml,
 }
 
 const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/auth`, {
@@ -44,9 +48,10 @@ const out = await res.json().catch(() => ({}))
 console.log('project ref:', ref)
 console.log('PATCH /config/auth status:', res.status)
 if (res.ok) {
-  console.log('✓ Confirm-signup + reset-password templates installed.')
+  console.log('✓ Confirm-signup + reset-password + staff-invite templates installed.')
   console.log('  confirm:', out.mailer_subjects_confirmation, '—', (out.mailer_templates_confirmation_content || '').length, 'chars')
   console.log('  recovery:', out.mailer_subjects_recovery, '—', (out.mailer_templates_recovery_content || '').length, 'chars')
+  console.log('  invite:', out.mailer_subjects_invite, '—', (out.mailer_templates_invite_content || '').length, 'chars')
 } else {
   console.log(JSON.stringify(out).slice(0, 400))
 }

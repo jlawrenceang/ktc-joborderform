@@ -20,9 +20,7 @@ export default function Settings() {
   const isRootOwner = !!me?.is_root_owner
   const [staff, setStaff] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState('')
-  const [suUser, setSuUser] = useState('')
-  const [suPass, setSuPass] = useState('')
+  const [suEmail, setSuEmail] = useState('')
   const [suName, setSuName] = useState('')
   const [suRole, setSuRole] = useState<'admin' | 'cashier' | 'checker' | 'operations' | 'csr'>('admin')
   const [busy, setBusy] = useState(false)
@@ -355,40 +353,30 @@ export default function Settings() {
 
   async function createStaff(e: FormEvent) {
     e.preventDefault()
-    const u = suUser.trim().toLowerCase()
-    const pwIssue = passwordIssue(suPass)
-    if (pwIssue) { setError(pwIssue); return }
+    const addr = suEmail.trim().toLowerCase()
     setBusy(true); setError(null); setNotice(null)
-    // Staff are minted via GoTrue's admin API (admin-create-staff edge fn), not a
-    // hand-written auth.users INSERT — Supabase owns the auth-row internals.
+    // Staff access is granted ONLY here: GoTrue inviteUserByEmail (admin-create-staff
+    // edge fn) emails an invite link; the invitee sets their own password.
     const { data, error: fnErr } = await supabase.functions.invoke('admin-create-staff', {
-      body: { username: u, password: suPass, full_name: suName.trim(), role: suRole },
+      body: { email: addr, full_name: suName.trim(), role: suRole, redirect_to: `${window.location.origin}/reset-password` },
     })
     setBusy(false)
     const error = fnErr || (data && (data as { error?: string }).error ? { message: (data as { error: string }).error } : null)
     if (error) { setError(error.message); return }
-    setSuUser(''); setSuPass(''); setSuName(''); setSuRole('admin')
-    setNotice(t('Staff account created ({suRole}). They sign in with username "{u}" and the password you set.', { suRole, u }))
+    setSuEmail(''); setSuName(''); setSuRole('admin')
+    setNotice(t('Invite sent to {addr} ({suRole}). They’ll set their password via the email link.', { addr, suRole }))
     await load()
   }
 
-  async function grant(e: FormEvent) {
-    e.preventDefault()
+  // Real-email staff: send a password-reset email (legacy @ktc-staff.local accounts
+  // use the inline owner-set reset below).
+  async function sendStaffReset(b: Broker) {
+    if (!b.email) return
     setBusy(true); setError(null); setNotice(null)
-    const target = email.trim().toLowerCase()
-    const { data, error } = await supabase
-      .from('customers')
-      .update({ is_admin: true, status: 'approved', decided_at: new Date().toISOString() })
-      .eq('email', target)
-      .select('id')
+    const { error } = await supabase.auth.resetPasswordForEmail(b.email, { redirectTo: `${window.location.origin}/reset-password` })
     setBusy(false)
     if (error) return setError(error.message)
-    if (!data || data.length === 0) {
-      setError(t('No account found for "{target}". Ask them to sign up first, then grant access here.', { target }))
-      return
-    }
-    setEmail(''); setNotice(t('Admin access granted to {target}.', { target }))
-    await load()
+    setNotice(t('Password-reset email sent to {email}.', { email: b.email }))
   }
 
   // Owner-only staff password reset (staff use synthetic @ktc-staff.local
@@ -436,12 +424,8 @@ export default function Settings() {
                 <input id="suName" className="ktc-input" required value={suName} onChange={(e) => setSuName(e.target.value)} style={{ width: 200 }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suUser">{t('Username')}</label>
-                <input id="suUser" className="ktc-input" required minLength={3} value={suUser} onChange={(e) => setSuUser(e.target.value)} placeholder="jdelacruz" style={{ width: 170 }} />
-              </div>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="suPass">{t('Password')}</label>
-                <input id="suPass" className="ktc-input" type="text" required minLength={8} value={suPass} onChange={(e) => setSuPass(e.target.value)} style={{ width: 160 }} title={PASSWORD_HINT} />
+                <label className="ktc-label" htmlFor="suEmail">{t('Email')}</label>
+                <input id="suEmail" className="ktc-input" type="email" required value={suEmail} onChange={(e) => setSuEmail(e.target.value)} placeholder="staff@email.com" style={{ width: 240 }} />
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
                 <label className="ktc-label" htmlFor="suRole">{t('Role')}</label>
@@ -453,23 +437,11 @@ export default function Settings() {
                   <option value="csr">{t('CSR')}</option>
                 </select>
               </div>
-              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Create staff')}</button>
+              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Send invite')}</button>
             </form>
             <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, opacity: 0.8 }}>
-              {t('No email needed — hand them the username + password. They sign in at the login page with the username.')}
+              {t('We email them a secure invite link to set their own password — this is the only way to grant staff access. For a shared/kiosk device, use a dedicated inbox (e.g. gate1@ktcterminal.com).')}
             </p>
-
-            <div style={{ height: 1, background: 'hsl(var(--line-soft))', margin: '18px 0' }} />
-
-            <h2 style={{ margin: '0 0 10px', fontSize: 15, fontWeight: 600 }}>{t('Or grant admin to an existing account')}</h2>
-            <form onSubmit={grant} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <label className="ktc-label" htmlFor="email">{t('Email of a signed-up user')}</label>
-                <input id="email" className="ktc-input" type="email" required value={email}
-                  onChange={(e) => setEmail(e.target.value)} placeholder="someone@email.com" style={{ width: 280 }} />
-              </div>
-              <button className="ktc-btn" type="submit" disabled={busy} style={{ width: 'auto', padding: '11px 18px' }}>{t('Grant access')}</button>
-            </form>
           </>
         ) : (
           <p className="ktc-label" style={{ fontSize: 13 }}>{t('Only the owner can add or change staff access.')}</p>
@@ -957,7 +929,7 @@ export default function Settings() {
                 </div>
                 {isOwner && !b.is_owner && (
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {b.email?.endsWith('@ktc-staff.local') && (
+                    {b.email?.endsWith('@ktc-staff.local') ? (
                       resetId === b.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                           <input className="ktc-input" type="text" value={resetPw} onChange={(e) => setResetPw(e.target.value)}
@@ -970,6 +942,10 @@ export default function Settings() {
                           {t('Reset password')}
                         </button>
                       )
+                    ) : (
+                      <button className="ktc-link" disabled={busy} onClick={() => void sendStaffReset(b)} style={{ fontSize: 13 }}>
+                        {t('Send reset email')}
+                      </button>
                     )}
                     <button className="ktc-link" disabled={busy} onClick={() => revoke(b)} style={{ fontSize: 13, fontWeight: 600 }}>
                       {t('Revoke access')}

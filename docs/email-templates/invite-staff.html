@@ -1,0 +1,48 @@
+<!--
+  KTC — "Staff invite" email template.
+  Installed into Supabase Auth (Invite) via scripts/set-auth-email-template.mjs.
+  Suggested Subject:  You've been invited to the KTC Online Portal
+  Supabase variable used: {{ .ConfirmationURL }}
+-->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f2f5;padding:32px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid #e6e7ea;overflow:hidden;">
+        <tr>
+          <td style="padding:28px 32px 8px;">
+            <img src="https://portal.ktcterminal.com/ktc-logo.png" alt="KTC Container Terminal Corp" height="44" style="display:block;border:0;" />
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 32px 0;">
+            <h1 style="margin:0;font-size:21px;font-weight:600;letter-spacing:-0.02em;color:#1a1c1f;">You're invited to the KTC Online Portal</h1>
+            <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4b4f56;">
+              KTC Container Terminal Corp. has created a staff account for you. Click the button below to set your password and activate your account.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 8px;">
+            <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#F26A21;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:10px;">
+              Set my password
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 32px 28px;">
+            <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:#8a8f98;">
+              If the button doesn't work, copy and paste this link into your browser:<br/>
+              <a href="{{ .ConfirmationURL }}" style="color:#D6321E;word-break:break-all;">{{ .ConfirmationURL }}</a>
+            </p>
+            <p style="margin:16px 0 0;font-size:12px;line-height:1.6;color:#8a8f98;">
+              If you weren't expecting this invitation, you can safely ignore this email.
+            </p>
+          </td>
+        </tr>
+      </table>
+      <p style="max-width:480px;margin:16px auto 0;font-size:11px;color:#a0a4ab;text-align:center;">
+        © 2026 KTC Container Terminal Corp. · portal.ktcterminal.com
+      </p>
+    </td>
+  </tr>
+</table>

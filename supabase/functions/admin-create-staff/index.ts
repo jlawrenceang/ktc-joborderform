@@ -1,19 +1,14 @@
-// Owner-only: create a staff account. Replaces the hand-written auth.users /
-// auth.identities INSERT (create_staff RPC) — Supabase/GoTrue now owns the auth
-// row internals, so we stop duplicating bcrypt + identity bookkeeping that could
-// drift from a future GoTrue schema change.
+// Owner-only: invite a staff member by email. This is the ONLY way a staff role
+// is granted — there is no synthetic-account / owner-sets-password path and no
+// "grant admin to an existing email" shortcut.
 //
-// Staff stay INVITE-ONLY: no self-signup, no email confirmation step. Accounts
-// use synthetic <username>@ktc-staff.local emails (no real inbox needed — ideal
-// for shared/kiosk devices) and are created already-confirmed (email_confirm).
+// Flow: owner enters email + full name + role -> GoTrue inviteUserByEmail creates
+// the user (no password) and emails a branded invite link -> the invitee clicks,
+// lands on /reset-password, and sets their own password. The role is assigned
+// here (promote_new_staff, run AS THE OWNER so the audit attributes the grant).
 //
-// Security: owner ONLY, evaluated by the DB AS THE CALLER (is_owner() folds in
-// MFA aal2 + session-alive). The privilege grant runs through promote_new_staff
-// under the OWNER's JWT, so the audit trail attributes it to the owner (not a
-// service-role/by-DB write). Mirrors admin-reset-link's runtime conventions.
-//
-// Invoked from Settings: supabase.functions.invoke('admin-create-staff',
-//   { body: { username, password, full_name, role } }).
+// Security: owner ONLY, evaluated by the DB as the caller (is_owner() folds in
+// MFA aal2 + session-alive). redirect_to is allow-listed to the portal origin.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const CORS = {
@@ -25,6 +20,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
 const ROLES = ['admin', 'cashier', 'checker', 'operations', 'csr']
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -51,44 +47,51 @@ Deno.serve(async (req) => {
   })
   const { data: isOwner, error: ownErr } = await callerClient.rpc('is_owner')
   if (ownErr) return json({ error: 'Authorization check failed.' }, 500)
-  if (isOwner !== true) return json({ error: 'Only the owner can create staff (complete MFA if enabled).' }, 403)
+  if (isOwner !== true) return json({ error: 'Only the owner can invite staff (complete MFA if enabled).' }, 403)
 
   // 3) Validate input.
-  let body: { username?: string; password?: string; full_name?: string; role?: string }
+  let body: { email?: string; full_name?: string; role?: string; redirect_to?: string }
   try { body = await req.json() } catch { return json({ error: 'Bad request body.' }, 400) }
-  const username = (body.username ?? '').trim().toLowerCase()
-  const password = body.password ?? ''
+  const email = (body.email ?? '').trim().toLowerCase()
   const fullName = (body.full_name ?? '').trim()
   const role = (body.role ?? 'admin').trim()
-  if (username.length < 3) return json({ error: 'Username must be at least 3 characters.' }, 400)
+  if (!EMAIL_RE.test(email)) return json({ error: 'Enter a valid email address.' }, 400)
   if (!ROLES.includes(role)) return json({ error: `Unknown role ${role}.` }, 400)
   if (!fullName) return json({ error: 'Full name is required.' }, 400)
-  if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    return json({ error: 'Password must be at least 8 characters and include a letter and a number.' }, 400)
-  }
-  const email = `${username}@ktc-staff.local`
 
-  // 4) Create the auth user via GoTrue (already-confirmed; metadata feeds the
-  //    handle_new_user trigger that makes the public.customers row).
-  const { data: created, error: cErr } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: fullName, username },
+  // Allow-list the post-invite landing to the portal origin (defense-in-depth).
+  const safeRedirect = (input?: string): string => {
+    const fallback = 'https://portal.ktcterminal.com/reset-password'
+    if (!input) return fallback
+    try {
+      const r = new URL(input)
+      if (r.protocol === 'https:' && (r.hostname === 'ktcterminal.com' || r.hostname.endsWith('.ktcterminal.com'))) {
+        return `${r.origin}/reset-password`
+      }
+    } catch { /* not absolute */ }
+    return fallback
+  }
+
+  // 4) Invite: creates the user (no password) + emails the branded invite link.
+  //    handle_new_user makes the public.customers row from the metadata.
+  const { data: invited, error: iErr } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: fullName },
+    redirectTo: safeRedirect(body.redirect_to),
   })
-  if (cErr || !created.user) {
-    const msg = /registered|exists|duplicate/i.test(cErr?.message ?? '') ? 'That username is already taken.' : (cErr?.message ?? 'Could not create the account.')
+  if (iErr || !invited.user) {
+    const msg = /registered|exists|already/i.test(iErr?.message ?? '')
+      ? 'That email already has an account.'
+      : (iErr?.message ?? 'Could not send the invite.')
     return json({ error: msg }, 400)
   }
 
-  // 5) Promote the new row AS THE OWNER (audit attributes the grant to the owner).
+  // 5) Assign the role AS THE OWNER (audit attributes the grant to the owner).
   const { error: pErr } = await callerClient.rpc('promote_new_staff', {
-    p_user_id: created.user.id, p_role: role, p_full_name: fullName,
+    p_user_id: invited.user.id, p_role: role, p_full_name: fullName,
   })
   if (pErr) {
-    // Roll back the auth user so a half-made account isn't left behind.
-    await admin.auth.admin.deleteUser(created.user.id).catch(() => undefined)
-    return json({ error: `Account created but role assignment failed: ${pErr.message}` }, 500)
+    await admin.auth.admin.deleteUser(invited.user.id).catch(() => undefined)
+    return json({ error: `Invite sent but role assignment failed: ${pErr.message}` }, 500)
   }
 
   return json({ email })
