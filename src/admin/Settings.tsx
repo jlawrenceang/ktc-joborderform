@@ -6,6 +6,7 @@ import { useBroker } from '../lib/useBroker'
 import type { Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
+import LangToggle from '../components/LangToggle'
 import { peso } from '../lib/pricing'
 import { SHIPPING_LINES, TERMINAL_CHARGE_SERVICES, CHARGE_RULE_ACTIONS } from '../lib/shippingLines'
 
@@ -408,6 +409,16 @@ export default function Settings() {
 
   return (
     <AdminShell>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>{t('Language')}</h2>
+          <p className="ktc-sub" style={{ margin: '2px 0 0', fontSize: 12 }}>
+            {t('Switch the portal between English and Filipino. Also available as 🌐 EN / FIL in the side menu.')}
+          </p>
+        </div>
+        <LangToggle />
+      </div>
+
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h1 className="ktc-title">{t('Staff & access')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 20 }}>

@@ -36,7 +36,8 @@ export default function LanguageGate() {
           <button className="ktc-btn-secondary" type="button" onClick={() => setLang('tl')}>Filipino (Tagalog)</button>
         </div>
         <p className="ktc-label" style={{ margin: '16px 0 0', fontSize: 12, opacity: 0.75 }}>
-          You can switch anytime with EN / FIL in the menu · Pwede mong palitan kahit kailan
+          You can change this later — 🌐 EN / FIL in the side menu (or Settings).<br />
+          Pwede mong palitan kahit kailan sa menu o Settings.
         </p>
       </div>
     </div>
