@@ -96,17 +96,18 @@ export default function SearchPicker({
           role="listbox"
           style={{
             position: 'absolute',
-            zIndex: 20,
+            // Above the sticky Back/Next action bar (z-30) so the open list is
+            // never painted under it; opaque surface so nothing bleeds through.
+            zIndex: 50,
             top: 'calc(100% + 4px)',
             left: 0,
             right: 0,
             maxHeight: 260,
             overflowY: 'auto',
             borderRadius: 12,
-            background: 'var(--c-w92)',
-            backdropFilter: 'blur(20px) saturate(1.6)',
+            background: 'var(--c-solid)',
             border: '1px solid var(--glass-brd)',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
             padding: 6,
           }}
         >
