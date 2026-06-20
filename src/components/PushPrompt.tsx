@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { pushSupported, isPushOn, enablePush } from '../lib/push'
 import { useT } from '../lib/i18n'
 
-// Soft "turn on notifications?" popup shown shortly after login. The actual
+// Soft "turn on notifications?" popup shown right after the first-run language
+// choice (so it's a clean yes/no, one screen after the language gate). The actual
 // browser permission prompt only fires on the explicit "Turn on" tap (a user
 // gesture, as browsers require). Auto-shows at most ONCE per browser — after it
 // has appeared we leave the user alone forever, even if they neither enabled it
@@ -13,7 +14,7 @@ const KEY = 'ktc_push_prompt' // localStorage: 'enabled' | 'dismissed'
 const SEEN = 'ktc_push_prompt_seen' // localStorage: auto-prompt has fired once on this browser
 
 export default function PushPrompt() {
-  const { t } = useT()
+  const { t, langChosen } = useT()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -29,6 +30,10 @@ export default function PushPrompt() {
   }, [open])
 
   useEffect(() => {
+    // Wait for the first-run language choice so the order is: language gate →
+    // then this notification prompt (no overlap), and it shows in the chosen
+    // language. Returning users already have langChosen=true, so it runs at once.
+    if (!langChosen) return
     if (!pushSupported()) return
     if (localStorage.getItem(KEY)) return
     if (Notification.permission === 'denied') return
@@ -52,7 +57,7 @@ export default function PushPrompt() {
       setTimeout(() => { if (!cancelled) setOpen(true) }, 1200)
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [langChosen])
 
   if (!open) return null
 
@@ -78,8 +83,11 @@ export default function PushPrompt() {
         style={{ width: '100%', maxWidth: 380, padding: 22, textAlign: 'center' }}>
         <div style={{ fontSize: 34, lineHeight: 1 }} aria-hidden>🔔</div>
         <h2 style={{ margin: '10px 0 4px', fontSize: 18, fontWeight: 700 }}>{t('Turn on notifications?')}</h2>
-        <p className="ktc-label" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p className="ktc-label" style={{ fontSize: 13.5, lineHeight: 1.6, margin: '0 0 8px' }}>
           {t('Get notified on this device when there’s an update — replies, approvals, payments and job-order activity.')}
+        </p>
+        <p className="ktc-label" style={{ fontSize: 12, lineHeight: 1.5, opacity: 0.75, margin: '0 0 16px' }}>
+          {t('No pressure — you can turn notifications on or off anytime from the 🔔 bell or in Settings.')}
         </p>
         {err && <p style={{ color: 'var(--acc-2)', fontSize: 12.5, margin: '0 0 10px' }}>{err}</p>}
         <div style={{ display: 'grid', gap: 8 }}>
