@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { useBroker } from '../lib/useBroker'
 import { useT } from '../lib/i18n'
+import { useTour } from './TourProvider'
+import LangToggle from './LangToggle'
+import ThemeToggle from './ThemeToggle'
 
 // Gmail-style account menu for the top rail: a round avatar (initials) that opens
-// a dropdown with the signed-in identity, a Settings link, and Sign out. Shared
-// by the customer Shell and the AdminShell (each passes its own settings route).
+// a dropdown with the signed-in identity, Settings, the quick tour, language +
+// dark-mode toggles (mirroring the ⊞ Menu), and Sign out. Shared by the customer
+// Shell and the AdminShell (each passes its own settings route).
 function initials(name?: string | null, email?: string | null): string {
   const src = (name || email || '').trim()
   if (!src) return '?'
@@ -19,6 +23,7 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
   const { t } = useT()
   const { broker } = useBroker()
   const { signOut } = useAuth()
+  const { replayPageTour, hasPageTour } = useTour()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLSpanElement>(null)
@@ -83,6 +88,23 @@ export default function AccountMenu({ settingsTo, settingsLabel }: { settingsTo?
               <span style={{ flex: 1 }}>{t(settingsLabel ?? 'Settings')}</span>
             </button>
           )}
+          {hasPageTour && (
+            <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => { setOpen(false); replayPageTour() }}>
+              <span aria-hidden className="ktc-nav-help-q">?</span>
+              <span style={{ flex: 1 }}>{t('Quick tour')}</span>
+            </button>
+          )}
+          <div className="ktc-menu-setting" role="menuitem">
+            <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌐</span>
+            <span style={{ flex: 1 }}>{t('Language')}</span>
+            <LangToggle />
+          </div>
+          <div className="ktc-menu-setting" role="menuitem">
+            <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌙</span>
+            <span style={{ flex: 1 }}>{t('Dark mode')}</span>
+            <ThemeToggle />
+          </div>
+          <div style={{ height: 1, background: 'var(--glass-brd)', margin: '4px 4px' }} />
           <button type="button" role="menuitem" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
             <span aria-hidden style={{ fontSize: 16, width: 20, textAlign: 'center' }}>⎋</span>
             <span style={{ flex: 1 }}>{t('Sign out')}</span>
