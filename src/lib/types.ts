@@ -195,6 +195,9 @@ export interface ReleaseOrder {
   payment_note?: string | null
   or_number?: string | null
   released_at?: string | null
+  /** ERP (Frappe) service-invoice control no. recorded with the OR — the ERP link. */
+  service_invoice_no?: string | null
+  invoice_recorded_at?: string | null
   staff_note?: string | null
   created_at: string
   consignee?: { code: string; name: string } | null

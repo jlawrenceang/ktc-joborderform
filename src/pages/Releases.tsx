@@ -5,6 +5,8 @@ import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import FileViewerModal from '../components/FileViewerModal'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import { useBroker } from '../lib/useBroker'
+import BrokerStatusBanner from '../components/BrokerStatusBanner'
 import { searchConsignees } from '../lib/pickerSearches'
 import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
@@ -19,7 +21,7 @@ import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseStatus, type Relea
 // DEFINER RPC (file_release_order / resubmit_release_doc / submit_release_payment).
 
 const SELECT_COLS =
-  'id, release_number, bl_number, status, amount, charges_note, payment_status, payment_proof_path, payment_note, or_number, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
+  'id, release_number, bl_number, status, amount, charges_note, payment_status, payment_proof_path, payment_note, or_number, service_invoice_no, staff_note, created_at, consignee:consignees(code, name), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_note, created_at)'
 
 // Per-status semantic tone for the .ktc-chip status pill (mirrors MyJobOrders).
 const STATUS_TONE: Record<ReleaseStatus, string> = {
@@ -75,7 +77,12 @@ function FileChip({ file, onRemove, disabled }: { file: File; onRemove: () => vo
 export default function Releases() {
   const { t } = useT()
   const { session } = useAuth()
+  const { broker } = useBroker()
   const uid = session?.user.id
+  // Releases require a FULLY approved account — the file_release_order RPC
+  // raises otherwise. Unlike job orders (which let a `pending` broker file a
+  // held order), pending may NOT file a release. Gate the form upfront.
+  const approved = broker?.status === 'approved'
 
   // List of the customer's own release orders (read directly via RLS).
   const [rows, setRows] = useState<ReleaseOrder[]>([])
@@ -166,7 +173,18 @@ export default function Releases() {
         </p>
       </div>
 
-      {/* File a release */}
+      {/* Account-approval gate — a release REQUIRES a fully approved account
+          (the RPC raises otherwise). Pending/unapproved users see the verify
+          banner instead of the form; their existing releases stay visible. */}
+      {!approved ? (
+        <div style={{ marginBottom: 16 }}>
+          {broker && <BrokerStatusBanner broker={broker} />}
+          <Notice tone="warning">
+            {t('Your account must be approved before you can file a release / pull-out request.')}
+          </Notice>
+        </div>
+      ) : (
+      /* File a release */
       <div className="ktc-glass" style={{ padding: 26, marginBottom: 16 }}>
         <h2 style={{ margin: 0, fontSize: 16.5, fontWeight: 650 }}>{t('File a release')}</h2>
         {fileError && <Notice tone="error" style={{ marginTop: 14 }}>{fileError}</Notice>}
@@ -222,6 +240,7 @@ export default function Releases() {
           </button>
         </div>
       </div>
+      )}
 
       {/* My releases */}
       <div className="ktc-glass" style={{ padding: 18 }}>
@@ -299,6 +318,19 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
   const [proof, setProof] = useState<File | null>(null) // payment proof
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false) // inline cancel confirmation
+
+  // A customer may cancel their own release only before it's paid/released —
+  // the cancel_release_order RPC enforces the same window server-side.
+  const canCancel = ['submitted', 'docs_verified', 'payable', 'on_hold'].includes(r.status)
+  async function cancelRelease() {
+    setBusy(true); setError(null)
+    const { error: rpcErr } = await supabase.rpc('cancel_release_order', { p_id: r.id })
+    setBusy(false); setConfirmCancel(false)
+    if (rpcErr) { setError(rpcErr.message); return }
+    await onChanged()
+    onClose()
+  }
 
   // Re-upload a corrected DO/BL for an on-hold release.
   async function resubmitDoc() {
@@ -492,11 +524,36 @@ function ReleaseDetail({ release, uid, info, qrUrl, onQrOpen, uploadDoc, onClose
                 {r.or_number
                   ? t('Released — Official Receipt No. {no}.', { no: r.or_number })
                   : t('Released.')}
+                {r.service_invoice_no && (
+                  <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 6 }}>
+                    {t('ERP invoice:')} <b className="ktc-mono">{r.service_invoice_no}</b>
+                  </div>
+                )}
               </Notice>
             )}
 
             {r.status === 'cancelled' && (
               <Notice tone="warning">{t('This release was cancelled.')}{r.staff_note ? <> {r.staff_note}</> : ''}</Notice>
+            )}
+
+            {/* Cancel — only before it's paid/released (the RPC enforces it too). */}
+            {canCancel && (
+              <div style={{ marginTop: 4, paddingTop: 14, borderTop: '1px solid var(--glass-brd)' }}>
+                {confirmCancel ? (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 13 }}>
+                    <span style={{ fontWeight: 600, color: 'var(--acc-2)' }}>{t('Cancel this request? This can’t be undone.')}</span>
+                    <button type="button" className="ktc-link" style={{ fontWeight: 700, color: 'var(--acc-2)' }} disabled={busy}
+                      onClick={() => void cancelRelease()}>
+                      {busy ? t('Cancelling…') : t('Yes, cancel it')}
+                    </button>
+                    <button type="button" className="ktc-link" disabled={busy} onClick={() => setConfirmCancel(false)}>{t('Keep it')}</button>
+                  </div>
+                ) : (
+                  <button type="button" className="ktc-link" style={{ fontSize: 12.5, opacity: 0.85 }} onClick={() => setConfirmCancel(true)}>
+                    {t('Cancel this request')}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -64,3 +64,12 @@ A new **`release_orders`** module, customer-filed, separate from `job_orders`:
 * Decisions captured 2026-06-21 (owner): staff-enter charges · CSR doc verification · consignee + BL + DO/BL upload.
 * Reuse: `src/components/SearchPicker.tsx` (consignee picker), `src/components/FileViewerModal.tsx` (doc viewer), `src/pages/Payment.tsx` (payment-proof + QRPH), `src/components/XrayQueueTable.tsx` (queue pattern).
 * Phasing — P1: file + CSR verify + charges. P2: payment + cashier confirm + OR/released. P3: JO "cleared for release" cross-link + container/EIR grain.
+
+## Addendum (2026-06-21): charges model, ERP link, cancel, approval gate
+
+Built immediately after the base module (migrations 0125 + 0126), per owner decisions:
+
+* **Charges are set once (no revise).** `set_release_charges` only fires on a `docs_verified` release (financial integrity). Missed/unfiled charges are added as **additional charge lines** — a `release_supplements` table (mirrors the JO supplements, [0101]), each paid separately by the customer and cashier-confirmed; the OR is **blocked until every supplement is confirmed**. RPCs: `add_release_charge` (gate `verify_release_docs`), `submit_release_supplement_payment` (customer), `confirm_release_supplement_payment` (gate `review_payments`). (Migration 0125.)
+* **ERP link = combined into Record-OR.** Recording the release now captures the physical **OR number** *and* the **ERP (Frappe) service-invoice control no.** in one cashier action — `record_release_or(p_id, p_or, p_invoice_no)` validates/normalizes the control no. (`OR-INV-… / BI-INV-…` via shared `normalize_erp_invoice_no`) into `service_invoice_no` + `invoice_recorded_at`. This `service_invoice_no` is the **link to the ERP document** (the app still does not issue the official OR). The box can't be released without the ERP number on hand. (Migration 0126.)
+* **Cancel (customer + staff, pre-payment).** `cancel_release_order(p_id, p_reason)` — the owning customer **or** a staff member (`verify_release_docs` / `review_payments`) may cancel only while `submitted | docs_verified | payable | on_hold` (locked at `paid`/`released`). Makes the previously-dead `cancelled` status live. (Migration 0126.)
+* **Upfront approval gate.** The customer release page now blocks filing for non-`approved` accounts (mirrors `JobOrder.tsx` + `BrokerStatusBanner`) instead of only erroring on the RPC. Releases **require** full approval (unlike JOs, which let `pending` file a held order).

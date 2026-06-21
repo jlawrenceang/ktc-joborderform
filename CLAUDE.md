@@ -31,6 +31,10 @@ Every plan, change, review, and merge must pass all six checks in `docs/agent/re
 - `docs/obsidian-vault/` — live memory; sync per `docs/agent/obsidian-memory-policy.md`.
 - `AGENTS.md` — Codex mirror. `docs/README.md` — docs map.
 
+## Agent & tooling authority
+
+The owner has **standing authorization** (2026-06-21) to use the full agent toolset at full power, without re-asking each time: parallel subagents, Explore/Plan agents, skills, and multi-agent **workflows / ultracode**. Scale the approach to the task — lean on orchestration and adversarial verification for substantive work; stay solo on trivial edits. This does **not** relax any non-negotiable (backend-enforced access, runtime data safety, forward-only migrations, owner failsafe).
+
 ## Doc precedence
 
 Runtime code > active DB contracts > current-state docs > planning notes > session history. Runtime wins; fix or archive the stale doc same-change.

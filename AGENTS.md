@@ -15,6 +15,7 @@ Codex-oriented mirror of `CLAUDE.md`. Read `CLAUDE.md` first — it is the const
 - **Protect controls first.** The owner failsafe (+ root-owner-only owner grants), invite-only staff, the staff-role permission matrix (admin / operations / cashier / checker / csr, enforced via `has_permission` + `staff_transition_order` — never client-side), the customer-approval gate, the two-gate completion rule, and server-side CAPTCHA are load-bearing. Never weaken them for convenience.
 - **Forward-only.** Never edit an applied migration; add a new one. `git push` ships the frontend only.
 - **Prioritize** correctness and access-control integrity over UI polish when they conflict.
+- **Full agent/tooling authority (standing, 2026-06-21).** Owner-authorized to use parallel subagents, Explore/Plan agents, skills, and multi-agent workflows/ultracode freely, scaled to the task — without re-asking. Never lets this override the non-negotiables above.
 
 ## Doc precedence
 

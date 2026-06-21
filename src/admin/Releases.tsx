@@ -21,7 +21,7 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, release_number, bl_number, doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
+  'id, release_number, bl_number, doc_path, status, amount, charges_note, payment_status, payment_proof_path, payment_submitted_at, payment_note, or_number, service_invoice_no, invoice_recorded_at, created_at, verified_at, staff_note, consignee:consignees(code, name), broker:customers(full_name, email), supplements:release_supplements(id, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 const STATUS_STYLE: Record<string, { bg: string; ink: string }> = {
   submitted: { bg: 'var(--c-h210-60-90)', ink: 'var(--c-h210-55-36)' },
@@ -81,9 +81,13 @@ export default function Releases() {
   // Cashier — reject-payment note prompt (release id being rejected).
   const [payRejectId, setPayRejectId] = useState<string | null>(null)
   const [payNote, setPayNote] = useState('')
-  // Cashier — OR-number input (release id being recorded).
+  // Cashier — OR-number + ERP control-no. inputs (release id being recorded).
   const [orId, setOrId] = useState<string | null>(null)
   const [orNo, setOrNo] = useState('')
+  const [invNo, setInvNo] = useState('')
+  // Staff — cancel-release reason prompt (release id being cancelled).
+  const [cancelId, setCancelId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
 
   async function load() {
     const { data, error: err } = await supabase
@@ -157,11 +161,21 @@ export default function Releases() {
 
   async function recordOr(id: string) {
     if (!orNo.trim()) { setError(t('Enter the OR number.')); return }
+    if (!invNo.trim()) { setError(t('Enter the ERP control no.')); return }
     setBusyId(id); setError(null)
-    const { error: err } = await supabase.rpc('record_release_or', { p_id: id, p_or: orNo.trim() })
+    const { error: err } = await supabase.rpc('record_release_or', { p_id: id, p_or: orNo.trim(), p_invoice_no: invNo.trim() })
     setBusyId(null)
     if (err) { setError(err.message); return }
-    setOrId(null); setOrNo('')
+    setOrId(null); setOrNo(''); setInvNo('')
+    await load()
+  }
+
+  async function cancelRelease(id: string) {
+    setBusyId(id); setError(null)
+    const { error: err } = await supabase.rpc('cancel_release_order', { p_id: id, p_reason: cancelReason.trim() || null })
+    setBusyId(null)
+    if (err) { setError(err.message); return }
+    setCancelId(null); setCancelReason('')
     await load()
   }
 
@@ -186,6 +200,12 @@ export default function Releases() {
           {who(r)}
           {' · '}{r.consignee ? `${r.consignee.code} – ${r.consignee.name}` : t('no consignee')}
         </div>
+        {r.status === 'released' && (r.or_number || r.service_invoice_no) && (
+          <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {r.or_number && <span>{t('OR')}: <span className="ktc-mono">{r.or_number}</span></span>}
+            {r.service_invoice_no && <span>{t('ERP invoice')}: <span className="ktc-mono">{r.service_invoice_no}</span></span>}
+          </div>
+        )}
       </>
     )
   }
@@ -198,6 +218,26 @@ export default function Releases() {
 
   const showDocs = can('verify_release_docs')
   const showCashier = can('review_payments')
+
+  // Staff cancel — only for releases still in motion. The RPC enforces the same set.
+  const CANCELLABLE = new Set(['submitted', 'docs_verified', 'payable', 'on_hold'])
+  function CancelRelease({ r }: { r: ReleaseOrder }) {
+    if (!(showDocs || showCashier) || !CANCELLABLE.has(r.status)) return null
+    const isBusy = busyId === r.id
+    if (cancelId === r.id) {
+      return (
+        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input className="ktc-input" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} autoFocus
+            placeholder={t('Reason (optional, shown to the customer)')} style={{ maxWidth: 260, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+          <button style={btn('danger')} disabled={isBusy} onClick={() => void cancelRelease(r.id)}>{t('Confirm cancel')}</button>
+          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setCancelId(null); setCancelReason('') }}>{t('Cancel')}</button>
+        </span>
+      )
+    }
+    return (
+      <button style={btn('danger')} disabled={isBusy} onClick={() => { setCancelId(r.id); setCancelReason('') }}>{t('Cancel release')}</button>
+    )
+  }
 
   // Documents desk buckets.
   const toCheck = rows.filter((r) => r.status === 'submitted' || r.status === 'on_hold')
@@ -281,6 +321,7 @@ export default function Releases() {
                       ) : (
                         <button style={btn('ghost')} disabled={isBusy} onClick={() => { setHoldId(r.id); setHoldNote('') }}>{t('Hold for a corrected doc')}</button>
                       )}
+                      {holdId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
                 )
@@ -319,6 +360,7 @@ export default function Releases() {
                       ) : (
                         <button style={btn('solid')} disabled={isBusy} onClick={() => { setChargeId(r.id); setChargeAmount(''); setChargeNote('') }}>{t('Set charges')}</button>
                       )}
+                      {chargeId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
                 )
@@ -368,6 +410,7 @@ export default function Releases() {
                       ) : (
                         <button style={btn('ghost')} disabled={isBusy} onClick={() => { setSupId(r.id); setSupLabel(''); setSupAmount('') }}>{t('Add charge')}</button>
                       )}
+                      {supId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
                 )
@@ -420,6 +463,7 @@ export default function Releases() {
                           <button style={btn('danger')} disabled={isBusy} onClick={() => { setPayRejectId(r.id); setPayNote('') }}>{t('Reject')}</button>
                         </>
                       )}
+                      {!showDocs && payRejectId !== r.id && <CancelRelease r={r} />}
                     </div>
                   </div>
                 )
@@ -501,11 +545,13 @@ export default function Releases() {
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <input className="ktc-input ktc-mono" value={orNo} onChange={(e) => setOrNo(e.target.value)} autoFocus
                             placeholder={t('OR number')} style={{ maxWidth: 200, width: '100%', padding: '7px 11px', fontSize: 13 }} />
-                          <button style={btn('solid')} disabled={isBusy || !orNo.trim()} onClick={() => void recordOr(r.id)}>{t('Record OR')}</button>
-                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setOrId(null); setOrNo('') }}>{t('Cancel')}</button>
+                          <input className="ktc-input ktc-mono" value={invNo} onChange={(e) => setInvNo(e.target.value)}
+                            placeholder={t('ERP control no. (OR-INV / BI-INV)')} style={{ maxWidth: 220, width: '100%', padding: '7px 11px', fontSize: 13 }} />
+                          <button style={btn('solid')} disabled={isBusy || !orNo.trim() || !invNo.trim()} onClick={() => void recordOr(r.id)}>{t('Record OR')}</button>
+                          <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setOrId(null); setOrNo(''); setInvNo('') }}>{t('Cancel')}</button>
                         </span>
                       ) : (
-                        <button style={btn('solid')} disabled={isBusy} onClick={() => { setOrId(r.id); setOrNo('') }}
+                        <button style={btn('solid')} disabled={isBusy} onClick={() => { setOrId(r.id); setOrNo(''); setInvNo('') }}
                           title={t('Records the official receipt number and releases the shipment')}>
                           {t('Record OR')}
                         </button>
