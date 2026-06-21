@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
-import NowServing from '../components/NowServing'
-import type { ServingNumber } from '../lib/types'
+import { batchLabel, formatAge, ageHours } from '../lib/batch'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
@@ -26,19 +25,28 @@ interface CheckerOrder {
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
-  serving?: ServingNumber[]
 }
 
-// This week's generalized priority number (one queue per JO; the queue sorts by it).
-const xrayNo = (o: CheckerOrder) =>
-  o.serving?.find((s) => !s.vacated_at)?.serving_no ?? null
+const thStyle: CSSProperties = { padding: '8px 10px', fontSize: 11.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', textAlign: 'left' }
+const tdStyle: CSSProperties = { padding: '9px 10px', verticalAlign: 'middle' }
+
+// Clickable column header for the container table — sort by JO no. or by age.
+function SortTh({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <th style={{ padding: 0 }}>
+      <button type="button" onClick={onClick} style={{ ...thStyle, display: 'inline-flex', alignItems: 'center', gap: 4, background: 'none', border: 0, cursor: 'pointer', font: 'inherit', color: active ? 'var(--acc-2)' : 'hsl(var(--ink-2))' }}>
+        {label}{active ? ' ↓' : ''}
+      </button>
+    </th>
+  )
+}
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, week_start, vacated_at)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 
@@ -68,6 +76,8 @@ export default function Checker() {
   const [busyLine, setBusyLine] = useState<string | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; container: string; jo: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<'table' | 'cards'>('table')
+  const [sortBy, setSortBy] = useState<'jo' | 'age'>('jo')
 
   // RPS assessment (operations / admin). Move types + rates come from move_rates.
   const [moveRates, setMoveRates] = useState<{ move_type: string; rate: number }[]>([])
@@ -108,7 +118,7 @@ export default function Checker() {
       // X-ray still pending (a JO with other services can stay open after its
       // X-ray is done — it leaves this queue but remains findable via lookup)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
-      .sort((a, b) => (xrayNo(a) ?? Infinity) - (xrayNo(b) ?? Infinity)) // serve in line order
+      // Query already orders by created_at asc — the JO number's true log order.
     setQueue(rows)
     setLoading(false)
   }
@@ -157,15 +167,11 @@ export default function Checker() {
         border: highlight ? '1px solid rgb(var(--acc-rgb) / 0.45)' : '1px solid var(--glass-brd)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          {xrayNo(o) != null && (
-            <span className="ktc-mono" style={{ fontSize: 21, fontWeight: 700, color: 'var(--acc-2)', letterSpacing: '-0.01em' }}>
-              #{xrayNo(o)}
-            </span>
-          )}
           <b className="ktc-mono" style={{ fontSize: 17 }}>{o.jo_number ?? '—'}</b>
           <Clearance o={o} />
+          <span className="ktc-chip" style={{ fontSize: 11 }}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
           <span className="ktc-label" style={{ fontSize: 12.5, marginLeft: 'auto' }}>
-            {t('filed {date}', { date: new Date(o.created_at).toLocaleDateString() })}
+            {t('Open {age}', { age: formatAge(o.created_at) })}
           </span>
         </div>
         <div className="ktc-label" style={{ fontSize: 13.5, marginTop: 6 }}>
@@ -233,6 +239,14 @@ export default function Checker() {
     )
   }
 
+  // Flat list of containers (vans) still needing X-ray — the working log.
+  const vanRows = queue.flatMap((o) =>
+    (o.lines ?? []).filter((l) => isXray(l.service_request) && !l.xray_done_at).map((l) => ({ lineId: l.id, container: l.container_number, o })))
+  const sortedVans = [...vanRows].sort((a, b) =>
+    sortBy === 'age'
+      ? new Date(a.o.created_at).getTime() - new Date(b.o.created_at).getTime()
+      : (a.o.jo_number ?? '').localeCompare(b.o.jo_number ?? ''))
+
   return (
     <AdminShell>
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
@@ -248,8 +262,6 @@ export default function Checker() {
           {error}
         </div>
       )}
-
-      <NowServing only={['queue']} />
 
       {/* Lookup */}
       <div className="ktc-glass" style={{ padding: 22, marginBottom: 18 }}>
@@ -274,20 +286,59 @@ export default function Checker() {
         )}
       </div>
 
-      {/* Pending X-ray queue */}
+      {/* Pending X-ray — container table (sort by JO no. = true log order, or by age) */}
       <div className="ktc-glass" style={{ padding: 22 }}>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>
-          {t('X-ray line — {count} waiting', { count: loading ? '…' : queue.length })}
-        </h2>
-        <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-          {loading ? (
-            [72, 72].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 16 }} />)
-          ) : queue.length === 0 ? (
-            <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear.')}</span>
-          ) : (
-            queue.map((o) => <OrderCard key={o.id} o={o} />)
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
+          <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>
+            {t('To X-ray — {count} container(s)', { count: loading ? '…' : vanRows.length })}
+          </h2>
+          <div style={{ display: 'inline-flex', gap: 4, marginLeft: 'auto' }}>
+            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'table' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('table')}>{t('Table')}</button>
+            <button type="button" className={`ktc-btn ktc-btn--sm ${view === 'cards' ? '' : 'ktc-btn-ghost'}`} onClick={() => setView('cards')}>{t('Cards')}</button>
+          </div>
         </div>
+
+        {loading ? (
+          <div style={{ display: 'grid', gap: 10 }}>{[60, 60].map((h, i) => <div key={i} className="ktc-skeleton" style={{ height: h, borderRadius: 12 }} />)}</div>
+        ) : vanRows.length === 0 ? (
+          <span className="ktc-label" style={{ fontSize: 14 }}>{t('Queue is clear.')}</span>
+        ) : view === 'cards' ? (
+          <div style={{ display: 'grid', gap: 10 }}>{queue.map((o) => <OrderCard key={o.id} o={o} />)}</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--glass-brd)' }}>
+                  <SortTh label={t('JO no.')} active={sortBy === 'jo'} onClick={() => setSortBy('jo')} />
+                  <th style={thStyle}>{t('Container')}</th>
+                  <th style={thStyle}>{t('Consignee')}</th>
+                  <th style={thStyle}>{t('Batch')}</th>
+                  <SortTh label={t('Age')} active={sortBy === 'age'} onClick={() => setSortBy('age')} />
+                  <th style={thStyle} aria-hidden />
+                </tr>
+              </thead>
+              <tbody>
+                {sortedVans.map(({ lineId, container, o }) => {
+                  const h = ageHours(o.created_at)
+                  return (
+                    <tr key={lineId} style={{ borderTop: '1px solid var(--glass-brd)' }}>
+                      <td style={tdStyle}><b className="ktc-mono">{o.jo_number ?? '—'}</b></td>
+                      <td style={tdStyle}><span className="ktc-mono">{container}</span></td>
+                      <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}</td>
+                      <td style={tdStyle}>{batchLabel(o.created_at, t)}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600, color: h >= 24 ? 'var(--c-h0-60-40)' : h >= 12 ? 'var(--c-h30-60-32)' : 'inherit' }}>{formatAge(o.created_at)}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>
+                        {can('confirm_xray')
+                          ? <button className="ktc-btn ktc-btn--sm" onClick={() => setConfirmTarget({ id: lineId, container, jo: o.jo_number ?? '—' })}>{t('Confirm')}</button>
+                          : <span className="ktc-chip ktc-chip--danger">{t('pending')}</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       {confirmTarget && (
         <div className="ktc-modal-backdrop" onClick={() => { if (!busyLine) setConfirmTarget(null) }}>
