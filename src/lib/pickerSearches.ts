@@ -13,12 +13,14 @@ export async function searchConsignees(q: string): Promise<PickerItem[]> {
   const s = orSafe(q)
   const { data } = await supabase
     .from('consignees')
-    .select('id, code, name')
+    .select('id, code, name, doc_2303_path')
     .or(`code.ilike.%${s}%,name.ilike.%${s}%`)
     .order('code')
     .limit(40)
-  return ((data ?? []) as { id: string; code: string; name: string }[])
-    .map((c) => ({ id: c.id, title: c.code, sub: c.name }))
+  // Flag consignees with no BIR 2303 on file ("documents pending") — still
+  // selectable; the consignee's Customer Information Sheet just isn't complete.
+  return ((data ?? []) as { id: string; code: string; name: string; doc_2303_path: string | null }[])
+    .map((c) => ({ id: c.id, title: c.code, sub: c.name, flag: c.doc_2303_path ? undefined : 'docs pending' }))
 }
 
 /** Customer search for the admin file-on-behalf form. Staff rows are excluded;

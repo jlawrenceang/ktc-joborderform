@@ -7,6 +7,9 @@ export interface PickerItem {
   title: string
   /** Rest of the row (name, email…). */
   sub?: string
+  /** Optional small warning pill (e.g. "docs pending" for a consignee with no
+   *  BIR documents on file yet). Shown but never blocks selection. */
+  flag?: string
 }
 
 /**
@@ -153,6 +156,9 @@ export default function SearchPicker({
               >
                 <b>{item.title}</b>
                 {item.sub ? <> – {item.sub}</> : null}
+                {item.flag ? (
+                  <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)', whiteSpace: 'nowrap' }}>{item.flag}</span>
+                ) : null}
               </button>
             ))
           )}
