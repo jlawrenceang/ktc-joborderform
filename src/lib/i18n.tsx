@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import { tl } from './translations'
+import { enSimple } from './translations-en'
 import { useAuth } from './AuthContext'
 
 // Lightweight, dependency-free i18n. English is the source of truth and the
@@ -70,7 +71,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [uid])
 
   const t = useCallback<TFunc>((en, vars) => {
-    const out = lang === 'tl' ? (tl[en] ?? en) : en
+    // tl: Tagalog/Taglish → simplified-English fallback → raw key.
+    // en: simplified English → raw key. (Override files keyed by the raw key.)
+    const out = lang === 'tl' ? (tl[en] ?? enSimple[en] ?? en) : (enSimple[en] ?? en)
     return interpolate(out, vars)
   }, [lang])
   return <Ctx.Provider value={{ lang, setLang, langChosen, t }}>{children}</Ctx.Provider>
