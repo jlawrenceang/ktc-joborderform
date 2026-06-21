@@ -7,6 +7,7 @@ import { useSessionGuard } from '../lib/useSessionGuard'
 import IdleWarning from '../components/IdleWarning'
 import StaffNotificationBell from '../components/StaffNotificationBell'
 import PushPrompt from '../components/PushPrompt'
+import { useTour } from '../components/TourProvider'
 import { useT } from '../lib/i18n'
 import { LockIcon } from '../components/icons'
 
@@ -20,6 +21,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
   const { t } = useT()
   const { signOut } = useAuth()
   const { broker } = useBroker()
+  const { replayPageTour, hasPageTour } = useTour()
   const navigate = useNavigate()
 
   useSessionGuard()
@@ -49,6 +51,12 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
         </Link>
         {title && <span style={{ fontSize: 15, fontWeight: 700, marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t(title)}</span>}
         <span style={{ flex: 1 }} />
+        {hasPageTour && (
+          <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => replayPageTour()} title={t('Quick tour')}
+            aria-label={t('Quick tour')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span aria-hidden className="ktc-nav-help-q">?</span>
+          </button>
+        )}
         <StaffNotificationBell />
         {role && (
           <span style={{

@@ -6,6 +6,8 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { ServingNumber } from '../lib/types'
 import { useT } from '../lib/i18n'
 import { CameraIcon } from '../components/icons'
+import { usePageTour } from '../components/TourProvider'
+import { checkerSteps } from '../admin/AdminTour'
 
 // Checker app screen: scan the slip QR (encodes /verify/<jo-id>) with the
 // camera, or type the JO number, then confirm X-ray per van. Reuses the same
@@ -40,6 +42,8 @@ export default function AppChecker() {
   const { t } = useT()
   const { can } = usePermissions()
   const allowed = can('confirm_xray')
+  // Same tour key as the desktop Checker so the once-per-role flag is shared.
+  usePageTour('checker', checkerSteps)
 
   const [queue, setQueue] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)

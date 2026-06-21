@@ -28,7 +28,11 @@ export const homeSteps: TourStep[] = [
   },
   {
     icon: <BoxIcon size={SZ} />, title: 'File & track orders', target: '[data-tour="tab-orders"]',
-    body: 'Tap Orders to file a new Job Order or follow your existing ones — live status, your serving number, View charges & pay, and Print slip once approved. A badge shows anything needing your action.',
+    body: 'Tap Orders to file a new Job Order or follow your existing ones — grouped by filing batch (today / yesterday), with live status, View charges & pay, and Print slip once approved. A badge shows anything needing your action.',
+  },
+  {
+    icon: <ReceiptIcon size={SZ} />, title: 'Release / Pull-out',
+    body: 'Need to pull out a container? File a Release / Pull-out online from the Menu — upload your DO/BL, settle the charges, then claim your Official Receipt (OR) at the office to take it out. No more lining up just to start.',
   },
   {
     icon: <ShipIcon size={SZ} />, title: 'Vessel schedule', target: '[data-tour="tab-vessels"]',
@@ -59,14 +63,14 @@ export const jobOrderSteps: TourStep[] = [
   },
   {
     icon: <BoxIcon size={SZ} />, title: 'Add your containers', target: '[data-tour="jo-containers"]',
-    body: 'Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; you\'ll get a serving number per service line.',
+    body: 'Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; your order joins today\'s filing batch and you can track each service line from My Orders.',
   },
 ]
 
 export const myJobOrdersSteps: TourStep[] = [
   {
     icon: <BoxIcon size={SZ} />, title: 'Your job orders live here',
-    body: 'All your job orders show here with their status and priority number. View the estimated charges and pay in advance to speed up processing — then print the paid Job Order slip and present it at the terminal to claim your Official Receipt (OR) and proceed with the service.',
+    body: 'All your job orders show here, grouped by filing batch (today / yesterday) with their live status. Track each service line, View charges & pay in advance to speed up processing — then print the paid Job Order slip and present it at the terminal to claim your Official Receipt (OR) and proceed with the service.',
   },
 ]
 

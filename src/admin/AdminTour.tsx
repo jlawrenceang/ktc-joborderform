@@ -40,7 +40,7 @@ export const dashboardSteps: TourStep[] = [
 export const checkerSteps: TourStep[] = [
   {
     icon: <ScanIcon size={SZ} />, title: 'X-ray Checker station',
-    body: 'Your queue of orders waiting for X-ray, sorted by line number, with the "Now serving" strip on top. Each order lists its containers (vans) so you confirm them one by one.',
+    body: 'Your queue of orders waiting for X-ray, sorted by filing batch, oldest first, with each van\'s working-hours age shown. Each order lists its containers (vans) so you confirm them one by one.',
   },
   {
     icon: <SearchIcon size={SZ} />, title: 'Look up a container',
