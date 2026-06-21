@@ -762,10 +762,10 @@ export default function Settings() {
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Payment details (customer payment page)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t('Bank / GCash details + QR shown when a customer pays online. Leave fields blank to hide them.')}
+          {t('Bank account + QRPH QR shown when a customer pays online. Online payments (GCash / Maya / banks) all route through the QR. Leave fields blank to hide them.')}
         </p>
         <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
-          {payInfo.filter((x) => x.key !== 'qr_path').map((x) => (
+          {payInfo.filter((x) => x.key !== 'qr_path' && x.key !== 'gcash_number').map((x) => (
             <div key={x.key} style={{ display: 'grid', gap: 5 }}>
               <label className="ktc-label" htmlFor={`pi-${x.key}`} style={{ fontSize: 12 }}>{x.label || x.key}</label>
               {x.key === 'instructions' ? (
@@ -776,7 +776,7 @@ export default function Settings() {
             </div>
           ))}
           <div style={{ display: 'grid', gap: 5 }}>
-            <label className="ktc-label" htmlFor="pi-qr" style={{ fontSize: 12 }}>{t('QR code image (bank / GCash)')}{payInfo.some((x) => x.key === 'qr_path' && x.value) ? ' ' + t('— replace current') : ''}</label>
+            <label className="ktc-label" htmlFor="pi-qr" style={{ fontSize: 12 }}>{t('QRPH QR code image')}{payInfo.some((x) => x.key === 'qr_path' && x.value) ? ' ' + t('— replace current') : ''}</label>
             <input id="pi-qr" className="ktc-input" type="file" accept="image/*" onChange={(e) => setQrFile(e.target.files?.[0] ?? null)} style={{ padding: '9px 11px' }} />
           </div>
         </div>

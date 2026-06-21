@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Shell from '../components/Shell'
 import Notice from '../components/Notice'
+import FileViewerModal from '../components/FileViewerModal'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
 import { prepareUpload } from '../lib/validation'
@@ -31,6 +32,7 @@ export default function Payment() {
   const [busy, setBusy] = useState(false)
   const [suppBusy, setSuppBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [qrOpen, setQrOpen] = useState(false)
 
   async function load() {
     if (!id) return
@@ -134,6 +136,7 @@ export default function Payment() {
   const anythingToPay = !fullySettled || outstandingSupps.length > 0
   const qrPath = info.get('qr_path')
   const qrUrl = qrPath ? supabase.storage.from('payment-qr').getPublicUrl(qrPath).data.publicUrl : null
+  const qrFileName = (qrPath?.split('/').pop()) || 'ktc-payment-qr.png'
 
   return (
     <Shell>
@@ -227,8 +230,7 @@ export default function Payment() {
                 {info.get('bank_name') && <div><span className="ktc-label">{t('Bank:')}</span> <b>{info.get('bank_name')}</b></div>}
                 {info.get('account_name') && <div><span className="ktc-label">{t('Account name:')}</span> <b>{info.get('account_name')}</b></div>}
                 {info.get('account_number') && <div><span className="ktc-label">{t('Account no.:')}</span> <b className="ktc-mono">{info.get('account_number')}</b></div>}
-                {info.get('gcash_number') && <div><span className="ktc-label">{t('GCash:')}</span> <b className="ktc-mono">{info.get('gcash_number')}</b></div>}
-                {!info.get('bank_name') && !info.get('gcash_number') && (
+                {!info.get('bank_name') && !info.get('account_number') && !qrUrl && (
                   <span className="ktc-label">{t('Payment details will be posted here soon — or pay directly at the KTC cashier.')}</span>
                 )}
               </div>
@@ -237,12 +239,23 @@ export default function Payment() {
               )}
             </div>
             {qrUrl && (
-              <div style={{ flex: '0 0 auto', textAlign: 'center' }}>
-                <img src={qrUrl} alt={t('Payment QR code')} style={{ width: 168, height: 168, objectFit: 'contain', borderRadius: 14, background: '#fff', border: '1px solid var(--glass-brd)', boxShadow: 'var(--shadow-sm)' }} />
-                <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 6 }}>{t('Scan to pay')}</div>
+              <div style={{ flex: '0 0 auto', textAlign: 'center', maxWidth: '100%' }}>
+                <button type="button" onClick={() => setQrOpen(true)} title={t('Tap to enlarge or download')}
+                  style={{ display: 'block', margin: '0 auto', padding: 0, border: 0, background: 'none', cursor: 'pointer' }}>
+                  <img src={qrUrl} alt={t('Payment QR code')}
+                    style={{ width: 'min(240px, 64vw)', aspectRatio: '1 / 1', objectFit: 'contain', borderRadius: 14, background: '#fff', border: '1px solid var(--glass-brd)', boxShadow: 'var(--shadow-sm)' }} />
+                </button>
+                <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 7, lineHeight: 1.45 }}>
+                  {t('QRPH — scan with any bank or e-wallet app (GCash, Maya, etc.)')}<br />
+                  <button type="button" className="ktc-link" style={{ fontSize: 11.5 }} onClick={() => setQrOpen(true)}>{t('Tap to enlarge or download')}</button>
+                </div>
               </div>
             )}
           </div>
+
+          {qrOpen && qrUrl && (
+            <FileViewerModal title={t('KTC Payment QR (QRPH)')} fileName={qrFileName} url={qrUrl} onClose={() => setQrOpen(false)} />
+          )}
 
           {error && <Notice tone="error" style={{ marginBottom: 16 }}>{error}</Notice>}
 
@@ -329,7 +342,7 @@ function PaySection({ title, amount, status, note, submittedAt, file, setFile, o
             <Notice tone="error" style={{ marginTop: 12 }}>{t('Your proof wasn’t accepted')}{note ? <>: <b>{note}</b></> : ''}. {t('Please re-upload a corrected slip.')}</Notice>
           )}
           <p className="ktc-label" style={{ fontSize: 13, marginTop: 10 }}>
-            {t('Upload a clear photo or PDF of the deposit / transfer / GCash receipt.')}
+            {t('Upload a clear photo or PDF of the deposit / transfer receipt.')}
           </p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
             {!file ? (
