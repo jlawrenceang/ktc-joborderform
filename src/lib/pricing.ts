@@ -7,18 +7,22 @@ import { supabase } from './supabase'
 // This is the operational "what to pay" amount — the official Service Invoice
 // still comes from the ERP at the cashier.
 
-export interface RateRow { service: string; rate: number; unit: string; vatable: boolean; active: boolean }
-export interface MoveRate { move_type: string; rate: number }
-export interface PricingConfig { rates: RateRow[]; moveRates: MoveRate[]; vatRate: number; adminFee: number; printFee: number }
+// A rate of null (or ≤ 0) means "not configured yet" — distinct from a real ₱0.
+// Never coerce a null rate to a number for display; show "—" instead.
+export interface RateRow { service: string; rate: number | null; unit: string; vatable: boolean; active: boolean }
+export interface MoveRate { move_type: string; rate: number | null }
+export interface PricingConfig { rates: RateRow[]; moveRates: MoveRate[]; vatRate: number; adminFee: number | null; printFee: number | null }
 
-export interface ChargeLine { service: string; qty: number; rate: number; amount: number; vatable: boolean; missingRate: boolean }
+// amount is null when the line's rate isn't configured (so it can render "—"
+// rather than a misleading ₱0). missingRate flags that case for callers.
+export interface ChargeLine { service: string; qty: number; rate: number | null; amount: number | null; vatable: boolean; missingRate: boolean }
 export interface Charges {
   lines: ChargeLine[]
   subtotal: number
   vatableBase: number
   vat: number
-  adminFee: number
-  printFee: number
+  adminFee: number | null
+  printFee: number | null
   total: number
   hasMissingRates: boolean
 }
@@ -29,13 +33,16 @@ export async function loadPricingConfig(): Promise<PricingConfig> {
     supabase.from('pricing_settings').select('key, value'),
     supabase.from('move_rates').select('move_type, rate'),
   ])
-  const settings = new Map(((s ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))
+  // Preserve null: a null value means "not set", NOT 0 — and Number(null) is 0,
+  // Number(undefined)/Number('') edge-cases aside, so coerce only real values.
+  const settings = new Map(((s ?? []) as { key: string; value: number | null }[])
+    .map((x) => [x.key, x.value == null ? null : Number(x.value)]))
   return {
-    rates: ((r ?? []) as RateRow[]).map((x) => ({ ...x, rate: Number(x.rate) })),
-    moveRates: ((m ?? []) as MoveRate[]).map((x) => ({ ...x, rate: Number(x.rate) })),
+    rates: ((r ?? []) as RateRow[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })),
+    moveRates: ((m ?? []) as MoveRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })),
     vatRate: settings.get('vat_rate') ?? 0.12,
-    adminFee: settings.get('admin_fee') ?? 0,
-    printFee: settings.get('print_fee') ?? 0,
+    adminFee: settings.get('admin_fee') ?? null,
+    printFee: settings.get('print_fee') ?? null,
   }
 }
 
@@ -50,30 +57,41 @@ export function computeCharges(counts: Map<string, number>, cfg: PricingConfig, 
   for (const [service, qty] of counts) {
     if (qty <= 0) continue
     const rate = cfg.rates.find((r) => r.service === service)
-    const unit = rate?.rate ?? 0
-    const amount = unit * qty
-    lines.push({ service, qty, rate: unit, amount, vatable: rate?.vatable ?? true, missingRate: !rate || rate.rate <= 0 })
-    subtotal += amount
-    if (rate?.vatable ?? true) vatableBase += amount
+    const unit = rate?.rate ?? null
+    // "not configured" = no row, null rate, or a non-positive rate.
+    const missingRate = unit == null || unit <= 0
+    const amount = missingRate ? null : unit * qty
+    lines.push({ service, qty, rate: unit, amount, vatable: rate?.vatable ?? true, missingRate })
+    if (amount != null) {
+      subtotal += amount
+      if (rate?.vatable ?? true) vatableBase += amount
+    }
   }
   if (moves) for (const [moveType, qty] of moves) {
     if (qty <= 0) continue
     const mr = cfg.moveRates.find((m) => m.move_type === moveType)
-    const unit = mr?.rate ?? 0
-    const amount = unit * qty
-    lines.push({ service: `${moveType} (RPS move)`, qty, rate: unit, amount, vatable: true, missingRate: !mr || unit <= 0 })
-    subtotal += amount
-    vatableBase += amount // RPS moves are VATable
+    const unit = mr?.rate ?? null
+    const missingRate = unit == null || unit <= 0
+    const amount = missingRate ? null : unit * qty
+    lines.push({ service: `${moveType} (RPS move)`, qty, rate: unit, amount, vatable: true, missingRate })
+    if (amount != null) {
+      subtotal += amount
+      vatableBase += amount // RPS moves are VATable
+    }
   }
   const vat = vatableBase * cfg.vatRate
-  const total = subtotal + vat + cfg.adminFee + cfg.printFee
+  // Unconfigured (null/≤0) fees don't add to the total — but stay nullable so
+  // the UI can render "—" instead of ₱0.
+  const adminFee = cfg.adminFee != null && cfg.adminFee > 0 ? cfg.adminFee : null
+  const printFee = cfg.printFee != null && cfg.printFee > 0 ? cfg.printFee : null
+  const total = subtotal + vat + (adminFee ?? 0) + (printFee ?? 0)
   return {
     lines,
     subtotal,
     vatableBase,
     vat,
-    adminFee: cfg.adminFee,
-    printFee: cfg.printFee,
+    adminFee,
+    printFee,
     total,
     hasMissingRates: lines.some((l) => l.missingRate),
   }

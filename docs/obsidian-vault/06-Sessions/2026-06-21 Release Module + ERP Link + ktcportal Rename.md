@@ -27,5 +27,10 @@ Build day for the **customer-filed release / pull-out** flow ([[ADR-0024]]) and 
 ## De-Jotform + rename to ktcportal
 - The portal is a custom React app — Jotform was long gone. Deleted the dead Jotform theme/script, renamed the package to **ktcportal**, retitled the README, scrubbed live doc refs. Kept the historical records (ADR-0003 = the pivot decision; `docs/archive/*`) per doc-governance. **GitHub repo renamed `ktc-joborderform` → `jlawrenceang/ktcportal`** (remote updated).
 
+## No-zero number rules (`0127`, `0128`)
+Owner directive: numbers need a minimum / series, and **defaults must be empty (NULL), never 0 — because a 0 can't be cleared**.
+- **0127 (validation, no read-side risk):** ERP control no. + JO invoice control + pad serial all **reject all-zeros**; release **OR number** validated (digits, non-zero — was free text); **configurable ERP series range** (`pricing_settings` keys `erp_series_min`/`erp_series_max`, unset = not enforced — owner sets later); **amounts must be > 0** (release base charge `set_release_charges`, JO `add_supplement` — closed the zero-amount supplement gap).
+- **0128 (placeholders → NULL):** `service_rates.rate`, `move_rates.rate`, `terminal_rates.rate`, `pricing_settings.value` (admin_fee/print_fee) made **nullable + seeded zeros nulled out** (`vat_rate` preserved; `shipping_line_charge_rules`/`rps_moves.qty` left — 0 is valid there). All charge computation is **frontend** (`src/lib/pricing.ts` + Calculator/Payment/Settings/Checker), now treating `null` **or ≤0** as **"not configured"** → renders `—`/"not set", excluded from totals; never `₱NaN`, never `null.toFixed()`, never a silent ₱0.
+
 ## Verification
-- Migrations 0123–0126 applied via the Management API ([[ktc-db-ops-via-mgmt-api]]) + verified (columns, function signatures, `normalize_erp_invoice_no('or-inv-1323')` → `OR-INV-00001323`). `tsc --noEmit` + `vite build` clean. Adversarial subagent reviews on the base module, supplements, and 0126 contracts.
+- Migrations 0123–0128 applied via the Management API ([[ktc-db-ops-via-mgmt-api]]) + verified (columns, function signatures, `normalize_erp_invoice_no('or-inv-1323')` → `OR-INV-00001323`; `OR-INV-0` raises). `tsc --noEmit` + `vite build` clean. Adversarial subagent reviews on the base module, supplements, 0126 contracts, and the NULL-safety pass.

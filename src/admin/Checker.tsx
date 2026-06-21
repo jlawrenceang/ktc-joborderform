@@ -66,14 +66,15 @@ export default function Checker() {
   const [view, setView] = useState<'table' | 'cards'>('table')
 
   // RPS assessment (operations / admin). Move types + rates come from move_rates.
-  const [moveRates, setMoveRates] = useState<{ move_type: string; rate: number }[]>([])
+  // rate may be null (not configured yet) — render "—", never null.toFixed().
+  const [moveRates, setMoveRates] = useState<{ move_type: string; rate: number | null }[]>([])
   const [assessId, setAssessId] = useState<string | null>(null)
   const [moves, setMoves] = useState<Record<string, number>>({})
   const [rpsFile, setRpsFile] = useState<File | null>(null)
   const [assessBusy, setAssessBusy] = useState(false)
   useEffect(() => {
     void supabase.from('move_rates').select('move_type, rate').eq('active', true).order('sort_order')
-      .then(({ data }) => setMoveRates(((data ?? []) as { move_type: string; rate: number }[]).map((m) => ({ ...m, rate: Number(m.rate) }))))
+      .then(({ data }) => setMoveRates(((data ?? []) as { move_type: string; rate: number | null }[]).map((m) => ({ ...m, rate: m.rate == null ? null : Number(m.rate) }))))
   }, [])
 
   async function saveAssessment(jo: string, needed: boolean) {
@@ -194,7 +195,7 @@ export default function Checker() {
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                   {moveRates.map((m) => (
                     <label key={m.move_type} className="ktc-label" style={{ fontSize: 12, display: 'grid', gap: 3 }}>
-                      {t(m.move_type)} <span style={{ fontSize: 10, opacity: 0.7 }}>{t('₱{rate}/move', { rate: m.rate.toFixed(2) })}</span>
+                      {t(m.move_type)} <span style={{ fontSize: 10, opacity: 0.7 }}>{m.rate == null ? t('rate not set') : t('₱{rate}/move', { rate: m.rate.toFixed(2) })}</span>
                       <input className="ktc-input" type="number" min="0" value={moves[m.move_type] ?? ''}
                         onChange={(e) => setMoves({ ...moves, [m.move_type]: Number(e.target.value) })} style={{ width: 84, padding: '6px 8px' }} />
                     </label>

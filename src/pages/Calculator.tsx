@@ -22,13 +22,15 @@ import { SHIPPING_LINES, normLine, type Origin } from '../lib/shippingLines'
 // from service_rates / pricing_settings. All rates are set by KTC in Settings;
 // the official amount is on the Service Invoice.
 
-type TermRate = { service: string; trade: string; origin: string; size: string; rate: number }
+// rate of null = "not configured yet" (distinct from a real ₱0) — never coerce
+// it to a number for display; show "—" / "not configured" instead.
+type TermRate = { service: string; trade: string; origin: string; size: string; rate: number | null }
 type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string; last_free_day: string | null; shipping_line: string | null }
 type Size = '20' | '40'
 // A per-line charge rule (0080) layered on the base tariff.
 type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
 // An ancillary service from the admin catalogue (service_rates).
-type Svc = { service: string; rate: number; unit: string; vatable: boolean }
+type Svc = { service: string; rate: number | null; unit: string; vatable: boolean }
 
 export default function Calculator() {
   const { t } = useT()
@@ -41,7 +43,10 @@ export default function Calculator() {
 
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [services, setServices] = useState<Svc[]>([])
-  const [settings, setSettings] = useState({ vat: 0.12, admin: 0, print: 0, reefer: 0, reeferMin: 4, deposit: 10000 })
+  // admin / print fees are nullable: null = not configured (render "—", exclude
+  // from the total). reefer rate likewise. vat stays a real number (statutory).
+  const [settings, setSettings] = useState<{ vat: number; admin: number | null; print: number | null; reefer: number | null; reeferMin: number; deposit: number }>(
+    { vat: 0.12, admin: null, print: null, reefer: null, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
   const [rules, setRules] = useState<Rule[]>([])
 
@@ -69,13 +74,14 @@ export default function Calculator() {
         supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number, last_free_day, shipping_line').eq('is_current', true).order('vessel_name'),
         supabase.from('shipping_line_charge_rules').select('shipping_line, service, trade, action, value').eq('active', true),
       ])
-      setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: Number(x.rate) })))
-      setServices(((sr ?? []) as { service: string; rate: number | string; unit: string; vatable: boolean }[])
-        .map((x) => ({ service: x.service, rate: Number(x.rate), unit: x.unit, vatable: x.vatable })))
-      const m = new Map(((ps ?? []) as { key: string; value: number }[]).map((x) => [x.key, Number(x.value)]))
+      setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
+      setServices(((sr ?? []) as { service: string; rate: number | string | null; unit: string; vatable: boolean }[])
+        .map((x) => ({ service: x.service, rate: x.rate == null ? null : Number(x.rate), unit: x.unit, vatable: x.vatable })))
+      // Preserve null (not set) — Number(null) would silently become 0.
+      const m = new Map(((ps ?? []) as { key: string; value: number | null }[]).map((x) => [x.key, x.value == null ? null : Number(x.value)]))
       setSettings({
-        vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? 0, print: m.get('print_fee') ?? 0,
-        reefer: m.get('reefer_rate') ?? 0, reeferMin: m.get('reefer_min_hours') ?? 4, deposit: m.get('reefer_deposit') ?? 10000,
+        vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? null, print: m.get('print_fee') ?? null,
+        reefer: m.get('reefer_rate') ?? null, reeferMin: m.get('reefer_min_hours') ?? 4, deposit: m.get('reefer_deposit') ?? 10000,
       })
       setVessels((v ?? []) as VesselOpt[])
       setRules(((cr ?? []) as Rule[]).map((x) => ({ ...x, value: Number(x.value) })))
@@ -100,7 +106,8 @@ export default function Calculator() {
 
   const rateOf = useMemo(() => {
     const map = new Map(termRates.map((r) => [`${r.service}|${r.trade}|${r.origin}|${r.size}`, r.rate]))
-    return (service: string, size: Size) => map.get(`${service}|${trade}|${origin}|${size}`) ?? 0
+    // null = not configured (either no row, or a row with a null/unset rate).
+    return (service: string, size: Size): number | null => map.get(`${service}|${trade}|${origin}|${size}`) ?? null
   }, [termRates, trade, origin])
 
   const lfd = lineVessels.find((v) => v.vessel_visit === vesselVisit)?.last_free_day ?? null
@@ -116,10 +123,20 @@ export default function Calculator() {
   ].filter((s) => s.show), [trade])
 
   const calc = useMemo(() => {
-    const sized = (service: string) => rateOf(service, '20') * count20 + rateOf(service, '40') * count40
+    // null = not configured: if a counted size has no rate, the line can't be
+    // priced. A size with 0 count never contributes, so its null rate is moot.
+    const sized = (service: string): number | null => {
+      const r20 = rateOf(service, '20')
+      const r40 = rateOf(service, '40')
+      if (count20 > 0 && r20 == null) return null
+      if (count40 > 0 && r40 == null) return null
+      return (r20 ?? 0) * count20 + (r40 ?? 0) * count40
+    }
     const counts = count20 + count40
-    // Apply the chosen line's charge rules to a base amount.
-    const applyRules = (service: string, base: number): { amount: number; tag: string } => {
+    // Apply the chosen line's charge rules to a base amount. A null base (rate
+    // not set) stays null — rules can't price an unconfigured charge.
+    const applyRules = (service: string, base: number | null): { amount: number | null; tag: string } => {
+      if (base == null) return { amount: null, tag: '' }
       const rs = line
         ? rules.filter((r) => normLine(r.shipping_line) === normLine(line) && r.service === service && (r.trade == null || r.trade === trade))
         : []
@@ -138,7 +155,8 @@ export default function Calculator() {
       const r = applyRules(s.key, sized(s.key))
       return { key: s.key, label: s.label, amount: r.amount, tag: r.tag }
     })
-    const basicTotal = basic.reduce((a, b) => a + b.amount, 0)
+    // Sum only configured (non-null) amounts.
+    const basicTotal = basic.reduce((a, b) => a + (b.amount ?? 0), 0)
 
     // Storage days = calendar days from the Last Free Day to the planned pickup.
     let storageDays = 0
@@ -146,18 +164,23 @@ export default function Calculator() {
       const ms = new Date(pickupDate).getTime() - new Date(lfd).getTime()
       storageDays = ms > 0 ? Math.round(ms / 86_400_000) : 0
     }
-    const storageR = applyRules('storage', sized('storage') * storageDays)
+    const sizedStorage = sized('storage')
+    const storageR = applyRules('storage', sizedStorage == null ? null : sizedStorage * storageDays)
     const storage = storageR.amount
     const storageTag = storageR.tag
 
     // Ancillary services from the admin catalogue (service_rates) — every active
     // one is offered; each bills rate × count. VATable ones join the VAT base;
-    // any non-VATable one is added after VAT (like the flat fees).
+    // any non-VATable one is added after VAT (like the flat fees). A null rate
+    // means the service isn't priced yet → amount is null (shown as "—").
     const ancillary = services
-      .map((s) => ({ service: s.service, vatable: s.vatable, count: Math.max(0, svcCounts[s.service] || 0), amount: s.rate * Math.max(0, svcCounts[s.service] || 0) }))
+      .map((s) => {
+        const count = Math.max(0, svcCounts[s.service] || 0)
+        return { service: s.service, vatable: s.vatable, count, amount: s.rate == null ? null : s.rate * count }
+      })
       .filter((a) => a.count > 0)
-    const ancillaryVatable = ancillary.filter((a) => a.vatable).reduce((sum, a) => sum + a.amount, 0)
-    const ancillaryFlat = ancillary.filter((a) => !a.vatable).reduce((sum, a) => sum + a.amount, 0)
+    const ancillaryVatable = ancillary.filter((a) => a.vatable).reduce((sum, a) => sum + (a.amount ?? 0), 0)
+    const ancillaryFlat = ancillary.filter((a) => !a.vatable).reduce((sum, a) => sum + (a.amount ?? 0), 0)
 
     // Electrical/reefer: per van per hour, plug-in → plug-out, with a minimum
     // billed-hours floor. A refundable cash bond applies per van.
@@ -167,13 +190,22 @@ export default function Calculator() {
       const h = ms > 0 ? Math.ceil(ms / 3_600_000) : 0
       reeferHours = h > 0 ? Math.max(h, settings.reeferMin) : 0
     }
-    const reefer = settings.reefer * Math.max(0, reeferVans) * reeferHours
+    // null reefer rate (not set) → can't price the reefer line.
+    const reefer = settings.reefer == null ? null : settings.reefer * Math.max(0, reeferVans) * reeferHours
     const deposit = Math.max(0, reeferVans) * settings.deposit
 
-    const vatable = basicTotal + storage + reefer + ancillaryVatable
+    // Did the customer select any line whose rate isn't configured yet?
+    const hasUnconfigured =
+      basic.some((b) => b.amount == null) ||
+      (storageDays > 0 && storage == null) ||
+      ancillary.some((a) => a.amount == null) ||
+      (reeferVans > 0 && reeferHours > 0 && reefer == null)
+
+    const vatable = basicTotal + (storage ?? 0) + (reefer ?? 0) + ancillaryVatable
     const vat = vatable * settings.vat
-    const charges = vatable + vat + settings.admin + settings.print + ancillaryFlat
-    return { basic, storage, storageTag, storageDays, ancillary, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit }
+    // Unconfigured (null) flat fees just don't add to the total.
+    const charges = vatable + vat + (settings.admin ?? 0) + (settings.print ?? 0) + ancillaryFlat
+    return { basic, storage, storageTag, storageDays, ancillary, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit, hasUnconfigured }
   }, [rateOf, basicServices, count20, count40, lfd, pickupDate, services, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
   const hasContainers = count20 > 0 || count40 > 0
@@ -317,7 +349,7 @@ export default function Calculator() {
             <div style={{ display: 'grid', gap: 11 }}>
               {services.map((s) => (
                 <div key={s.service}>{fieldRow(
-                  <>{s.service}{s.rate > 0 && <span style={{ opacity: 0.6, fontSize: 11 }}> · {peso(s.rate)}/{t('container')}</span>}</>,
+                  <>{s.service}{s.rate != null && s.rate > 0 && <span style={{ opacity: 0.6, fontSize: 11 }}> · {peso(s.rate)}/{t('container')}</span>}</>,
                   numInput(svcCounts[s.service] || 0, (n) => setSvcCounts((p) => ({ ...p, [s.service]: Math.max(0, n) })), s.service),
                 )}</div>
               ))}
@@ -364,13 +396,13 @@ export default function Calculator() {
             <>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
                 <tbody>
-                  {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={peso(b.amount)} hint={b.tag} />)}
-                  {calc.storageDays > 0 && <Row label={t('Storage')} value={peso(calc.storage)} hint={`× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
-                  {calc.ancillary.map((a) => <Row key={a.service} label={a.service} value={peso(a.amount)} hint={`× ${a.count}`} />)}
-                  {calc.reefer > 0 && <Row label={t('Electrical / reefer')} value={peso(calc.reefer)} hint={`${reeferVans} × ${calc.reeferHours}h`} />}
+                  {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={b.amount == null ? '—' : peso(b.amount)} hint={b.amount == null ? t('not configured') : b.tag} />)}
+                  {calc.storageDays > 0 && <Row label={t('Storage')} value={calc.storage == null ? '—' : peso(calc.storage)} hint={calc.storage == null ? t('not configured') : `× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
+                  {calc.ancillary.map((a) => <Row key={a.service} label={a.service} value={a.amount == null ? '—' : peso(a.amount)} hint={a.amount == null ? t('not configured') : `× ${a.count}`} />)}
+                  {(calc.reefer == null || calc.reefer > 0) && reeferVans > 0 && calc.reeferHours > 0 && <Row label={t('Electrical / reefer')} value={calc.reefer == null ? '—' : peso(calc.reefer)} hint={calc.reefer == null ? t('not configured') : `${reeferVans} × ${calc.reeferHours}h`} />}
                   <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
-                  <Row label={t('Admin / service fee')} value={peso(settings.admin)} />
-                  <Row label={t('Print fee')} value={peso(settings.print)} />
+                  <Row label={t('Admin / service fee')} value={settings.admin == null ? '—' : peso(settings.admin)} />
+                  <Row label={t('Print fee')} value={settings.print == null ? '—' : peso(settings.print)} />
                   <tr>
                     <td style={{ padding: '9px 0', fontWeight: 700, fontSize: 14 }}>{t('Estimated charges')}</td>
                     <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 16, color: 'var(--acc-2)', whiteSpace: 'nowrap' }}>{peso(calc.charges)}</td>
@@ -392,9 +424,9 @@ export default function Calculator() {
                 </div>
               )}
 
-              {calc.vatable === 0 && (
+              {(calc.vatable === 0 || calc.hasUnconfigured || settings.admin == null || settings.print == null) && (
                 <p className="ktc-label" style={{ fontSize: 12, marginTop: 10, color: 'var(--c-h30-70-36)' }}>
-                  {t('Rates aren’t configured yet — ask KTC, or check Settings if you’re staff.')}
+                  {t('Some rates aren’t set yet — ask KTC, or check Settings if you’re staff. Lines marked “—” aren’t in this estimate.')}
                 </p>
               )}
               <p className="ktc-label" style={{ fontSize: 11.5, marginTop: 12 }}>

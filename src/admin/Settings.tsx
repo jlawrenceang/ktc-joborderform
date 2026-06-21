@@ -32,8 +32,10 @@ export default function Settings() {
   const [notice, setNotice] = useState<string | null>(null)
 
   // Pricing (service rates + flat fees + VAT) — admin-editable, read-only to others.
-  type Rate = { service: string; rate: number; unit: string; vatable: boolean; active: boolean; sort_order: number }
-  type Setting = { key: string; value: number; label: string | null }
+  // rate/value of null = "not set" (a placeholder), distinct from a real ₱0 —
+  // an empty input saves null straight through to the now-nullable column.
+  type Rate = { service: string; rate: number | null; unit: string; vatable: boolean; active: boolean; sort_order: number }
+  type Setting = { key: string; value: number | null; label: string | null }
   const [rates, setRates] = useState<Rate[]>([])
   const [settings, setSettings] = useState<Setting[]>([])
   const [pricingBusy, setPricingBusy] = useState(false)
@@ -102,15 +104,15 @@ export default function Settings() {
 
   // RPS per-move rates — admin-configured (manage_pricing). Charged when a JO
   // is assessed as needing RPS.
-  type MoveRateRow = { move_type: string; rate: number; active: boolean; sort_order: number | null }
+  type MoveRateRow = { move_type: string; rate: number | null; active: boolean; sort_order: number | null }
   const [moveRates, setMoveRates] = useState<MoveRateRow[]>([])
   const [mrBusy, setMrBusy] = useState(false)
   const [mrMsg, setMrMsg] = useState<string | null>(null)
   useEffect(() => {
     void supabase.from('move_rates').select('move_type, rate, active, sort_order').order('sort_order')
-      .then(({ data }) => setMoveRates(((data ?? []) as MoveRateRow[]).map((x) => ({ ...x, rate: Number(x.rate) }))))
+      .then(({ data }) => setMoveRates(((data ?? []) as MoveRateRow[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) }))))
   }, [])
-  function setMr(mt: string, rate: number) { setMoveRates((xs) => xs.map((x) => (x.move_type === mt ? { ...x, rate } : x))) }
+  function setMr(mt: string, rate: number | null) { setMoveRates((xs) => xs.map((x) => (x.move_type === mt ? { ...x, rate } : x))) }
   async function saveMoveRates() {
     setMrBusy(true); setMrMsg(null)
     const { error } = await supabase.from('move_rates').upsert(moveRates.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'move_type' })
@@ -176,7 +178,7 @@ export default function Settings() {
   }
   useEffect(() => { void loadPricing() }, [])
 
-  function setRateVal(service: string, rate: number) {
+  function setRateVal(service: string, rate: number | null) {
     setRates((rs) => rs.map((x) => (x.service === service ? { ...x, rate } : x)))
   }
   function setRateActive(service: string, active: boolean) {
@@ -216,11 +218,11 @@ export default function Settings() {
       setPricingMsg(t('That service already exists — reactivate it instead.'))
       return
     }
-    setRates((rs) => [...rs, { service: name, rate: 0, unit: 'per_container', vatable: newVatable, active: true, sort_order: rs.length + 1 }])
+    setRates((rs) => [...rs, { service: name, rate: null, unit: 'per_container', vatable: newVatable, active: true, sort_order: rs.length + 1 }])
     setNewService(''); setNewVatable(true)
     setPricingMsg(t('"{name}" added — set its rate and Save pricing.', { name }))
   }
-  function setSettingVal(key: string, value: number) {
+  function setSettingVal(key: string, value: number | null) {
     setSettings((ss) => ss.map((x) => (x.key === key ? { ...x, value } : x)))
   }
   async function savePricing() {
@@ -238,15 +240,15 @@ export default function Settings() {
   }
 
   // Terminal tariff (arrastre / LoLo / storage), keyed by trade × origin × size (0073).
-  type TermRate = { id: string; service: string; trade: string; origin: string; size: string; rate: number }
+  type TermRate = { id: string; service: string; trade: string; origin: string; size: string; rate: number | null }
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [termBusy, setTermBusy] = useState(false)
   const [termMsg, setTermMsg] = useState<string | null>(null)
   useEffect(() => {
     void supabase.from('terminal_rates').select('id, service, trade, origin, size, rate')
-      .then(({ data }) => setTermRates(((data ?? []) as TermRate[]).map((x) => ({ ...x, rate: Number(x.rate) }))))
+      .then(({ data }) => setTermRates(((data ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) }))))
   }, [])
-  function setTermVal(id: string, rate: number) {
+  function setTermVal(id: string, rate: number | null) {
     setTermRates((rs) => rs.map((x) => (x.id === id ? { ...x, rate } : x)))
   }
   async function saveTerm() {
@@ -538,8 +540,9 @@ export default function Settings() {
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate} disabled={pricingLocked}
-                  onChange={(e) => setRateVal(r.service, Number(e.target.value))} style={{ width: 110, padding: '7px 10px' }} />
+                <input className="ktc-input" type="number" step="0.01" min="0" value={r.rate ?? ''} disabled={pricingLocked}
+                  placeholder={t('Enter rate')}
+                  onChange={(e) => setRateVal(r.service, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 110, padding: '7px 10px' }} />
                 <span className="ktc-label" style={{ fontSize: 11, width: 72 }}>{r.unit.replace('per_', '/ ')}</span>
                 <label className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: pricingLocked ? 'default' : 'pointer' }}
                   title={r.active ? t('Untick to remove from the New Job Order form and calculator (existing orders unaffected)') : t('Tick to offer this service again')}>
@@ -587,7 +590,7 @@ export default function Settings() {
               <div key={s.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w35)', border: '1px dashed var(--glass-brd)' }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || t('VAT rate')}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <b className="ktc-mono" style={{ fontSize: 14 }}>{(s.value * 100).toFixed(0)}%</b>
+                  <b className="ktc-mono" style={{ fontSize: 14 }}>{((s.value ?? 0.12) * 100).toFixed(0)}%</b>
                   <span className="ktc-chip" title={t('Philippine statutory VAT — changeable only server-side if the law changes')}>{t('statutory · fixed')}</span>
                 </span>
               </div>
@@ -596,8 +599,9 @@ export default function Settings() {
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{s.label || s.key}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                  <input className="ktc-input" type="number" step="0.01" min="0" value={s.value} disabled={pricingLocked}
-                    onChange={(e) => setSettingVal(s.key, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                  <input className="ktc-input" type="number" step="0.01" min="0" value={s.value ?? ''} disabled={pricingLocked}
+                    placeholder={t('Enter amount')}
+                    onChange={(e) => setSettingVal(s.key, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
                 </span>
               </div>
             ),
@@ -664,9 +668,9 @@ export default function Settings() {
                     {[r20, r40].map((row, idx) => (
                       <span key={idx} style={{ width: 120, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
                         <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                        <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? 0}
-                          disabled={!row}
-                          onChange={(e) => row && setTermVal(row.id, Number(e.target.value))}
+                        <input className="ktc-input" type="number" step="0.01" min="0" value={row?.rate ?? ''}
+                          disabled={!row} placeholder={t('Enter rate')}
+                          onChange={(e) => row && setTermVal(row.id, e.target.value === '' ? null : Number(e.target.value))}
                           style={{ width: 92, padding: '7px 10px' }} />
                       </span>
                     ))}
@@ -837,7 +841,8 @@ export default function Settings() {
               <span style={{ fontSize: 13, fontWeight: 600 }}>{m.move_type}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
-                <input className="ktc-input" type="number" step="0.01" min="0" value={m.rate} onChange={(e) => setMr(m.move_type, Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                <input className="ktc-input" type="number" step="0.01" min="0" value={m.rate ?? ''} placeholder={t('Enter rate')}
+                  onChange={(e) => setMr(m.move_type, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
                 <span className="ktc-label" style={{ fontSize: 11 }}>{t('/ move')}</span>
               </span>
             </div>
