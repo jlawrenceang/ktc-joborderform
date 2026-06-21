@@ -15,7 +15,6 @@ interface PrintOrder {
   serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
 }
 
-const LINE_LABEL: Record<string, string> = { xray: 'X-ray', dea: 'DEA', oog: 'OOG', other: 'Other' }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
@@ -133,11 +132,6 @@ export default function JobOrderPrint() {
               </div>
               <div style={{ fontSize: 9, color: '#5a6678', textAlign: 'right' }}>
                 Date: <b style={{ color: '#15233a' }}>{new Date(order.created_at).toLocaleDateString()}</b>
-                {(order.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
-                  <div key={s.service_line} style={{ marginTop: 2 }}>
-                    {LINE_LABEL[s.service_line] ?? s.service_line} line: <b style={{ color: '#15233a', fontSize: 10.5 }}>#{s.serving_no}</b>
-                  </div>
-                ))}
               </div>
             </div>
 

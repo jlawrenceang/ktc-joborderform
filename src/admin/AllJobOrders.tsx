@@ -13,6 +13,7 @@ import { peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
 import { ArchiveIcon, PencilIcon, ClockIcon, ChatIcon } from '../components/icons'
 import ReleaseTracks from '../components/ReleaseTracks'
+import { batchLabel, formatAge, ageHours } from '../lib/batch'
 
 interface AdminJobOrder extends JobOrder {
   broker?: { full_name: string | null; email: string | null; contact_number: string | null } | null
@@ -353,6 +354,8 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
               const sp = STATUS_STYLE[o.status] ?? STATUS_STYLE.cancelled
               const printable = o.status === 'processing' || o.status === 'completed'
               const isBusy = busyId === o.id
+              const isOpen = ['submitted', 'processing', 'on_hold'].includes(o.status)
+              const ageH = ageHours(o.created_at, o.status === 'completed' ? o.completed_at : null)
               return (
                 <div key={o.id} style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
@@ -369,11 +372,16 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
                           {isCreditInvoice(o.service_invoice_no) ? t('BILLED') : t('PAID')} · {o.service_invoice_no}{o.invoice_pad_no ? ` · #${o.invoice_pad_no}` : ''}
                         </span>
                       )}
-                      {(o.serving ?? []).filter((s) => !s.vacated_at).map((s) => (
-                        <span key={s.service_line} className="ktc-chip ktc-chip--accent" title={t("This week's {line} line number", { line: t(SERVICE_LINE_LABEL[s.service_line]) })}>
-                          {t(SERVICE_LINE_LABEL[s.service_line])} #{s.serving_no}
+                      <span className="ktc-chip" title={t('Filed {date}', { date: new Date(o.created_at).toLocaleString() })}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
+                      {isOpen && (
+                        <span className="ktc-chip" title={t('Time since filed')}
+                          style={ageH >= 24 ? { background: 'var(--c-h0-75-97)', color: 'var(--c-h0-60-40)' } : ageH >= 12 ? { background: 'var(--c-h40-90-96)', color: 'var(--c-h30-60-32)' } : undefined}>
+                          {t('Open {age}', { age: formatAge(o.created_at) })}
                         </span>
-                      ))}
+                      )}
+                      {o.status === 'completed' && o.completed_at && (
+                        <span className="ktc-chip ktc-chip--success" title={t('Filing to completion')}>{t('Done in {age}', { age: formatAge(o.created_at, o.completed_at) })}</span>
+                      )}
                       {o.last_customer_edit_at && ['submitted', 'processing', 'on_hold'].includes(o.status) && (
                         <span className="ktc-chip ktc-chip--warning" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
                           title={t('The customer changed this order after filing — please re-check it.') + ' · ' + new Date(o.last_customer_edit_at).toLocaleString()}>

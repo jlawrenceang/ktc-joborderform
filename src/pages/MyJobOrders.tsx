@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import Shell from '../components/Shell'
 import { supabase } from '../lib/supabase'
 import { useAutoRefresh } from '../lib/useAutoRefresh'
-import NowServing from '../components/NowServing'
-import { SERVICE_LINE_LABEL, hasOutstandingSupplements, type JobOrder } from '../lib/types'
+import { hasOutstandingSupplements, type JobOrder } from '../lib/types'
+import { batchLabel } from '../lib/batch'
 import { usePageTour } from '../components/TourProvider'
 import { myJobOrdersSteps } from '../components/WelcomeTour'
 import { useBroker } from '../lib/useBroker'
@@ -234,10 +234,6 @@ export default function MyJobOrders() {
           </div>
         )}
 
-        <div style={{ marginTop: 18 }}>
-          <NowServing />
-        </div>
-
         {/* Views — server-side filters, 10 per page */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
           <span className="ktc-label" style={{ fontSize: 12.5, fontWeight: 600 }}>{t('Show')}</span>
@@ -282,12 +278,11 @@ export default function MyJobOrders() {
                 <span>{t('Consignee · Entry')}</span>
                 <span>{t('Containers')}</span>
                 <span>{t('Date')}</span>
-                <span>{t('Priority')}</span>
+                <span>{t('Batch')}</span>
               </div>
               <div style={{ display: 'grid', gap: 8 }}>
                 {orders.map((o) => {
                   const count = o.lines?.length ?? 0
-                  const serving = (o.serving ?? []).filter((s) => !s.vacated_at)
                   return (
                     <button
                       key={o.id}
@@ -310,9 +305,7 @@ export default function MyJobOrders() {
                       <span className="ktc-jo-cont ktc-label">{t('{count} cont.', { count })}</span>
                       <span className="ktc-jo-date ktc-label">{fmtDate(o.created_at)}</span>
                       <span className="ktc-jo-prio">
-                        {serving.length ? serving.map((s) => (
-                          <span key={s.service_line} className="ktc-chip ktc-chip--accent">{t(SERVICE_LINE_LABEL[s.service_line])} #{s.serving_no}</span>
-                        )) : <span className="ktc-label" style={{ opacity: 0.55 }}>—</span>}
+                        <span className="ktc-chip">{batchLabel(o.created_at, t)}</span>
                       </span>
                     </button>
                   )
@@ -338,7 +331,6 @@ export default function MyJobOrders() {
       {selected && (() => {
         const o = selected
         const count = o.lines?.length ?? 0
-        const serving = (o.serving ?? []).filter((s) => !s.vacated_at)
         const close = () => { setSelected(null); setRespondingId(null); setCancelId(null); setEditingId(null) }
         return (
           <div className="ktc-modal-backdrop" onClick={close}>
@@ -375,7 +367,7 @@ export default function MyJobOrders() {
                   <Meta label={t('Entry Number')} value={o.entry_number ?? '—'} />
                   <Meta label={t('Vessel & Voyage')} value={o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'} />
                   <Meta label={t('Date filed')} value={fmtDate(o.created_at)} />
-                  <Meta label={t('Priority number')} value={serving.length ? serving.map((s) => `${t(SERVICE_LINE_LABEL[s.service_line])} #${s.serving_no}`).join(', ') : '—'} />
+                  <Meta label={t('Batch')} value={batchLabel(o.created_at, t)} />
                 </div>
 
                 {['submitted', 'processing', 'on_hold', 'completed'].includes(o.status) && (
