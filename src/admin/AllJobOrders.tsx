@@ -625,7 +625,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
 
       {charge && (
         <div className="ktc-modal-backdrop" onClick={() => { if (!busyId) setCharge(null) }}>
-          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 430, width: '100%', padding: 24 }}>
+          <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 430, width: '100%', padding: 24, maxHeight: '88vh', overflowY: 'auto' }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>{t('Add a charge')} · <span className="ktc-mono">{charge.jo}</span></h2>
             <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.5 }}>
               {t('Tags an additional charge onto this order. The customer pays it separately; the order can’t complete until it’s settled.')}
@@ -645,8 +645,8 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       )}
 
       {modal && (
-        <div onClick={() => setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
-          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 26 }}>
+        <div className="ktc-modal-backdrop" onClick={() => setModal(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass ktc-modal-panel" style={{ maxWidth: 460, width: '100%', padding: 26, maxHeight: '88vh', overflowY: 'auto' }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>
               {modal.target === 'on_hold' ? t('Hold for information') : t('Reject job order')} · {modal.jo}
             </h2>
@@ -685,7 +685,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
           their own Viber/SMS. Messenger has no prefill — use Copy, then paste. */}
       {msgOrder && (
         <div className="ktc-modal-backdrop" onClick={() => setMsgOrder(null)}>
-          <div className="ktc-glass-thick ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: '100%', padding: 24 }}>
+          <div className="ktc-glass-thick ktc-modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, width: '100%', padding: 24, maxHeight: '88vh', overflowY: 'auto' }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 650 }}>
               {t('Status message')} · <span className="ktc-mono">{msgOrder.jo_number ?? '—'}</span>
             </h2>

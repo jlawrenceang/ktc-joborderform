@@ -239,8 +239,8 @@ export default function Account() {
 
       {/* Re-verification confirm */}
       {showReverify && (
-        <div onClick={() => setShowReverify(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 24 }}>
-          <div onClick={(e) => e.stopPropagation()} className="ktc-glass" style={{ maxWidth: 460, width: '100%', padding: 18 }}>
+        <div className="ktc-modal-backdrop" onClick={() => setShowReverify(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="ktc-glass ktc-modal-panel" style={{ maxWidth: 460, width: '100%', padding: 18, maxHeight: '88vh', overflowY: 'auto' }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Changing your name needs re-verification')}</h2>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, fontSize: 13.5 }}>
               {t('Your legal name was verified against your ID. To change it to')} <b style={{ color: 'hsl(var(--ink))' }}>{fullName.trim()}</b>,{' '}

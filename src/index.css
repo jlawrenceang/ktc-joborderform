@@ -479,6 +479,12 @@
   @media (prefers-reduced-motion: reduce) {
     .ktc-modal-backdrop, .ktc-modal-panel { animation: none; }
   }
+  /* Tiny screens: trim the backdrop padding so the panel keeps usable width. */
+  @media (max-width: 420px) {
+    .ktc-modal-backdrop {
+      padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
+    }
+  }
 
   /* ---- Responsive page container ----
      Replaces per-shell inline max-width/padding so the mobile layer below can
