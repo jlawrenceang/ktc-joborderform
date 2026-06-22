@@ -1,7 +1,11 @@
 import { type ReactNode, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 // Small reusable modal built on the existing visionOS glass modal classes
 // (ktc-modal-backdrop / ktc-modal-panel in index.css). Click-outside or Esc closes.
+// Rendered through a PORTAL to <body> so it always escapes ancestor stacking
+// contexts — a parent `.ktc-glass` (backdrop-filter) would otherwise trap the
+// fixed backdrop and let the bottom tabbar / footer overlap it.
 export default function Modal({
   open,
   onClose,
@@ -22,8 +26,8 @@ export default function Modal({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  if (!open) return null
-  return (
+  if (!open || typeof document === 'undefined') return null
+  return createPortal(
     <div className="ktc-modal-backdrop" onClick={onClose}>
       <div
         className="ktc-glass ktc-modal-panel"
@@ -38,6 +42,7 @@ export default function Modal({
         )}
         <div style={{ overflowY: 'auto', padding: '16px 18px' }}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
