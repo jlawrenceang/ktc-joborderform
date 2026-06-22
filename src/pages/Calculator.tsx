@@ -10,41 +10,36 @@ import { calculatorSteps } from '../components/WelcomeTour'
 import { useT } from '../lib/i18n'
 import { SHIPPING_LINES, normLine, type Origin } from '../lib/shippingLines'
 
-// Rate calculator — a guided estimate the customer builds step by step, then
-// presses "Generate estimate" to see the charges. Flow (owner, 2026-06-16):
-//   1. Shipping line + vessel & voyage  → trade route (foreign/domestic) + LFD
-//   2. Trade route (derived from the line)
-//   3. Import (withdrawal) or Export (deposit)  → which charges apply
-//   4. 20ft / 40ft container counts
-//   5. Generate → charges populate
-// Basic terminal charges come from the admin tariff (terminal_rates, 0073/0078)
-// keyed by service × trade × origin × size; ancillary (X-ray, electrical, storage)
-// from service_rates / pricing_settings. All rates are set by KTC in Settings;
-// the official amount is on the Service Invoice.
+// Rate calculator — a guided estimate. Flow (redesigned 2026-06-22):
+//   1. Shipment details — shipping line, vessel & voyage, trade route (derived),
+//      import/export, and (optional) planned pickup date for storage.
+//   2. Containers — one row per container type: size × empty/full × dry/reefer × qty.
+//   3. Ancillary services — add from a dropdown (X-ray, DEA, electrical/reefer…).
+//   4. Generate → charges.
+// Terminal charges come from the admin tariff (terminal_rates) keyed by
+// service × trade × origin × size × fill × kind (0141); ancillary from
+// service_rates / pricing_settings. rate = null → "not configured" (≠ ₱0).
 
-// rate of null = "not configured yet" (distinct from a real ₱0) — never coerce
-// it to a number for display; show "—" / "not configured" instead.
-type TermRate = { service: string; trade: string; origin: string; size: string; rate: number | null }
+type TermRate = { service: string; trade: string; origin: string; size: string; fill: string; kind: string; rate: number | null }
 type VesselOpt = { vessel_visit: string; vessel_name: string; voyage_number: string; last_free_day: string | null; shipping_line: string | null }
 type Size = '20' | '40'
-// A per-line charge rule (0080) layered on the base tariff.
+type Fill = 'empty' | 'full'
+type Kind = 'dry' | 'reefer'
+type Cell = { size: Size; fill: Fill; kind: Kind; qty: number }
 type Rule = { shipping_line: string; service: string; trade: string | null; action: string; value: number }
-// An ancillary service from the admin catalogue (service_rates).
 type Svc = { service: string; rate: number | null; unit: string; vatable: boolean }
+
+const REEFER_KEY = '__reefer__'
+const emptyCell = (): Cell => ({ size: '20', fill: 'full', kind: 'dry', qty: 1 })
 
 export default function Calculator() {
   const { t } = useT()
   usePageTour('calculator', calculatorSteps)
-  // Staff/owner reach the calculator from the admin Menu — keep them in the
-  // admin shell (rail + admin tab bar) instead of swapping the whole UI into
-  // the customer portal. Customers get the customer shell.
   const { broker, loading: brokerLoading } = useBroker()
   const Wrap = hasAdminAccess(broker) ? AdminShell : Shell
 
   const [termRates, setTermRates] = useState<TermRate[]>([])
   const [services, setServices] = useState<Svc[]>([])
-  // admin / print fees are nullable: null = not configured (render "—", exclude
-  // from the total). reefer rate likewise. vat stays a real number (statutory).
   const [settings, setSettings] = useState<{ vat: number; admin: number | null; print: number | null; reefer: number | null; reeferMin: number; deposit: number }>(
     { vat: 0.12, admin: null, print: null, reefer: null, reeferMin: 4, deposit: 10000 })
   const [vessels, setVessels] = useState<VesselOpt[]>([])
@@ -55,9 +50,9 @@ export default function Calculator() {
   const [vesselVisit, setVesselVisit] = useState('')
   const [origin, setOrigin] = useState<Origin>('foreign')
   const [trade, setTrade] = useState<'import' | 'export'>('import')
-  const [count20, setCount20] = useState(0)
-  const [count40, setCount40] = useState(0)
   const [pickupDate, setPickupDate] = useState('')
+  const [cells, setCells] = useState<Cell[]>([emptyCell()])
+  const [addedSvcs, setAddedSvcs] = useState<string[]>([])
   const [svcCounts, setSvcCounts] = useState<Record<string, number>>({})
   const [reeferVans, setReeferVans] = useState(0)
   const [plugIn, setPlugIn] = useState('')
@@ -68,7 +63,7 @@ export default function Calculator() {
   useEffect(() => {
     void (async () => {
       const [{ data: tr }, { data: sr }, { data: ps }, { data: v }, { data: cr }] = await Promise.all([
-        supabase.from('terminal_rates').select('service, trade, origin, size, rate'),
+        supabase.from('terminal_rates').select('service, trade, origin, size, fill, kind, rate'),
         supabase.from('service_rates').select('service, rate, unit, vatable').eq('active', true).order('sort_order').order('service'),
         supabase.from('pricing_settings').select('key, value'),
         supabase.from('vessel_schedule_v').select('vessel_visit, vessel_name, voyage_number, last_free_day, shipping_line').eq('is_current', true).order('vessel_name'),
@@ -77,7 +72,6 @@ export default function Calculator() {
       setTermRates(((tr ?? []) as TermRate[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) })))
       setServices(((sr ?? []) as { service: string; rate: number | string | null; unit: string; vatable: boolean }[])
         .map((x) => ({ service: x.service, rate: x.rate == null ? null : Number(x.rate), unit: x.unit, vatable: x.vatable })))
-      // Preserve null (not set) — Number(null) would silently become 0.
       const m = new Map(((ps ?? []) as { key: string; value: number | null }[]).map((x) => [x.key, x.value == null ? null : Number(x.value)]))
       setSettings({
         vat: m.get('vat_rate') ?? 0.12, admin: m.get('admin_fee') ?? null, print: m.get('print_fee') ?? null,
@@ -88,10 +82,8 @@ export default function Calculator() {
     })()
   }, [])
 
-  // Any change to the inputs invalidates a shown estimate (press Generate again).
-  useEffect(() => { setGenerated(false) }, [line, vesselVisit, origin, trade, count20, count40, pickupDate, svcCounts, reeferVans, plugIn, plugOut])
+  useEffect(() => { setGenerated(false) }, [line, vesselVisit, origin, trade, pickupDate, cells, addedSvcs, svcCounts, reeferVans, plugIn, plugOut])
 
-  // Vessels for the chosen line (loose name match); all vessels when no line.
   const lineVessels = useMemo(
     () => (line ? vessels.filter((v) => normLine(v.shipping_line) === normLine(line)) : vessels),
     [vessels, line],
@@ -101,20 +93,17 @@ export default function Calculator() {
     setLine(code)
     const o = SHIPPING_LINES.find((l) => l.code === code)?.origin
     if (o) setOrigin(o)
-    setVesselVisit('') // re-pick a vessel under the new line
+    setVesselVisit('')
   }
 
   const rateOf = useMemo(() => {
-    const map = new Map(termRates.map((r) => [`${r.service}|${r.trade}|${r.origin}|${r.size}`, r.rate]))
-    // null = not configured (either no row, or a row with a null/unset rate).
-    return (service: string, size: Size): number | null => map.get(`${service}|${trade}|${origin}|${size}`) ?? null
+    const map = new Map(termRates.map((r) => [`${r.service}|${r.trade}|${r.origin}|${r.size}|${r.fill}|${r.kind}`, r.rate]))
+    return (service: string, size: string, fill: string, kind: string): number | null =>
+      map.get(`${service}|${trade}|${origin}|${size}|${fill}|${kind}`) ?? null
   }, [termRates, trade, origin])
 
   const lfd = lineVessels.find((v) => v.vessel_visit === vesselVisit)?.last_free_day ?? null
 
-  // Which basic terminal charges apply structurally (weighing is export-only).
-  // Per-line rules (waive/discount/surcharge, 0080) are applied to the amounts
-  // below — a waived charge shows as ₱0 with a "Waived" tag.
   const basicServices = useMemo(() => [
     { key: 'arrastre', label: 'Arrastre', show: true },
     { key: 'weighing', label: 'Weighing scale', show: trade === 'export' },
@@ -122,19 +111,22 @@ export default function Calculator() {
     { key: 'lolo', label: 'Lift on / Lift off (LoLo)', show: true },
   ].filter((s) => s.show), [trade])
 
+  const totalQty = useMemo(() => cells.reduce((a, c) => a + Math.max(0, c.qty), 0), [cells])
+
   const calc = useMemo(() => {
-    // null = not configured: if a counted size has no rate, the line can't be
-    // priced. A size with 0 count never contributes, so its null rate is moot.
+    // Sum a service across every container row. If any row with a qty has no
+    // configured rate for its exact size×fill×kind, the line can't be priced.
     const sized = (service: string): number | null => {
-      const r20 = rateOf(service, '20')
-      const r40 = rateOf(service, '40')
-      if (count20 > 0 && r20 == null) return null
-      if (count40 > 0 && r40 == null) return null
-      return (r20 ?? 0) * count20 + (r40 ?? 0) * count40
+      let sum = 0, anyNull = false
+      for (const c of cells) {
+        if (c.qty <= 0) continue
+        const r = rateOf(service, c.size, c.fill, c.kind)
+        if (r == null) { anyNull = true; continue }
+        sum += r * c.qty
+      }
+      return anyNull ? null : sum
     }
-    const counts = count20 + count40
-    // Apply the chosen line's charge rules to a base amount. A null base (rate
-    // not set) stays null — rules can't price an unconfigured charge.
+    const counts = totalQty
     const applyRules = (service: string, base: number | null): { amount: number | null; tag: string } => {
       if (base == null) return { amount: null, tag: '' }
       const rs = line
@@ -155,10 +147,8 @@ export default function Calculator() {
       const r = applyRules(s.key, sized(s.key))
       return { key: s.key, label: s.label, amount: r.amount, tag: r.tag }
     })
-    // Sum only configured (non-null) amounts.
     const basicTotal = basic.reduce((a, b) => a + (b.amount ?? 0), 0)
 
-    // Storage days = calendar days from the Last Free Day to the planned pickup.
     let storageDays = 0
     if (lfd && pickupDate) {
       const ms = new Date(pickupDate).getTime() - new Date(lfd).getTime()
@@ -169,57 +159,67 @@ export default function Calculator() {
     const storage = storageR.amount
     const storageTag = storageR.tag
 
-    // Ancillary services from the admin catalogue (service_rates) — every active
-    // one is offered; each bills rate × count. VATable ones join the VAT base;
-    // any non-VATable one is added after VAT (like the flat fees). A null rate
-    // means the service isn't priced yet → amount is null (shown as "—").
-    const ancillary = services
-      .map((s) => {
-        const count = Math.max(0, svcCounts[s.service] || 0)
-        return { service: s.service, vatable: s.vatable, count, amount: s.rate == null ? null : s.rate * count }
+    // Ancillary = the services the customer ADDED from the dropdown (reefer handled below).
+    const ancillary = addedSvcs
+      .filter((k) => k !== REEFER_KEY)
+      .map((k) => {
+        const s = services.find((x) => x.service === k)
+        const count = Math.max(0, svcCounts[k] || 0)
+        return { service: k, vatable: s?.vatable ?? true, count, amount: s?.rate == null ? null : s.rate * count }
       })
-      .filter((a) => a.count > 0)
     const ancillaryVatable = ancillary.filter((a) => a.vatable).reduce((sum, a) => sum + (a.amount ?? 0), 0)
     const ancillaryFlat = ancillary.filter((a) => !a.vatable).reduce((sum, a) => sum + (a.amount ?? 0), 0)
 
-    // Electrical/reefer: per van per hour, plug-in → plug-out, with a minimum
-    // billed-hours floor. A refundable cash bond applies per van.
+    const reeferOn = addedSvcs.includes(REEFER_KEY)
     let reeferHours = 0
-    if (plugIn && plugOut) {
+    if (reeferOn && plugIn && plugOut) {
       const ms = new Date(plugOut).getTime() - new Date(plugIn).getTime()
       const h = ms > 0 ? Math.ceil(ms / 3_600_000) : 0
       reeferHours = h > 0 ? Math.max(h, settings.reeferMin) : 0
     }
-    // null reefer rate (not set) → can't price the reefer line.
-    const reefer = settings.reefer == null ? null : settings.reefer * Math.max(0, reeferVans) * reeferHours
-    const deposit = Math.max(0, reeferVans) * settings.deposit
+    const reefer = !reeferOn ? 0 : settings.reefer == null ? null : settings.reefer * Math.max(0, reeferVans) * reeferHours
+    const deposit = reeferOn ? Math.max(0, reeferVans) * settings.deposit : 0
 
-    // Did the customer select any line whose rate isn't configured yet?
     const hasUnconfigured =
       basic.some((b) => b.amount == null) ||
       (storageDays > 0 && storage == null) ||
       ancillary.some((a) => a.amount == null) ||
-      (reeferVans > 0 && reeferHours > 0 && reefer == null)
+      (reeferOn && reeferVans > 0 && reeferHours > 0 && reefer == null)
 
     const vatable = basicTotal + (storage ?? 0) + (reefer ?? 0) + ancillaryVatable
     const vat = vatable * settings.vat
-    // Unconfigured (null) flat fees just don't add to the total.
     const charges = vatable + vat + (settings.admin ?? 0) + (settings.print ?? 0) + ancillaryFlat
-    return { basic, storage, storageTag, storageDays, ancillary, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit, hasUnconfigured }
-  }, [rateOf, basicServices, count20, count40, lfd, pickupDate, services, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
+    return { basic, storage, storageTag, storageDays, ancillary, reeferOn, reefer, reeferHours, deposit, vatable, vat, charges, toPrepare: charges + deposit, hasUnconfigured }
+  }, [rateOf, basicServices, cells, totalQty, lfd, pickupDate, services, addedSvcs, svcCounts, settings, reeferVans, plugIn, plugOut, rules, line, trade, t])
 
-  const hasContainers = count20 > 0 || count40 > 0
-  // No vessel & voyage → no charges at all (ops rule): the estimate is tied to a
-  // specific vessel call, so without one we don't compute anything (incl. the
-  // ancillary / admin / print fees).
   const hasVessel = !!vesselVisit
-  const canGenerate = hasVessel && hasContainers
+  const canGenerate = hasVessel && totalQty > 0
 
   function generate() {
     if (!canGenerate) return
     setGenerated(true)
-    // On a narrow screen the estimate is below the inputs — bring it into view.
     requestAnimationFrame(() => estimateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  // ---- cell + ancillary editing ----
+  function setCell(i: number, patch: Partial<Cell>) { setCells((cs) => cs.map((c, idx) => (idx === i ? { ...c, ...patch } : c))) }
+  function addCell() { setCells((cs) => [...cs, { size: '20', fill: 'full', kind: 'dry', qty: 1 }]) }
+  function removeCell(i: number) { setCells((cs) => (cs.length > 1 ? cs.filter((_, idx) => idx !== i) : cs)) }
+
+  const [pickSvc, setPickSvc] = useState('')
+  const availableSvcs = useMemo(() => {
+    const opts = services.map((s) => ({ key: s.service, label: s.service })).filter((o) => !addedSvcs.includes(o.key))
+    if (settings.reefer != null && !addedSvcs.includes(REEFER_KEY)) opts.push({ key: REEFER_KEY, label: t('Electrical / reefer') })
+    return opts
+  }, [services, addedSvcs, settings.reefer, t])
+  function addSvc() {
+    if (!pickSvc) return
+    setAddedSvcs((a) => [...a, pickSvc])
+    setPickSvc('')
+  }
+  function removeSvc(k: string) {
+    setAddedSvcs((a) => a.filter((x) => x !== k))
+    if (k === REEFER_KEY) { setReeferVans(0); setPlugIn(''); setPlugOut('') }
   }
 
   // ---- small UI helpers ----
@@ -248,18 +248,6 @@ export default function Calculator() {
       ))}
     </div>
   )
-  // Trade route: blue = Domestic, orange = Foreign, so the two read distinctly.
-  const originSeg = (
-    <div style={{ display: 'inline-flex', gap: 4, padding: 3, borderRadius: 999, border: '1px solid var(--glass-brd)', background: 'var(--c-w55)' }}>
-      {([['domestic', 'Domestic', 'linear-gradient(135deg, #3b82f6, #2563eb)'], ['foreign', 'Foreign', 'linear-gradient(135deg, var(--acc), var(--acc-2))']] as const).map(([v, label, bg]) => (
-        <button key={v} type="button" onClick={() => setOrigin(v)}
-          style={{ border: 0, cursor: 'pointer', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 650,
-            color: origin === v ? '#fff' : 'hsl(var(--ink-2))', background: origin === v ? bg : 'transparent' }}>
-          {t(label)}
-        </button>
-      ))}
-    </div>
-  )
   const fieldRow = (labelEl: ReactNode, controlEl: ReactNode) => (
     <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <span className="ktc-label">{labelEl}</span>{controlEl}
@@ -272,9 +260,6 @@ export default function Calculator() {
     </tr>
   )
 
-  // Wait for the profile so we pick the right shell (avoids a flash of the
-  // customer portal for a staff/owner user). Cached after the first page, so
-  // this only shows on a cold direct load.
   if (brokerLoading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -288,99 +273,132 @@ export default function Calculator() {
       <div style={{ margin: '10px 4px 14px' }}>
         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{t('Rate Calculator')}</h1>
         <p className="ktc-sub" style={{ maxWidth: 560, fontSize: 12.5 }}>
-          {t('Build your estimate step by step, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.')}
+          {t('Build your estimate, then tap Generate. This is a guide — the official amount is confirmed on the Service Invoice at the KTC office.')}
         </p>
       </div>
 
       <div className="ktc-calc-layout">
-        {/* ---- Inputs: one compact card, sections divided by a hairline ---- */}
         <div className="ktc-glass" style={{ padding: 0 }} data-tour="calc-inputs">
-          {/* 1 — Shipping line + vessel */}
+          {/* 1 — Shipment details (line + vessel + route + shipment + pickup) */}
           <div className="ktc-calc-section">
-            <StepHead n={1} title={t('Shipping line & vessel')} sub={t('Sets your trade route and the Last Free Day for storage.')} />
-            <div style={{ display: 'grid', gap: 11 }}>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <span className="ktc-label">{t('Shipping line')}</span>
+            <StepHead n={1} title={t('Shipment details')} sub={t('Sets your trade route, charges and the storage Last Free Day.')} />
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ display: 'grid', gap: 5 }}>
+                <span className="ktc-label">{t('Shipping line')} *</span>
                 <select className="ktc-input ktc-input--compact" value={line} onChange={(e) => chooseLine(e.target.value)}>
                   <option value="">{t('Select a shipping line…')}</option>
                   {SHIPPING_LINES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gap: 6 }}>
-                <span className="ktc-label">{t('Vessel & voyage')} <span style={{ opacity: 0.7 }}>({t('required for the estimate')})</span></span>
+              <div style={{ display: 'grid', gap: 5 }}>
+                <span className="ktc-label">{t('Vessel & voyage')} *</span>
                 <select className="ktc-input ktc-input--compact" value={vesselVisit} onChange={(e) => setVesselVisit(e.target.value)}>
                   <option value="">{line && lineVessels.length === 0 ? t('No current vessels for this line') : t('Select a vessel & voyage…')}</option>
                   {lineVessels.map((v) => <option key={v.vessel_visit} value={v.vessel_visit}>{v.vessel_name.toUpperCase()} — {v.voyage_number.toUpperCase()}</option>)}
                 </select>
-                {lfd && <span className="ktc-label" style={{ fontSize: 12 }}>{t('Last Free Day:')} <b>{new Date(lfd).toLocaleDateString()}</b> — {t('storage applies after this date.')}</span>}
               </div>
-            </div>
-          </div>
-
-          {/* 2 — Trade route (derived) + 3 — Shipment type */}
-          <div className="ktc-calc-section">
-            <StepHead n={2} title={t('Trade route & shipment')} sub={t('The route is set by your shipping line; choose the shipment type.')} />
-            <div style={{ display: 'grid', gap: 11 }}>
               {fieldRow(
-                t('Trade route'),
+                <>{t('Trade route')} *</>,
                 line
                   ? <span className={`ktc-chip ${origin === 'domestic' ? 'ktc-chip--info' : 'ktc-chip--accent'}`} style={{ fontWeight: 650 }}>{origin === 'domestic' ? t('Domestic') : t('Foreign')}</span>
-                  : originSeg,
+                  : <span className="ktc-label" style={{ fontSize: 12 }}>{t('Pick a shipping line')}</span>,
               )}
               {fieldRow(
-                t('Shipment'),
+                <>{t('Shipment')} *</>,
                 seg(trade, setTrade, [{ v: 'import', label: 'Import (Withdrawal)' }, { v: 'export', label: 'Export (Deposit)' }]),
               )}
-            </div>
-          </div>
-
-          {/* 4 — Container counts */}
-          <div className="ktc-calc-section">
-            <StepHead n={3} title={t('Containers')} sub={t('How many vans of each size?')} />
-            <div style={{ display: 'grid', gap: 11 }}>
-              {fieldRow(t('20ft containers'), numInput(count20, setCount20, t('20ft containers')))}
-              {fieldRow(t('40ft containers'), numInput(count40, setCount40, t('40ft containers')))}
-            </div>
-          </div>
-
-          {/* Ancillary services (optional) */}
-          <div className="ktc-calc-section">
-            <StepHead n={4} title={t('Ancillary services')} sub={t('Optional — added depending on your order.')} />
-            <div style={{ display: 'grid', gap: 11 }}>
-              {services.map((s) => (
-                <div key={s.service}>{fieldRow(
-                  <>{s.service}{s.rate != null && s.rate > 0 && <span style={{ opacity: 0.6, fontSize: 11 }}> · {peso(s.rate)}/{t('container')}</span>}</>,
-                  numInput(svcCounts[s.service] || 0, (n) => setSvcCounts((p) => ({ ...p, [s.service]: Math.max(0, n) })), s.service),
-                )}</div>
-              ))}
-              {services.length === 0 && <p className="ktc-label" style={{ fontSize: 12, opacity: 0.8, margin: 0 }}>{t('No ancillary services configured yet.')}</p>}
-              {lfd && fieldRow(t('Planned pickup date (storage)'),
-                <input className="ktc-input" type="date" value={pickupDate} onChange={(e) => setPickupDate(e.target.value)} style={{ maxWidth: 180 }} />)}
-              {!lfd && (
-                <p className="ktc-label" style={{ fontSize: 12, opacity: 0.8, margin: 0 }}>{t('Pick a vessel above to estimate storage from the Last Free Day.')}</p>
+              {fieldRow(
+                t('Planned pickup date'),
+                <input className="ktc-input" type="date" value={pickupDate} disabled={!lfd}
+                  onChange={(e) => setPickupDate(e.target.value)} style={{ maxWidth: 180 }} />,
               )}
-              <div style={{ display: 'grid', gap: 8, paddingTop: 6, borderTop: '1px solid hsl(var(--line-soft))' }}>
-                <span className="ktc-label" style={{ fontWeight: 600 }}>{t('Electrical / reefer')}</span>
-                {fieldRow(t('Reefer vans'), numInput(reeferVans, setReeferVans, t('Reefer vans')))}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: 8 }}>
-                  <label style={{ display: 'grid', gap: 4 }}><span className="ktc-label" style={{ fontSize: 12 }}>{t('Plug-in')}</span>
-                    <input className="ktc-input" type="datetime-local" value={plugIn} onChange={(e) => setPlugIn(e.target.value)} style={{ fontSize: 13, minWidth: 0 }} /></label>
-                  <label style={{ display: 'grid', gap: 4 }}><span className="ktc-label" style={{ fontSize: 12 }}>{t('Plug-out (est.)')}</span>
-                    <input className="ktc-input" type="datetime-local" value={plugOut} onChange={(e) => setPlugOut(e.target.value)} style={{ fontSize: 13, minWidth: 0 }} /></label>
+              <span className="ktc-label" style={{ fontSize: 11.5, lineHeight: 1.4 }}>
+                {lfd
+                  ? t('Last Free Day: {d} — storage is estimated from this date to your pickup.', { d: new Date(lfd).toLocaleDateString() })
+                  : t('Pick a vessel to enable storage (counts from its Last Free Day).')}
+              </span>
+            </div>
+          </div>
+
+          {/* 2 — Containers (per type: size × fill × kind × qty) */}
+          <div className="ktc-calc-section">
+            <StepHead n={2} title={t('Containers')} sub={t('Add a row per container type — rates differ by size, empty/full and dry/reefer.')} />
+            <div style={{ display: 'grid', gap: 8 }}>
+              {cells.map((c, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <select className="ktc-input ktc-input--compact" style={{ flex: '1 1 74px' }} value={c.size} onChange={(e) => setCell(i, { size: e.target.value as Size })}>
+                    <option value="20">20ft</option><option value="40">40ft</option>
+                  </select>
+                  <select className="ktc-input ktc-input--compact" style={{ flex: '1 1 86px' }} value={c.fill} onChange={(e) => setCell(i, { fill: e.target.value as Fill })}>
+                    <option value="full">{t('Full')}</option><option value="empty">{t('Empty')}</option>
+                  </select>
+                  <select className="ktc-input ktc-input--compact" style={{ flex: '1 1 90px' }} value={c.kind} onChange={(e) => setCell(i, { kind: e.target.value as Kind })}>
+                    <option value="dry">{t('Dry')}</option><option value="reefer">{t('Reefer')}</option>
+                  </select>
+                  {numInput(c.qty, (n) => setCell(i, { qty: n }), t('Quantity'))}
+                  <button type="button" className="ktc-link" onClick={() => removeCell(i)} style={{ opacity: cells.length === 1 ? 0.3 : 1 }} aria-label={t('Remove row')}>✕</button>
                 </div>
-                {reeferVans > 0 && (
-                  <p className="ktc-label" style={{ fontSize: 12, margin: '2px 0 0', lineHeight: 1.5 }}>
-                    {t('Billed per hour (minimum {h} hours). A refundable cash bond of {amt} per van is required — the balance is returned 7–10 working days after withdrawal, once computed.', { h: settings.reeferMin, amt: peso(settings.deposit) })}
-                  </p>
-                )}
-              </div>
+              ))}
+              <button type="button" className="ktc-link" onClick={addCell} style={{ justifySelf: 'start' }}>{t('+ Add container type')}</button>
+            </div>
+          </div>
+
+          {/* 3 — Ancillary services (add from dropdown) */}
+          <div className="ktc-calc-section">
+            <StepHead n={3} title={t('Ancillary services')} sub={t('Optional — add the ones your order needs.')} />
+            <div style={{ display: 'grid', gap: 10 }}>
+              {addedSvcs.length === 0 && <p className="ktc-label" style={{ fontSize: 12, opacity: 0.8, margin: 0 }}>{t('None added.')}</p>}
+              {addedSvcs.map((k) => {
+                if (k === REEFER_KEY) {
+                  return (
+                    <div key={k} style={{ display: 'grid', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600 }}>{t('Electrical / reefer')}</span>
+                        <button type="button" className="ktc-link" onClick={() => removeSvc(k)} style={{ fontSize: 12 }}>{t('Remove')}</button>
+                      </div>
+                      {fieldRow(t('Reefer vans'), numInput(reeferVans, setReeferVans, t('Reefer vans')))}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: 8 }}>
+                        <label style={{ display: 'grid', gap: 4 }}><span className="ktc-label" style={{ fontSize: 12 }}>{t('Plug-in')}</span>
+                          <input className="ktc-input" type="datetime-local" value={plugIn} onChange={(e) => setPlugIn(e.target.value)} style={{ fontSize: 13, minWidth: 0 }} /></label>
+                        <label style={{ display: 'grid', gap: 4 }}><span className="ktc-label" style={{ fontSize: 12 }}>{t('Plug-out (est.)')}</span>
+                          <input className="ktc-input" type="datetime-local" value={plugOut} onChange={(e) => setPlugOut(e.target.value)} style={{ fontSize: 13, minWidth: 0 }} /></label>
+                      </div>
+                      {reeferVans > 0 && (
+                        <p className="ktc-label" style={{ fontSize: 11.5, margin: '2px 0 0', lineHeight: 1.5 }}>
+                          {t('Billed per hour (minimum {h} hours). A refundable cash bond of {amt} per van is required — returned 7–10 working days after withdrawal.', { h: settings.reeferMin, amt: peso(settings.deposit) })}
+                        </p>
+                      )}
+                    </div>
+                  )
+                }
+                const s = services.find((x) => x.service === k)
+                return (
+                  <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="ktc-label" style={{ flex: '1 1 150px', minWidth: 0 }}>
+                      {k}{s?.rate != null && s.rate > 0 && <span style={{ opacity: 0.6, fontSize: 11 }}> · {peso(s.rate)}/{t('container')}</span>}
+                    </span>
+                    {numInput(svcCounts[k] || 0, (n) => setSvcCounts((p) => ({ ...p, [k]: Math.max(0, n) })), k)}
+                    <button type="button" className="ktc-link" onClick={() => removeSvc(k)} style={{ fontSize: 12 }}>{t('Remove')}</button>
+                  </div>
+                )
+              })}
+              {availableSvcs.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', paddingTop: addedSvcs.length ? 6 : 0, borderTop: addedSvcs.length ? '1px solid hsl(var(--line-soft))' : 'none' }}>
+                  <select className="ktc-input ktc-input--compact" style={{ flex: '1 1 160px' }} value={pickSvc} onChange={(e) => setPickSvc(e.target.value)}>
+                    <option value="">{t('Add an ancillary service…')}</option>
+                    {availableSvcs.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+                  </select>
+                  <button type="button" className="ktc-btn ktc-btn--sm" disabled={!pickSvc} onClick={addSvc} style={{ width: 'auto', padding: '7px 14px', fontSize: 12.5, opacity: pickSvc ? 1 : 0.55 }}>{t('Add')}</button>
+                </div>
+              )}
+              {services.length === 0 && <p className="ktc-label" style={{ fontSize: 12, opacity: 0.8, margin: 0 }}>{t('No ancillary services configured yet.')}</p>}
             </div>
           </div>
         </div>
 
         {/* ---- Estimate column ---- */}
         <div ref={estimateRef} className="ktc-glass" style={{ padding: 16, position: 'sticky', top: 86 }} data-tour="calc-estimate">
-          <StepHead n={5} title={t('Estimate')} />
+          <StepHead n={4} title={t('Estimate')} />
           <button type="button" className="ktc-btn" disabled={!canGenerate} onClick={generate}
             style={{ width: '100%', marginBottom: 14, opacity: canGenerate ? 1 : 0.55 }}>
             {t('Generate estimate')}
@@ -388,8 +406,8 @@ export default function Calculator() {
 
           {!hasVessel ? (
             <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Select a shipping line and vessel & voyage first — charges are estimated against the vessel’s call.')}</p>
-          ) : !hasContainers ? (
-            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Enter your 20ft / 40ft container counts, then tap Generate estimate.')}</p>
+          ) : totalQty === 0 ? (
+            <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Add at least one container (set a quantity), then tap Generate estimate.')}</p>
           ) : !generated ? (
             <p className="ktc-label" style={{ fontSize: 12.5 }}>{t('Tap Generate estimate to see the charges.')}</p>
           ) : (
@@ -399,7 +417,7 @@ export default function Calculator() {
                   {calc.basic.map((b) => <Row key={b.key} label={t(b.label)} value={b.amount == null ? '—' : peso(b.amount)} hint={b.amount == null ? t('not configured') : b.tag} />)}
                   {calc.storageDays > 0 && <Row label={t('Storage')} value={calc.storage == null ? '—' : peso(calc.storage)} hint={calc.storage == null ? t('not configured') : `× ${calc.storageDays} ${t('day(s)')}${calc.storageTag ? ' ' + calc.storageTag : ''}`} />}
                   {calc.ancillary.map((a) => <Row key={a.service} label={a.service} value={a.amount == null ? '—' : peso(a.amount)} hint={a.amount == null ? t('not configured') : `× ${a.count}`} />)}
-                  {(calc.reefer == null || calc.reefer > 0) && reeferVans > 0 && calc.reeferHours > 0 && <Row label={t('Electrical / reefer')} value={calc.reefer == null ? '—' : peso(calc.reefer)} hint={calc.reefer == null ? t('not configured') : `${reeferVans} × ${calc.reeferHours}h`} />}
+                  {calc.reeferOn && reeferVans > 0 && calc.reeferHours > 0 && <Row label={t('Electrical / reefer')} value={calc.reefer == null ? '—' : peso(calc.reefer)} hint={calc.reefer == null ? t('not configured') : `${reeferVans} × ${calc.reeferHours}h`} />}
                   <Row label={t('VAT ({pct}%)', { pct: (settings.vat * 100).toFixed(0) })} value={peso(calc.vat)} />
                   <Row label={t('Admin / service fee')} value={settings.admin == null ? '—' : peso(settings.admin)} />
                   <Row label={t('Print fee')} value={settings.print == null ? '—' : peso(settings.print)} />
