@@ -303,7 +303,7 @@ export default function MyJobOrders() {
   function openOrder(o: JobOrder) { setSelected(o); setRespondingId(null); setCancelId(null); setError(null) }
 
   return (
-    <Shell>
+    <Shell wide>
       <div className="ktc-glass" style={{ padding: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
@@ -385,7 +385,6 @@ export default function MyJobOrders() {
                     </div>
                     <div className="ktc-jo-zcard-foot">
                       <span className="ktc-label">{t('{count} cont.', { count })}</span>
-                      <span className="ktc-chip">{batchLabel(o.created_at, t)}</span>
                       <span className="ktc-label" style={{ marginLeft: 'auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
                   </button>

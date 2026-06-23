@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.6 — 2026-06-23 (My Job Orders: wider column, drop redundant batch pill)
+
+- **My Job Orders page widened** (760 → 960 column via a new `Shell wide` option) so the cards have more room.
+- **Removed the "Today/Yesterday" batch chip from the card view** — the filing date is already shown right beside it, so the pill was redundant. (List view keeps its labeled Batch column.)
+
 ## v1.6.5 — 2026-06-23 (vessel is dropdown-only everywhere)
 
 - **Removed the "vessel not listed — enter manually" escape hatch app-wide** — the customer **edit-order** form (`EditJobOrderForm`) and the admin **file-on-behalf** form (`NewJobOrder`) are now **dropdown-only** (vessel is schedule-driven). If a vessel isn't listed, customers call KTC customer service and ops add it to the schedule first. (The customer filing form + on-hold resubmit were already dropdown-only.) Ops manual updated.

@@ -19,7 +19,7 @@ import PushPrompt from './PushPrompt'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
-export default function Shell({ children }: { children: ReactNode }) {
+export default function Shell({ children, wide }: { children: ReactNode; wide?: boolean }) {
   const { signOut } = useAuth()
   const { broker, refresh } = useBroker()
   const navigate = useNavigate()
@@ -51,7 +51,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   }, IDLE_LOGOUT_MS)
 
   return (
-    <div className="ktc-page ktc-page--tabbar">
+    <div className={`ktc-page ktc-page--tabbar${wide ? ' ktc-page--wide' : ''}`}>
       <nav className="ktc-nav ktc-nav--app" aria-label="Brand">
         <Link to="/" aria-label="Go to Home" style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 6px' }}>
           <img className="ktc-nav-logo" src="/ktc-logo.png" alt="KTC Container Terminal Corp" />
