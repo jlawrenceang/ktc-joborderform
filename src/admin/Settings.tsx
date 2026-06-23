@@ -45,6 +45,7 @@ export default function Settings() {
   const { broker: me } = useBroker()
   const isOwner = !!me?.is_owner
   const isRootOwner = !!me?.is_root_owner
+  const [tab, setTab] = useState<'pricing' | 'ops' | 'access' | 'system'>('pricing')
   const [staff, setStaff] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
   const [suEmail, setSuEmail] = useState('')
@@ -544,10 +545,19 @@ export default function Settings() {
         <LangToggle />
       </div>
 
-      {isOwner && <TestPushCard />}
-      {isOwner && <TestEmailCard />}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        <button type="button" onClick={() => setTab('pricing')} className={tab === 'pricing' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Pricing & tariff')}</button>
+        <button type="button" onClick={() => setTab('ops')} className={tab === 'ops' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Operations')}</button>
+        <button type="button" onClick={() => setTab('access')} className={tab === 'access' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Access & staff')}</button>
+        {isOwner && (
+          <button type="button" onClick={() => setTab('system')} className={tab === 'system' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('System')}</button>
+        )}
+      </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      {tab === 'system' && isOwner && <TestPushCard />}
+      {tab === 'system' && isOwner && <TestEmailCard />}
+
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'access' ? undefined : 'none' }}>
         <h1 className="ktc-title">{t('Staff & access')}</h1>
         <p className="ktc-sub" style={{ marginBottom: 20 }}>
           {t('Internal KTC staff with admin access. Managed separately from brokers.')}
@@ -591,7 +601,7 @@ export default function Settings() {
       </div>
 
       {isOwner && (
-        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'ops' ? undefined : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <div style={{ maxWidth: 460 }}>
               <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Customer notification emails')}</h2>
@@ -617,7 +627,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Service rates & fees')}</h2>
@@ -739,7 +749,7 @@ export default function Settings() {
       </div>
 
       {isRootOwner && (
-        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'access' ? undefined : 'none' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Owner access (root owner only)')}</h2>
           <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13, lineHeight: 1.55 }}>
             {t('You are the root owner. You can grant or revoke OWNER access for other admin accounts. A secondary owner has every owner power EXCEPT minting owners — only you (root) can create owners. The root owner can’t be changed here.')}
@@ -765,7 +775,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Terminal tariff')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Per-container rates the Rate Calculator looks up. For each service, tick the conditions its rate depends on — leave all unticked for one uniform rate. Storage is special: domestic is a flat per-day rate by size; foreign is a progressive per-day band tariff. Amounts in ₱, VAT-exclusive (12% VAT is added on the subtotal).')}
@@ -821,25 +831,43 @@ export default function Settings() {
                 </div>
               ))}
             </div>
-            <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'grid', gap: 12 }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600 }}><OriginPill origin="foreign" size="sm" /> {t('Progressive per-day bands (charged cumulatively after the free days)')}</span>
-              {(['import', 'export', 'transhipment'] as const).map((tr) => (
-                <div key={tr} style={{ display: 'grid', gap: 4 }}>
-                  <span className="ktc-label" style={{ fontSize: 11.5, fontWeight: 700 }}>{t(tradeLabel(tr, 'foreign'))}</span>
-                  {(['20', '40'] as const).map((sz) => (
-                    <div key={sz} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-                      <span style={{ width: 40, fontSize: 11.5 }}>{t(sz === '20' ? '20ft' : '40ft')}</span>
-                      {storageTiers.filter((b) => b.trade === tr && b.size === sz).sort((a, b) => a.day_from - b.day_from).map((b) => (
-                        <span key={b.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11 }}>
-                          <span className="ktc-label" style={{ fontSize: 10.5, whiteSpace: 'nowrap' }}>{b.day_from}{b.day_to ? `–${b.day_to}` : '+'}</span>
-                          <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={b.rate ?? ''} placeholder="—"
-                            onChange={(e) => setTierRate(b.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 78, padding: '5px 6px' }} />
-                        </span>
-                      ))}
+              {(['import', 'export', 'transhipment'] as const).map((tr) => {
+                const bands = storageTiers.filter((b) => b.trade === tr && b.size === '20').sort((a, b) => a.day_from - b.day_from)
+                return (
+                  <div key={tr} style={{ display: 'grid', gap: 6 }}>
+                    <span className="ktc-label" style={{ fontSize: 12.5, fontWeight: 700 }}>{t(tradeLabel(tr, 'foreign'))}</span>
+                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      <table style={{ borderCollapse: 'collapse', fontSize: 12.5 }}>
+                        <thead>
+                          <tr>
+                            <th className="ktc-label" style={{ textAlign: 'left', padding: '4px 12px 6px 0', fontWeight: 600 }}>{t('Days')}</th>
+                            {bands.map((b) => (
+                              <th key={b.id} className="ktc-label" style={{ padding: '4px 6px 6px', fontWeight: 600, whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {b.day_from}{b.day_to ? `–${b.day_to}` : '+'}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(['20', '40'] as const).map((sz) => (
+                            <tr key={sz}>
+                              <td className="ktc-label" style={{ padding: '3px 12px 3px 0', fontWeight: 600, whiteSpace: 'nowrap' }}>{t(sz === '20' ? '20ft' : '40ft')}</td>
+                              {storageTiers.filter((b) => b.trade === tr && b.size === sz).sort((a, b) => a.day_from - b.day_from).map((b) => (
+                                <td key={b.id} style={{ padding: '3px 4px' }}>
+                                  <input className="ktc-input ktc-mono" type="number" step="0.01" min="0" value={b.rate ?? ''} placeholder="—"
+                                    onChange={(e) => setTierRate(b.id, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 96, padding: '7px 8px', textAlign: 'right' }} />
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -851,7 +879,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Per-shipping-line charge rules')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Layer line-specific rules on top of the tariff: waive a charge, give a discount (% or ₱/container), or add a surcharge. Example: Maersk & MCC waive LoLo on export. Free storage days are set per line in the vessel schedule settings.')}
@@ -904,7 +932,7 @@ export default function Settings() {
         {ruleMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{ruleMsg}</p>}
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'ops' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Support contact channels')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Shown on the customer Help & Support page as “talk to an agent” deep links (call / SMS / Viber / email) with a prefilled message + ticket number. Leave a field blank to hide that channel.')}
@@ -926,7 +954,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'ops' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Payment details (customer payment page)')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Bank account + QRPH QR shown when a customer pays online. Online payments (GCash / Maya / banks) all route through the QR. Leave fields blank to hide them.')}
@@ -955,7 +983,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Free storage days per shipping line')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t("Drives the vessel schedule's")} <strong>{t('Last Free Day')}</strong> {t('(finish discharging + import days). Set for import and export.')}
@@ -993,7 +1021,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('RPS per-move rates')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.')}
@@ -1020,7 +1048,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Additional charge types')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
           {t('These feed the “Add charge” dropdown on a job order. The amount pre-fills, but staff can adjust it per charge. Leave an amount blank for “not set”. Deactivate to retire a type (it disappears from the dropdown); delete is only offered once inactive. Amounts in ₱.')}
@@ -1090,7 +1118,7 @@ export default function Settings() {
       </div>
 
       {isOwner && (
-        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'access' ? undefined : 'none' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Roles & gates')}</h2>
           <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
             {t('What each staff role may do. Owner-only — enforced server-side (RLS + RPCs), the UI just mirrors it.')}
@@ -1159,7 +1187,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="ktc-glass" style={{ padding: 18 }}>
+      <div className="ktc-glass" style={{ padding: 18, display: tab === 'access' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 600 }}>{t('Current staff')}</h2>
         {loading ? <span className="ktc-label">{t('Loading…')}</span> : staff.length === 0 ? (
           <div className="ktc-label" style={{ fontSize: 14 }}>{t('No staff yet.')}</div>
@@ -1215,7 +1243,7 @@ export default function Settings() {
       </div>
 
       {/* G12: cron / outbound / client-error monitor */}
-      <SystemHealth />
+      {tab === 'system' && <SystemHealth />}
     </AdminShell>
   )
 }

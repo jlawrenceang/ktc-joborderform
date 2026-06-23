@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.2 — 2026-06-23 (Settings: tabs + storage editor polish)
+
+- **Settings is now tabbed** — the long scroll is grouped into **Pricing & tariff · Operations · Access & staff · System** (Language stays pinned on top), so each category is its own short page.
+- **Storage tariff editor** restyled to a clean table (day-band columns × 20ft/40ft rows) using the app's standard input/label styling, mirroring the source rate sheet.
+
 ## v1.6.1 — 2026-06-23 (rate calculator: per-service granularity + tiered foreign storage)
 
 ### Terminal tariff / rate calculator (migration `0157`)
