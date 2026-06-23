@@ -221,8 +221,10 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     const v = typeof localStorage !== 'undefined' ? localStorage.getItem(VIEW_KEY) : null
     return v === 'list' ? 'list' : 'card'
   })
-  // List view: which order's detail/actions panel is expanded.
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  // The order whose full detail/actions modal is open (tracked by id so it stays
+  // in sync across reloads; mirrors MyJobOrders' `selected`).
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = selectedId ? orders.find((o) => o.id === selectedId) ?? null : null
 
   function setViewPersist(v: View) {
     setView(v)
@@ -251,6 +253,9 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
         setOrders(rows)
         setTotal(count ?? 0)
         setLoading(false)
+        // Keep an open detail modal in sync; close it if the order dropped out of
+        // the current filter/page (mirrors MyJobOrders' `selected` handling).
+        setSelectedId((prev) => (prev && rows.some((o) => o.id === prev) ? prev : null))
       })
   }
 
@@ -266,12 +271,21 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       .then(({ data }) => setChargeTypes(((data ?? []) as ChargeType[])))
   }, [])
 
+  // Escape closes the detail modal (matches backdrop / ✕). Only while one is open
+  // and no nested prompt (note / charge / message) is showing — those own Escape.
+  useEffect(() => {
+    if (!selectedId || modal || charge || msgOrder) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedId(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [selectedId, modal, charge, msgOrder])
+
   function changeFilter(f: Filter) {
-    setFilter(f); setPage(0); setLoading(true); setArchiveMsg(null); setExpandedId(null)
+    setFilter(f); setPage(0); setLoading(true); setArchiveMsg(null); setSelectedId(null)
     void load(f, 0)
   }
   function changePage(p: number) {
-    setPage(p); setLoading(true); setExpandedId(null)
+    setPage(p); setLoading(true); setSelectedId(null)
     void load(filter, p)
   }
 
@@ -492,6 +506,37 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
         {o.xray_performed_at && !o.service_invoice_no && (
           <span className="ktc-chip ktc-chip--info" title={new Date(o.xray_performed_at).toLocaleString()}>
             {t('X-ray done')}
+          </span>
+        )}
+      </>
+    )
+  }
+
+  // A FEW key secondary chips for the compact tile face (Batch + aging +
+  // edited-after-filing + proof-to-review). The full set lives in SecondaryChips
+  // inside the detail modal. Container count is rendered separately by the tile.
+  function CompactChips({ o }: { o: AdminJobOrder }) {
+    const isOpen = ['submitted', 'processing', 'on_hold'].includes(o.status)
+    const ageH = ageHours(o.created_at, o.status === 'completed' ? o.completed_at : null)
+    return (
+      <>
+        <span className="ktc-chip" title={t('Filed {date}', { date: new Date(o.created_at).toLocaleString() })}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
+        {isOpen && (
+          <span className="ktc-chip" title={t('X-ray working hours (9 AM–7 PM) since filed')}
+            style={ageH >= 20 ? { background: 'var(--c-h0-75-97)', color: 'var(--c-h0-60-40)' } : ageH >= 10 ? { background: 'var(--c-h40-90-96)', color: 'var(--c-h30-60-32)' } : undefined}>
+            {t('Open {age}', { age: formatAge(o.created_at) })}
+          </span>
+        )}
+        {o.last_customer_edit_at && isOpen && (
+          <span className="ktc-chip ktc-chip--warning" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            title={t('The customer changed this order after filing — please re-check it.') + ' · ' + new Date(o.last_customer_edit_at).toLocaleString()}>
+            <PencilIcon size={13} /> {t('Edited after filing')}
+          </span>
+        )}
+        {hasPaymentToReview(o) && (
+          <span className="ktc-chip ktc-chip--warning" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
+            title={t('A payment proof is waiting for the cashier to review.')}>
+            <ClockIcon size={13} /> {t('Payment proof to review')}
           </span>
         )}
       </>
@@ -760,11 +805,15 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     )
   }
 
-  // ── Card view (zoned) ──
+  // ── Card view (compact, click-to-open) ──
+  // Only a scannable summary on the face; the FULL detail + every action lives in
+  // the detail modal (opened on click). No body/actions render here.
   function OrderCard({ o }: { o: AdminJobOrder }) {
     const sp = STATUS_STYLE[o.status] ?? STATUS_STYLE.cancelled
+    const containers = (o.lines ?? []).length
     return (
-      <div style={{ padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+      <button type="button" onClick={() => setSelectedId(o.id)}
+        style={{ display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer', padding: '14px 16px', borderRadius: 14, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
         {/* (a) Header row: JO# · status · balance pill · invoice chip */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -778,65 +827,51 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
           <span className="ktc-label" style={{ fontSize: 12 }}>{new Date(o.created_at).toLocaleString()}</span>
         </div>
 
-        {/* (b) Meta line: customer · consignee · entry */}
+        {/* (b) Meta line: customer · consignee · entry · container count */}
         <div className="ktc-label" style={{ fontSize: 13, marginTop: 4 }}>
           {o.broker?.full_name || o.broker?.email || t('Unknown customer')}
           {' · '}{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
           {o.entry_number ? ` · ${t('Entry')} ${o.entry_number}` : ''}
+          {' · '}{t('{n} cntr', { n: containers })}
         </div>
 
-        {/* Secondary / aging / progress chips, grouped */}
+        {/* (c) A few key secondary chips (Batch + aging + cues) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginTop: 8 }}>
-          <SecondaryChips o={o} />
+          <CompactChips o={o} />
         </div>
-
-        {/* (c) Body + (d) footer actions */}
-        <OrderBody o={o} />
-      </div>
+      </button>
     )
   }
 
-  // ── List view (dense one-row-per-order; click to expand the card body) ──
+  // ── List view (compact one-row-per-order; click to open the detail modal) ──
   function OrderRow({ o }: { o: AdminJobOrder }) {
     const sp = STATUS_STYLE[o.status] ?? STATUS_STYLE.cancelled
-    const open = expandedId === o.id
     const containers = (o.lines ?? []).length
     return (
-      <div style={{ borderRadius: 12, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)', overflow: 'hidden' }}>
-        <button type="button" onClick={() => setExpandedId(open ? null : o.id)}
-          style={{ display: 'grid', gridTemplateColumns: 'minmax(96px,auto) auto 1fr auto', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer', border: 0, background: 'transparent', padding: '10px 14px' }}>
-          <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.jo_number ?? '—'}</b>
-          <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: sp.bg, color: sp.ink, whiteSpace: 'nowrap' }}>
-            {t(STATUS_LABEL[o.status] ?? o.status)}
+      <button type="button" onClick={() => setSelectedId(o.id)}
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(96px,auto) auto 1fr auto', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer', borderRadius: 12, border: '1px solid var(--glass-brd)', background: 'var(--c-w55)', padding: '10px 14px' }}>
+        <b className="ktc-mono" style={{ fontSize: 13.5 }}>{o.jo_number ?? '—'}</b>
+        <span style={{ fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: sp.bg, color: sp.ink, whiteSpace: 'nowrap' }}>
+          {t(STATUS_LABEL[o.status] ?? o.status)}
+        </span>
+        <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {o.broker?.full_name || o.broker?.email || t('Unknown customer')}
           </span>
-          <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {o.broker?.full_name || o.broker?.email || t('Unknown customer')}
-            </span>
-            <span className="ktc-label" style={{ fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
-              {' · '}{t('{n} cntr', { n: containers })}
-              {' · '}{t('Batch')}: {batchLabel(o.created_at, t)}
-            </span>
+          <span className="ktc-label" style={{ fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
+            {' · '}{t('{n} cntr', { n: containers })}
+            {' · '}{t('Batch')}: {batchLabel(o.created_at, t)}
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-            <PaymentPill o={o} />
-            <span aria-hidden style={{ display: 'inline-flex', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s', color: 'hsl(var(--ink-2))' }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
-            </span>
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+          <PaymentPill o={o} />
+          <InvoiceChip o={o} />
+          <span aria-hidden style={{ display: 'inline-flex', color: 'hsl(var(--ink-2))' }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18" /></svg>
           </span>
-        </button>
-        {open && (
-          <div style={{ padding: '4px 14px 14px', borderTop: '1px solid var(--glass-brd)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
-              <InvoiceChip o={o} />
-              <SecondaryChips o={o} />
-            </div>
-            {o.entry_number && <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 8 }}>{t('Entry')} {o.entry_number}</div>}
-            <OrderBody o={o} />
-          </div>
-        )}
-      </div>
+        </span>
+      </button>
     )
   }
 
@@ -916,6 +951,51 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       </div>
 
       {viewerModal}
+
+      {/* Detail modal — the FULL order detail + every action. The tiles are just a
+          compact summary; clicking one opens this. Mirrors MyJobOrders' pattern. */}
+      {selected && (() => {
+        const o = selected
+        const sp = STATUS_STYLE[o.status] ?? STATUS_STYLE.cancelled
+        const close = () => setSelectedId(null)
+        return (
+          <div className="ktc-modal-backdrop" onClick={close}>
+            <div className="ktc-glass ktc-modal-panel" onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: 620, maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+              {/* Header: JO# · status · payment pill */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '15px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
+                  <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? '—'}</b>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, background: sp.bg, color: sp.ink, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+                    {t(STATUS_LABEL[o.status] ?? o.status)}
+                  </span>
+                  <PaymentPill o={o} />
+                </div>
+                <button type="button" aria-label={t('Close')} onClick={close}
+                  style={{ fontSize: 20, lineHeight: 1, border: 0, background: 'none', cursor: 'pointer', color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>✕</button>
+              </div>
+
+              <div style={{ overflowY: 'auto', padding: '16px 20px' }}>
+                {/* Meta line: customer · consignee · entry */}
+                <div className="ktc-label" style={{ fontSize: 13 }}>
+                  {o.broker?.full_name || o.broker?.email || t('Unknown customer')}
+                  {' · '}{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('no consignee')}
+                  {o.entry_number ? ` · ${t('Entry')} ${o.entry_number}` : ''}
+                </div>
+
+                {/* Full secondary / aging / progress chips + ERP invoice chip */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginTop: 8 }}>
+                  <InvoiceChip o={o} />
+                  <SecondaryChips o={o} />
+                </div>
+
+                {/* Containers, supplements, notes, release tracks, actions, timeline */}
+                <OrderBody o={o} />
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {charge && (
         <div className="ktc-modal-backdrop" onClick={() => { if (!busyId) setCharge(null) }}>

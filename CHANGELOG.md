@@ -4,6 +4,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.6.3 — 2026-06-23 (vessel de-dup + compact admin JO tiles)
+
+- **Vessel list de-duplicated (`0158`):** the sync derives `vessel_visit` as `<name> <voyage> <week-or-arrival-date>`, so when ops filled the sheet's week column for a row first synced without it, the key flipped (`…2026-06-21` → `…W26`) and a **second row** was inserted for the same visit — the duplicate entries. Migration collapses existing dupes (keep newest) and adds a trigger enforcing **one row per (vessel_name, voyage_number)** on every insert/update — duplicates can't recur regardless of key format.
+- **Compact admin job-order tiles:** the admin list now shows compact, scannable tiles (JO# · status · balance pill · ERP chip · customer/consignee · a few key chips); **clicking a tile opens a detail modal** with the full order (containers, supplements, release tracks, notes, timeline) and all actions behind their gates. The Cards/List toggle is retained.
+
 ## v1.6.2 — 2026-06-23 (Settings: tabs + storage editor polish)
 
 - **Settings is now tabbed** — the long scroll is grouped into **Pricing & tariff · Operations · Access & staff · System** (Language stays pinned on top), so each category is its own short page.
