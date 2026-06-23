@@ -57,14 +57,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 ## v1.6.1 — 2026-06-23 (rate calculator: per-service granularity + tiered foreign storage)
 
-### Terminal tariff / rate calculator (migration `0157`)
+### Terminal tariff / rate calculator (migration `0157`) — decision in [ADR-0027](docs/adr/0027-per-service-rate-granularity-and-tiered-foreign-storage.md)
 - **Per-service rate granularity:** each terminal service (arrastre / wharfage / LoLo / weighing) configures which conditions its rate varies by — any subset of origin / size / fill / kind, or **uniform**. The Settings editor shows only the inputs for the ticked conditions and **fans the value out** to the underlying `terminal_rates` cells, so the calculator's full-key lookup is unchanged. `terminal_rate_config` seeded from the live data: arrastre = origin×size×fill, weighing/wharfage = size, LoLo = uniform. Existing rates were normalized to each service's granularity.
 - **Tiered foreign storage (`storage_tiers`):** foreign storage is a **progressive per-day band tariff** per trade direction (Import / Export / Transhipment) × size, charged **cumulatively** after the line's free days (each band's width from its day range, escalating). **Domestic** storage stays a flat per-day rate by size. The calculator computes the cumulative tiered total; **empty** containers use the laden rates. A dedicated storage editor in Settings edits the domestic flat rates + the foreign band rates.
 - **Transhipment** added as a foreign trade option in the calculator (with its own storage bands); domestic stays Inbound/Outbound only.
 
 ## v1.6.0 — 2026-06-23 (JO lifecycle overhaul, dual-view lists, unified payment, fee + terminology cleanups)
 
-### Job-order lifecycle, payments & UX overhaul (migrations `0151`–`0156`)
+### Job-order lifecycle, payments & UX overhaul (migrations `0151`–`0156`) — decision in [ADR-0026](docs/adr/0026-terminal-reject-field-targeted-needs-info-and-cancel-cascades.md)
 - **Vessel is ops-only:** removed the customer "request a vessel" surfaces (My Requests section + resubmit modal + `vessel_*` bell routing); the JO form now just reads *"If the vessel isn't listed here, please call KTC customer service for updates."* Ops keeps the vessel-request review panel.
 - **Serving number retired for customers (`0151`):** dropped the `serving_numbers_notify` trigger so customers / CSR no longer get a "Serving number #N" notification (copy scrubbed to batch + aging). The **ops X-ray queue keeps its number**.
 - **Reject is terminal; on-hold is field-targeted (`0154`):** a rejected JO is closed (no resubmit) with the reason shown; an on-hold JO now carries `needs_fields` — staff tick exactly which fields (consignee / entry / vessel / containers) the customer must re-enter, and only those unlock on resubmit (`hold_job_order` + `resubmit_needs_info`).
