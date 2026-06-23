@@ -381,13 +381,10 @@ export default function MyJobOrders() {
                       </span>
                       <span className="ktc-label" style={{ fontSize: 12.5, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{fmtDate(o.created_at)}</span>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '3px 12px', marginTop: 9, fontSize: 13, alignItems: 'baseline' }}>
-                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Consignee')}</span>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}</span>
-                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Vessel & Voyage')}</span>
+                    <div style={{ display: 'grid', gap: 3, marginTop: 9, fontSize: 13 }}>
+                      <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'}</span>
-                      <span className="ktc-label" style={{ fontSize: 11.5 }}>{t('Containers')}</span>
-                      <span>{t('{count} container vans', { count })}</span>
+                      <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('{count} container vans', { count })}</span>
                     </div>
                   </button>
                 )
@@ -404,7 +401,7 @@ export default function MyJobOrders() {
                       <span className="ktc-label" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(o.created_at)}</span>
                     </div>
                     <div className="ktc-label" style={{ fontSize: 12.5, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : t('No consignee')}
+                      {o.consignee ? o.consignee.name : t('No consignee')}
                     </div>
                     <div className="ktc-label" style={{ fontSize: 12, marginTop: 1 }}>{t('{count} container vans', { count })}</div>
                   </button>
@@ -460,7 +457,7 @@ export default function MyJobOrders() {
                 <>
                 {/* Meta */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px 16px', fontSize: 13 }}>
-                  <Meta label={t('Consignee')} value={o.consignee ? `${o.consignee.code} – ${o.consignee.name}` : '—'} span2 />
+                  <Meta label={t('Consignee')} value={o.consignee ? o.consignee.name : '—'} span2 />
                   <Meta label={t('Entry Number')} value={o.entry_number ?? '—'} />
                   <Meta label={t('Vessel & Voyage')} value={o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'} />
                   <Meta label={t('Date filed')} value={fmtDate(o.created_at)} />
