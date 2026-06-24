@@ -34,6 +34,8 @@ Rule of thumb: if you are asking *"what is the rule?"* open `docs/agent/*`. If y
 
 ## Start here
 
+**New here?** Read [[Business Context]] first — who we are, who uses it, and what we're building (business background + product scope).
+
 1. [[Current State]] — what is live right now (runtime-aligned snapshot)
 2. [[Roadmap]] — phased plan (Now / Next / Later / Parked)
 3. [[Pending Items]] — backlog

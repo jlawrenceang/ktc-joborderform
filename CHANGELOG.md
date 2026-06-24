@@ -4,6 +4,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## Unreleased
+
+- **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
+
 ## v1.6.12 — 2026-06-23 (My Job Orders: "Cleared for release" badge)
 
 - Added a green **"✓ Cleared for release"** badge (on the card + detail modal) that lights up only when **both gates converge** — all services done **and** payment confirmed — derived from `releaseState()` (the two-gate model), never stored.
