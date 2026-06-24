@@ -15,6 +15,7 @@ This repository uses **runtime-first documentation governance** (governing rules
 
 - `CLAUDE.md` — top-level constitution.
 - `AGENTS.md` — short Codex-oriented mirror.
+- `docs/obsidian-vault/01-System/Business Context.md` — canonical business background (who we are / who uses it) + product scope (what we're building). Read this first for domain orientation.
 - `docs/agent/` — modular instruction reference (one concern per file). Start at `docs/agent/README.md`. Doc governance itself: `docs/agent/doc-governance.md`.
 
 ## 2) Decision records

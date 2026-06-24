@@ -5,6 +5,7 @@ Codex-oriented mirror of `CLAUDE.md`. Read `CLAUDE.md` first — it is the const
 ## Pointers
 
 - Constitution: `CLAUDE.md`.
+- Business background + product scope (read first for domain orientation): `docs/obsidian-vault/01-System/Business Context.md`.
 - Modular rule reference: `docs/agent/*` (one concern per file; start at `docs/agent/README.md`).
 - Live memory: `docs/obsidian-vault/` (current state, roadmap, sessions, per-core pages).
 - Decision history: `docs/adr/`.
