@@ -1,7 +1,7 @@
 import { Suspense, type ReactNode } from 'react'
 import { lazyWithReload } from './lib/lazyWithReload'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './lib/AuthContext'
+import { AuthProvider, useAuth } from './lib/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import TourProvider from './components/TourProvider'
 import LanguageGate from './components/LanguageGate'
@@ -11,6 +11,7 @@ import ServerBusyBanner from './components/ServerBusyBanner'
 import { useBroker } from './lib/useBroker'
 import { hasAdminAccess } from './lib/types'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
 import Confirmed from './pages/Confirmed'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
@@ -85,6 +86,21 @@ function RoleLanding() {
   return <Home />
 }
 
+// Root route: a signed-out visitor sees the public Landing; a signed-in session
+// goes straight to its role landing (no landing detour, no forced accept gate).
+function RootGate() {
+  const { session, loading } = useAuth()
+  if (loading) {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">Loading…</span>
+      </div>
+    )
+  }
+  if (!session) return <Landing />
+  return <Protected><RoleLanding /></Protected>
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -118,7 +134,7 @@ export default function App() {
           <Route path="/privacy" element={<Navigate to="/agreement" replace />} />
 
           {/* Broker portal */}
-          <Route path="/" element={<Protected><RoleLanding /></Protected>} />
+          <Route path="/" element={<RootGate />} />
           <Route path="/account" element={<Protected><Account /></Protected>} />
           <Route path="/verify-id" element={<Protected><VerifyId /></Protected>} />
           <Route path="/job-order" element={<Protected><JobOrder /></Protected>} />
