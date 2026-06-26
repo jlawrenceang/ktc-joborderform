@@ -8,9 +8,8 @@ import { VERSION_LABEL, VERSION_FULL } from '../version'
 import { MarkdownBody } from '../components/MarkdownDoc'
 import Notice from '../components/Notice'
 import LangToggle from '../components/LangToggle'
-import NeedHelp from '../components/NeedHelp'
 import PasswordInput from '../components/PasswordInput'
-import OrgInfo from '../components/OrgInfo'
+import PublicBrand from '../components/PublicBrand'
 import PasswordStrength from '../components/PasswordStrength'
 import { passwordIssue } from '../lib/validation'
 import { useT } from '../lib/i18n'
@@ -270,12 +269,11 @@ export default function Login() {
         {/* Desktop-only brand panel — gives sign-in / create-account the same intentional
             two-column treatment as the landing (hidden on phone, where the panel logo shows). */}
         <aside className="ktc-auth__brand">
-          <img src="/ktc-logo.png" alt="" className="ktc-auth__brand-logo" />
+          <PublicBrand logoHeight={52} />
           <h2 className="ktc-auth__brand-title">{t('KTC Online Portal')}</h2>
           <p className="ktc-auth__brand-lede">
             {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
           </p>
-          <OrgInfo style={{ marginTop: 4 }} />
         </aside>
         <div className="ktc-auth__panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 7, marginBottom: 10 }}>
@@ -284,8 +282,7 @@ export default function Login() {
           </svg>
           <LangToggle />
         </div>
-        <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" className="ktc-auth__panel-logo" />
-        <OrgInfo className="ktc-auth__panel-org" style={{ marginBottom: 16, marginTop: -8 }} />
+        <div className="ktc-auth__panel-brand"><PublicBrand logoHeight={50} /></div>
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>
@@ -449,8 +446,7 @@ export default function Login() {
           </button>
         </p>
 
-        <NeedHelp align="center" style={{ marginTop: 14, fontSize: 12 }} />
-        <div className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.78, textAlign: 'center', lineHeight: 1.7 }}>
+        <div className="ktc-label" style={{ marginTop: 14, fontSize: 11.5, opacity: 0.78, textAlign: 'center', lineHeight: 1.7 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

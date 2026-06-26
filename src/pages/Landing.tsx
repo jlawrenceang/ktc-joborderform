@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
-import NeedHelp from '../components/NeedHelp'
-import OrgInfo from '../components/OrgInfo'
+import PublicBrand from '../components/PublicBrand'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
-import { ORG } from '../lib/org'
 
 // Public landing — what an unauthenticated visitor sees at "/" (App routes a
 // signed-in session straight to the role landing instead). Orientation +
@@ -50,13 +48,7 @@ export default function Landing() {
       <main className="ktc-glass ktc-rise ktc-landing__card">
         {/* Header — logo + language (full width above the split) */}
         <div className="ktc-landing__top">
-          <div className="ktc-landing__brand">
-            <img src="/ktc-logo.png" alt={ORG.name} style={{ height: 50 }} />
-            <div className="ktc-landing__brand-side">
-              <OrgInfo />
-              <NeedHelp />
-            </div>
-          </div>
+          <PublicBrand />
           <LangToggle />
         </div>
 
