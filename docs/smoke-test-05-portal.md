@@ -406,6 +406,36 @@ If any preflight check fails, pause and fix first.
 
 ---
 
+## Lane M — Google sign-in onboarding + pending verify-only lockdown + consent gate (postdates the original ST05 draft)
+
+### Route M — Continue with Google → Finish registration → pending; verify-only lockdown; consent-gated filing/ticketing
+
+**Objective:** A customer can onboard through **Google OAuth**: from `/login`, **Continue with Google** → choose a Google account → land on a **Finish registration** step (contact number + Customer Agreement consent) → complete → enter as a **pending** customer (never staff, never auto-approved) — equivalent to the email/password pending state. A **pending** account is confined to the **verify-only** screen (vessel schedule / rates / consignees / filing all return nothing). **Filing and ticketing stay blocked until the agreement consent is recorded.**
+**Start state:** Logged out, on `/login`.
+
+> **Backstops (set before the lane):** the **Google provider is enabled** in Supabase Auth → Providers, and the **OAuth callback / redirect URL is allow-listed** in Supabase Auth → URL Configuration (and the Google Cloud OAuth client). A disabled provider or an un-allow-listed redirect must **fail closed** (clean error / no session), never half-create an account.
+> **Scope note:** this lane covers the Google-OAuth onboarding + verify-only pending lockdown that **postdate ST05's original draft** (as Lane L covers the `0141` redesign). The **verify-only lockdown is the current pending model** — it tightens **Lane A-3**'s earlier "pending files a held JO" step; reconcile against runtime at execution.
+
+| Action ID | Screen / Route | UI Action | Preconditions | Backend Owner | Expected State / Data | UI / Side Effects to Check | Guardrail Test | Result | Evidence / Notes |
+|---|---|---|---|---|---|---|---|---|---|
+| M-1 | `/login` | Click **Continue with Google** | logged out; Google provider enabled | `supabase.auth.signInWithOAuth({ provider: 'google' })` | browser redirects to Google's account chooser | the login/password form yields to the OAuth redirect; no password/CAPTCHA on this path | a **disabled** provider or an **un-allow-listed** redirect fails closed (clean error, no session) | | |
+| M-2 | Google → app callback | Choose a Google account | provider enabled; redirect allow-listed | Google OAuth → Supabase callback; `handle_new_user` | returns signed-in; a `customers` row is created **pending**, with **no** contact number / agreement consent yet | lands on **Finish registration**, not the portal | a brand-new Google identity (no consent/contact) is routed to Finish registration, never straight into the portal | | |
+| M-3 | Finish registration | Enter **contact number**; scroll-to-agree + tick the **Customer Agreement** consent; submit | first OAuth login, profile incomplete | update `customers.contact_number` + record agreement consent (version + timestamp) | contact number + consent stored on the customer row | **Finish** disabled until the contact number is valid **and** the consent is ticked (mirrors the email-register 2-tick gate) | the gate cannot be skipped — consent + contact are required to finish | | |
+| M-4 | `/` (verify-only) | Complete → land in the portal | consent recorded | — | enters as **`status='pending'`** — identical to the email/password pending state; never staff, never auto-approved | the verify-only screen + valid-ID upload prompt show | the Google path produces a **pending customer only** (no privilege escalation) | | |
+| M-5 | `/` (verify-only) · `/job-order` · vessel / rates / consignee views | As the pending account, try to reach the vessel schedule / rates / consignees / file a JO | pending customer | RLS + route guards | each returns **nothing** — only the verify-only screen renders; vessel schedule, rates, consignees, and filing all come back empty/blocked | no data flash on any route | the pending account is **confined to verify-only**; the data routes return empty under **RLS** (server-enforced, not just UI-hidden) | | |
+| M-6 | `/job-order` · `/support` | With consent **not yet** recorded (pre-Finish, or a wiped consent), attempt to **file a JO** and **open a support ticket** | consent not recorded | `file_job_orders` / `open_ticket` (+ guards) | both are **blocked** until the agreement consent is recorded | a "finish registration / agree to continue" prompt, not a silent failure | filing and ticketing are **consent-gated** — refused without a recorded consent | | |
+
+#### Route closure
+- [ ] Continue with Google → choose account → **Finish registration** (contact + consent) → enters as a **pending** customer (never staff / auto-approved)
+- [ ] Backstops hold: provider enabled + redirect allow-listed; a missing one **fails closed**
+- [ ] Pending account is confined to the **verify-only** screen — vessel schedule / rates / consignees / filing all return nothing (RLS-enforced)
+- [ ] Filing + ticketing are **blocked until consent is recorded**
+
+#### Lane closeout
+- [ ] Google sign-in onboarding + pending verify-only lockdown + consent gate coherent end-to-end
+
+---
+
 ## Server-side backbone verification (read-only, 2026-06-23)
 
 Ahead of the manual UI run, the **SECURITY DEFINER RPC bodies** behind lanes A · C · D · E · F · I were inspected read-only via the Supabase Management API against the KTC project (no prod data created). This confirms the *server-enforced* half of each lane's guardrails so the manual run can focus on the UI/side-effect half. All 24 target functions were found; key confirmations:
@@ -446,6 +476,7 @@ Ahead of the manual UI run, the **SECURITY DEFINER RPC bodies** behind lanes A �
 | J — Roles & gates | | | |
 | K — Owner / security basics | | | |
 | L — Container rate matrix (calculator + admin tariff, 0141) | | | |
+| M — Google sign-in + pending verify-only lockdown + consent gate | | | |
 
 **Overall go / no-go:** ____
 

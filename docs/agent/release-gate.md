@@ -22,6 +22,7 @@ Every plan, implementation, review, and merge must explicitly pass all six check
 ## 4. Code quality and change hygiene
 - Keep changes modular, typed, compact, and auditable. `npm run lint` (tsc) must pass clean.
 - Avoid large jumbled mutations and dead/duplicate paths.
+- **Complexity justification.** Any abstraction beyond the minimal that solves the task must be defended in one written line — *rule bent · why · simpler alternative rejected* — or it is stripped (First Principle 2: simplicity first).
 - Doc updates belong in the same change as the code (see `doc-governance.md`).
 
 ## 5. End-to-end workflow cohesion
@@ -31,7 +32,7 @@ Every plan, implementation, review, and merge must explicitly pass all six check
 
 ## 6. Release readiness and rollback discipline
 - Required checks: `npm run lint`, `npm run build`, and a targeted smoke test on the touched flow (see `testing-and-release.md`).
-- **For any change touching SQL/migrations**, also run `node scripts/check-security-invariants.mjs` — it fails the release if a `SECURITY DEFINER` trigger/internal helper became client-callable (the 0105 ACL rule, now a standing check) or the owner-guard trigger (`guard_broker_protected_fields`) is missing. A new internal/trigger definer function must `revoke … from public, anon, authenticated`.
+- **For any change touching SQL/migrations**, also run `node scripts/check-security-invariants.mjs` — it fails the release if a `SECURITY DEFINER` trigger/internal helper became client-callable (the 0105 ACL rule, now a standing check) or the owner-guard trigger (`guard_broker_protected_fields`) is missing. A new internal/trigger definer function must `revoke … from public, anon, authenticated`. This script is the repo's **negation backstop** — a deterministic check standing behind a hard prohibition (something that must *never* happen); reach for one whenever a rule can be written as "X must never be true."
 - For DB changes, record what migration was applied and how to reverse it.
 - Record assumptions, residual risks, and rollback steps before merge.
 

@@ -1,8 +1,8 @@
 # Testing and Release
 
-## Baseline checks
+## Pre-ship checks
 
-Before declaring a change ready:
+Before declaring a change ready (post-change — distinct from the pre-change *baseline-green* check in `coding-guardrails.md`):
 - `npm run lint` (= `tsc --noEmit`) — must be clean.
 - `npm run build` (= `tsc && vite build`) — must succeed.
 - A targeted smoke test on every touched flow (below).

@@ -6,6 +6,9 @@ When changing portal code:
 - Think like an operator first, developer second.
 - Protect access controls before improving UX.
 - Prefer small, grounded, verifiable fixes; fix root causes, not symptoms — no blind edits.
+- **No placeholders.** Ship full implementations — never a stub, mock, or `TODO` where real logic is required. If a piece genuinely can't be finished, flag it explicitly; don't leave a silent gap.
+- **Search before implementing.** Before writing new code, grep for the existing owning file / helper (see *Existing utilities* below) and extend it — don't fork a duplicate.
+- **Baseline-green before building.** At session start, confirm `npm run lint` / `npm run build` (and any fast tests) are green **before** touching anything, so any red afterward is attributable to your change.
 - Avoid unrelated redesign in the same change.
 - Verify code *and* runtime behavior before concluding (see `testing-and-release.md`).
 

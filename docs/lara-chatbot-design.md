@@ -151,6 +151,13 @@ From spec §12 — none block the design, but confirm so the build matches inten
 5. **De-dupe** short labels ("Back to menu", "How do I pay?") against existing keys before insert. (I'll do this.)
 6. **Launcher position** clears the mobile bottom tab-bar. (I'll verify the real tab-bar height.)
 
+## Deferred (owner to supply the guide later)
+
+Two release topics are intentionally **deferred** — for now Lara's release tile explains only the live online Release / Pull-out flow (ADR-0024):
+
+- **Release pre-advise / advance-notice** — not built; Lara gives no guidance on it until the feature ships (matches the `nodes.ts` release-tile comment + `CHANGELOG.md`).
+- **Document-verification guide content** — deferred; the **owner will supply the guide later**. Until then Lara's release nodes only name the live "Awaiting document check" step, not a detailed how-to.
+
 ## Build plan
 
 1. `types.ts` + `nodes.ts` (the registry) + the EN→TL keys.
