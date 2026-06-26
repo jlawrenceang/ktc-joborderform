@@ -5,14 +5,14 @@ Engineering work is shipped; what remains here is configuration, legal, and secu
 that only the owner can complete. Keep this current — tick items as they're done.
 
 ## 1. Legal / Data Privacy Act (RA 10173) — **deferred, must do around launch**
-- [ ] **Appoint a Data Protection Officer (DPO).** Can be an internal person. The
-      Customer Agreement (v4) now *commits* to this rather than falsely claiming it.
-      KTC processes the personal data of 1,000+ data subjects, so under the DPA this
-      is a legal obligation, not optional.
-- [ ] **Register with the National Privacy Commission (NPC).** Same basis. The
-      agreement commits to "complete NPC registration as required by law."
+- [x] **Designate a Data Protection Officer (DPO).** Owner (Jan Lawrence Ang) named
+      as DPO in the Customer Agreement (v4), interim. *Revisit if KTC wants a
+      dedicated DPO role later.*
+- [ ] **Register with the National Privacy Commission (NPC).** Deferred — the NPC
+      references were removed from the agreement for now, but for a controller of
+      1,000+ data subjects this remains a real DPA obligation to complete later.
 - [ ] **Set up a dedicated privacy/DPO mailbox** (e.g. `dpo@ktcterminal.com`) and
-      update the agreement contact. *Interim contact is `jla.ktcport@gmail.com`.*
+      update the agreement contact. *Interim DPO contact is `jla.ktcport@gmail.com`.*
 - [ ] **Confirm the liability-cap floor** — currently **₱100,000** (Agreement §5).
       A counsel-confirm item.
 - [ ] **Final PH-counsel pass on the Customer Agreement (v4).** The current text was

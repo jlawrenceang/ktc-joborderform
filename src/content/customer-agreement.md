@@ -39,17 +39,17 @@ You must not:
 
 KTC processes your personal data as a Personal Information Controller and is committed to handling it in line with the Data Privacy Act of 2012 (R.A. 10173) and its Implementing Rules and Regulations.
 
-- **Privacy contact:** for any data-privacy request or concern, contact KTC at **jla.ktcport@gmail.com**. KTC will appoint a Data Protection Officer and complete the applicable National Privacy Commission registration as required by law, and will update this contact accordingly.
+- **Data Protection Officer (DPO):** **Jan Lawrence Ang**, reachable at **jla.ktcport@gmail.com**, handles data-privacy requests and concerns.
 - **Data we collect:** your name, contact number, email, account credentials, **a valid government-issued ID you upload**, customer/company details, and the job-order and payment data you submit.
 - **Purposes:** to register and **verify your identity**, decide accreditation, process job orders and provide terminal services, compute and record charges, communicate with you, maintain security and prevent fraud, and comply with legal and lawful government requirements.
 - **Legal basis:** your **consent** (for identity verification using your uploaded ID and related processing), performance of this Agreement, and compliance with legal obligations.
 - **Security measures:** KTC implements **reasonable and appropriate organizational, physical, and technical safeguards** consistent with the DPA — including role-based access controls enforced at the database level, encryption in transit, restricted document storage with expiring access links, audit logging of account and order activity, two-factor authentication for administrative accounts, and confidentiality undertakings by personnel.
 - **Storage and processors:** data is stored in our managed cloud backend, with hosting and anti-abuse services acting as our processors under data-processing terms. Uploaded IDs are kept in restricted storage accessible only to **authorized KTC personnel**.
-- **Disclosure:** we do not sell your data. We may share it with the above processors, and with government authorities/regulators (e.g. BOC, PDEA, NPC, law enforcement) when required by law.
+- **Disclosure:** we do not sell your data. We may share it with the above processors, and with government authorities/regulators (e.g. BOC, PDEA, law enforcement) when required by law.
 - **International transfer:** our providers may process data on servers outside the Philippines; KTC takes steps consistent with the DPA to keep it protected.
-- **Breach notification:** where a personal-data breach requires notification under the DPA and NPC rules, KTC will notify the NPC and affected data subjects within the periods required by law.
+- **Breach notification:** where a personal-data breach requires notification under the DPA, KTC will notify the relevant authorities and affected data subjects within the periods required by law.
 - **Retention:** your **uploaded valid ID and any supporting documents are held only briefly — for identity verification — and are automatically and securely deleted no later than 3 days after upload**. Other account and job-order data is kept while your account is active and as required by law (including customs and tax record-keeping rules), then securely deleted or anonymized.
-- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the NPC** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact KTC at **jla.ktcport@gmail.com** (withdrawal may end your Portal access and does not affect prior processing).
+- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the relevant data protection authority** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact KTC at **jla.ktcport@gmail.com** (withdrawal may end your Portal access and does not affect prior processing).
 - **Consent:** by accepting this Agreement you **consent to KTC's collection and processing of your personal data, including the valid government-issued ID you upload**, for the purposes above.
 
 ## 5. Service, Liability, and Indemnity

@@ -1823,4 +1823,11 @@ export const tl: Record<string, string> = {
   "Please read and agree to the Customer Agreement to continue.": "Pakibasa at sang-ayunan ang Customer Agreement para magpatuloy.",
   "Complete registration": "Kumpletuhin ang registration",
   "Type the details for KTC…": "I-type ang mga detalye para sa KTC…",
+  "Needs your attention": "Nangangailangan ng inyong atensyon",
+  "Pending consignee requests": "Mga nakabinbing kahilingan sa consignee",
+  "All caught up — nothing is waiting for your action.": "Wala nang nakabinbin — walang naghihintay sa inyong aksyon.",
+  "View all": "Tingnan lahat",
+  "(no name)": "(walang pangalan)",
+  "The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.": "Ang online service desk ng KTC Container Terminal Corp. — i-file at subaybayan ang inyong terminal at port-services na trabaho.",
+  "Create an account to begin accreditation. KTC staff accounts are invite-only.": "Gumawa ng account para simulan ang accreditation. Ang mga KTC staff account ay sa imbitasyon lamang.",
 }

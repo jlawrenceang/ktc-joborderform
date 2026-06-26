@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import AdminShell from './AdminShell'
 import { supabase } from '../lib/supabase'
@@ -21,6 +21,10 @@ interface Stats {
   jobOrders: number
 }
 
+interface AcctRow { id: string; full_name: string | null; customer_code: string | null; created_at: string }
+interface ConsRow { id: string; name: string | null; created_at: string }
+interface Queue { accounts: AcctRow[]; consignees: ConsRow[] }
+
 const cards: { key: keyof Stats; label: string; to: string; accent?: boolean }[] = [
   { key: 'pendingAccounts', label: 'Accounts awaiting approval', to: '/admin/approvals', accent: true },
   { key: 'pendingConsignees', label: 'Consignees pending', to: '/admin/consignees', accent: true },
@@ -29,9 +33,14 @@ const cards: { key: keyof Stats; label: string; to: string; accent?: boolean }[]
   { key: 'jobOrders', label: 'Open job orders', to: '/admin/job-orders' },
 ]
 
+function shortDate(d: string): string {
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
 export default function Dashboard() {
   const { t } = useT()
   const [stats, setStats] = useState<Stats | null>(null)
+  const [queue, setQueue] = useState<Queue | null>(null)
   usePageTour('dashboard', dashboardSteps)
 
   useEffect(() => {
@@ -48,6 +57,19 @@ export default function Dashboard() {
     ]).then(([pendingAccounts, pendingConsignees, brokers, consignees, jobOrders]) =>
       setStats({ pendingAccounts, pendingConsignees, brokers, consignees, jobOrders }),
     )
+
+    // The actual pending work — surfaced as drill-down rows below the counts, so the
+    // dashboard lands the admin on the queue itself, not just a scoreboard.
+    Promise.all([
+      supabase.from('customers').select('id, full_name, customer_code, created_at')
+        .eq('is_admin', false).eq('is_owner', false).is('staff_role', null)
+        .eq('status', 'pending').order('created_at', { ascending: true }).limit(5),
+      supabase.from('consignees').select('id, name, created_at')
+        .eq('status', 'pending').order('created_at', { ascending: true }).limit(5),
+    ]).then(([a, c]) => setQueue({
+      accounts: (a.data as AcctRow[] | null) ?? [],
+      consignees: (c.data as ConsRow[] | null) ?? [],
+    }))
   }, [])
 
   return (
@@ -82,6 +104,67 @@ export default function Dashboard() {
           )
         })}
       </div>
+
+      {/* Needs your attention — the actual pending work as clickable drill-down rows,
+          so the dashboard is a work surface (act on the queue), not just a scoreboard. */}
+      <h2 className="ktc-home-greet" style={{ fontSize: 17, margin: '22px 0 10px' }}>
+        {t('Needs your attention')}
+      </h2>
+      <div className="ktc-glass ktc-card" style={{ padding: 0, overflow: 'hidden' }}>
+        {queue === null ? (
+          <div className="ktc-label" style={{ padding: 16 }}>{t('Loading…')}</div>
+        ) : queue.accounts.length === 0 && queue.consignees.length === 0 ? (
+          <div className="ktc-label" style={{ padding: '22px 16px', textAlign: 'center' }}>
+            ✓ {t('All caught up — nothing is waiting for your action.')}
+          </div>
+        ) : (
+          <>
+            {queue.accounts.length > 0 && (
+              <QueueSection t={t} title={t('Accounts awaiting approval')} count={stats?.pendingAccounts ?? queue.accounts.length} to="/admin/approvals">
+                {queue.accounts.map((a) => (
+                  <QueueRow key={a.id} to="/admin/approvals"
+                    main={a.full_name || a.customer_code || t('(no name)')}
+                    sub={a.full_name && a.customer_code ? a.customer_code : undefined}
+                    date={shortDate(a.created_at)} />
+                ))}
+              </QueueSection>
+            )}
+            {queue.consignees.length > 0 && (
+              <QueueSection t={t} title={t('Pending consignee requests')} count={stats?.pendingConsignees ?? queue.consignees.length} to="/admin/consignees">
+                {queue.consignees.map((c) => (
+                  <QueueRow key={c.id} to="/admin/consignees" main={c.name || t('(no name)')} date={shortDate(c.created_at)} />
+                ))}
+              </QueueSection>
+            )}
+          </>
+        )}
+      </div>
     </AdminShell>
+  )
+}
+
+function QueueSection({ t, title, count, to, children }: { t: (s: string) => string; title: string; count: number; to: string; children: ReactNode }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--glass-brd)', background: 'var(--c-w55)' }}>
+        <span style={{ fontSize: 13, fontWeight: 650 }}>
+          {title} <span className="ktc-label" style={{ fontWeight: 500 }}>· {count}</span>
+        </span>
+        <Link to={to} className="ktc-link" style={{ fontSize: 12.5, flex: '0 0 auto' }}>{t('View all')} →</Link>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function QueueRow({ to, main, sub, date }: { to: string; main: string; sub?: string; date: string }) {
+  return (
+    <Link to={to} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--glass-brd)', textDecoration: 'none', color: 'inherit' }}>
+      <span style={{ flex: 1, minWidth: 0, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {main}{sub ? <span className="ktc-label" style={{ marginLeft: 6 }}>· {sub}</span> : null}
+      </span>
+      <span className="ktc-label" style={{ fontSize: 11.5, flex: '0 0 auto' }}>{date}</span>
+      <span aria-hidden style={{ color: 'hsl(var(--ink-2))', flex: '0 0 auto' }}>›</span>
+    </Link>
   )
 }

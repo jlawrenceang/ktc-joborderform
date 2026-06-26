@@ -1423,15 +1423,15 @@
   z-index: 2;
   width: 100%;
   max-width: 620px;
-  padding: 32px 34px 28px;
-  margin-top: 26vh;            /* mobile: clears a terminal-photo hero band up top */
+  padding: 22px 26px 16px;
+  margin-top: 9vh;            /* mobile: clears a slim terminal-photo hero band up top */
 }
 .ktc-landing__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 11px;
 }
 .ktc-landing__grid {
   display: grid;
@@ -1459,7 +1459,7 @@
 .ktc-landing__service {
   display: flex;
   gap: 13px;
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--glass-brd);
 }
 .ktc-landing__service-bar {
@@ -1473,11 +1473,37 @@
   font-weight: 650;
   letter-spacing: -0.01em;
 }
+.ktc-landing__service-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+.ktc-landing__service-chev {
+  flex: 0 0 auto;
+  color: hsl(var(--ink-2));
+  transition: transform 0.18s ease;
+}
+.ktc-landing__service-head[aria-expanded='true'] .ktc-landing__service-chev {
+  transform: rotate(180deg);
+}
 .ktc-landing__service-body {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 13px;
   line-height: 1.5;
   color: hsl(var(--ink-2));
+  display: none;            /* phone: collapsed — tap the title to reveal */
+}
+.ktc-landing__service-body.is-open {
+  display: block;
 }
 .ktc-landing__access {
   display: grid;
@@ -1502,8 +1528,8 @@
   color: hsl(var(--ink-2));
 }
 .ktc-landing__foot {
-  margin-top: 22px;
-  padding-top: 14px;
+  margin-top: 14px;
+  padding-top: 10px;
   border-top: 1px solid var(--glass-brd);
   display: flex;
   flex-wrap: wrap;
@@ -1547,4 +1573,8 @@
   .ktc-landing__services {
     margin-bottom: 0;
   }
+  /* descriptions always shown on desktop; the collapse is a phone affordance */
+  .ktc-landing__service-body { display: block; }
+  .ktc-landing__service-chev { display: none; }
+  .ktc-landing__service-head { cursor: default; }
 }
