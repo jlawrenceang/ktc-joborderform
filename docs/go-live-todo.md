@@ -21,8 +21,10 @@ that only the owner can complete. Keep this current — tick items as they're do
       public launch.
 
 ## 2. Security — **re-enable before the staff dry-run** (down for testing)
-- [ ] **Re-enable Turnstile** (server-enforced Managed CAPTCHA). Also blocks bot
-      signups, alongside the disposable-email block (live).
+- [x] **Turnstile re-enabled + server-enforcement verified 2026-06-26** — a no-token
+      login is rejected `captcha_failed`; site key (`0x4AAAAAA…`) live in Vercel
+      Production. *Final check pending: do one real login on the live site to confirm
+      the Supabase secret pairs with the Vercel site key (same Cloudflare widget).*
 - [ ] **Re-enable MFA** and enroll the owner + staff (`/admin/security`).
 - [ ] **Rotate the owner password** (`jlawrenceang@gmail.com`).
 
