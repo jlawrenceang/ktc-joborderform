@@ -10,6 +10,13 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.28 — 2026-06-26 (Landing polish: regular CTAs, fits-one-screen, mobile photo hero)
+
+Owner feedback + the surface roast. The desktop sign-in CTAs were rendering as ~368×160px slabs — the desktop column layout turned the `160px` flex-basis into a button *height*. Fixed:
+- **Regular auto-height buttons** (full rail width), and the access panel is centered to kill the ~135px bottom void that stranded the footer.
+- **Desktop card fits one screen** — tighter spacing, no scroll.
+- **Mobile photo hero band** — the terminal slideshow now runs as a real band across the top of the first viewport (it was collapsing to a ~30px strip behind a full-height card).
+
 ## v1.6.27 — 2026-06-26 (Customer Agreement v4 + disposable-email block)
 
 **Customer Agreement → v4.0** — redlined after a PH-legal-framework review (DPA, e-Commerce Act, Civil Code, fairness) caught three blockers, all fixed:

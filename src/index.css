@@ -1387,7 +1387,9 @@
   position: relative;
   min-height: 100%;
   display: grid;
-  place-items: center;
+  /* Mobile: a real terminal-photo hero band runs across the top (the card is
+     pushed down by its margin); desktop re-centers the wide card (below). */
+  place-items: start center;
   padding: 24px;
   /* Dark base so first paint (before the photo decodes) matches the scrim mood
      rather than flashing the light canvas. */
@@ -1422,13 +1424,14 @@
   width: 100%;
   max-width: 620px;
   padding: 32px 34px 28px;
+  margin-top: 26vh;            /* mobile: clears a terminal-photo hero band up top */
 }
 .ktc-landing__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
 }
 .ktc-landing__grid {
   display: grid;
@@ -1449,14 +1452,14 @@
 }
 .ktc-landing__services {
   list-style: none;
-  margin: 24px 0 4px;
+  margin: 16px 0 2px;
   padding: 0;
   border-top: 1px solid var(--glass-brd);
 }
 .ktc-landing__service {
   display: flex;
-  gap: 14px;
-  padding: 14px 0;
+  gap: 13px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--glass-brd);
 }
 .ktc-landing__service-bar {
@@ -1513,9 +1516,11 @@
    The access rail's CTAs stack full-width so the two paths in read as a clear,
    intentional sign-in panel rather than a cramped button row. */
 @media (min-width: 900px) {
+  .ktc-landing { place-items: center; }   /* desktop re-centers the wide card */
   .ktc-landing__card {
     max-width: 1040px;
-    padding: 40px 46px 32px;
+    padding: 32px 46px 26px;
+    margin-top: 0;            /* desktop: centered, no band */
   }
   .ktc-landing__grid {
     grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
@@ -1528,9 +1533,16 @@
   .ktc-landing__access {
     padding-left: 46px;
     border-left: 1px solid var(--glass-brd);
+    align-content: center;            /* center the sign-in panel — kills the bottom void */
   }
   .ktc-landing__cta {
     flex-direction: column;
+  }
+  /* Regular-height buttons (full rail width), not 160px-tall slabs. */
+  .ktc-landing__cta > .ktc-btn,
+  .ktc-landing__cta > .ktc-btn-secondary {
+    flex: 0 0 auto;
+    width: 100%;
   }
   .ktc-landing__services {
     margin-bottom: 0;
