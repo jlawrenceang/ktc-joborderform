@@ -1830,4 +1830,7 @@ export const tl: Record<string, string> = {
   "(no name)": "(walang pangalan)",
   "The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.": "Ang online service desk ng KTC Container Terminal Corp. — i-file at subaybayan ang inyong terminal at port-services na trabaho.",
   "Create an account to begin accreditation. KTC staff accounts are invite-only.": "Gumawa ng account para simulan ang accreditation. Ang mga KTC staff account ay sa imbitasyon lamang.",
+  "Meet Lara, your assistant": "Kilalanin si Lara, ang inyong assistant",
+  "Tap the chat button anytime to ask Lara — she helps you file and track orders, understand charges, and find rates or vessels. If she can't answer, she opens a support ticket so a real person follows up.": "I-tap ang chat button anumang oras para magtanong kay Lara — tinutulungan niya kayong mag-file at mag-track ng order, umunawa sa mga singil, at maghanap ng rates o vessel. Kung hindi niya masagot, magbubukas siya ng support ticket para may tunay na tao na tutugon.",
+  "Below the tiles, the items actually waiting on you — accounts to approve, consignee requests — appear as a list you can tap straight into. When it's clear, you're all caught up.": "Sa ilalim ng mga tile, ang mga bagay na talagang naghihintay sa inyo — mga account na aaprubahan, mga kahilingan sa consignee — ay lumalabas bilang listahang mata-tap nang diretso. Kapag malinis na, wala na kayong nakabinbin.",
 }

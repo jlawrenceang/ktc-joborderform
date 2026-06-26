@@ -1,7 +1,7 @@
 import { type TourStep } from './Tour'
 import {
   WaveIcon, IdCardIcon, PinIcon, BellIcon, BoxIcon, ShipIcon, CalculatorIcon,
-  GridIcon, RefreshIcon, TagIcon, CalendarIcon, ReceiptIcon, UserIcon,
+  GridIcon, RefreshIcon, TagIcon, CalendarIcon, ReceiptIcon, UserIcon, ChatIcon,
 } from './icons'
 
 // Per-page customer tours — each page calls usePageTour(key, steps). Steps
@@ -45,6 +45,10 @@ export const homeSteps: TourStep[] = [
   {
     icon: <GridIcon size={SZ} />, title: 'Explore the app', target: '[data-tour="tab-menu"]',
     body: 'My Account, the user manual, and Settings (language, dark mode, replay this tour) all live under Menu — tap it to explore.',
+  },
+  {
+    icon: <ChatIcon size={SZ} />, title: 'Meet Lara, your assistant', target: '[data-tour="lara-launcher"]',
+    body: 'Tap the chat button anytime to ask Lara — she helps you file and track orders, understand charges, and find rates or vessels. If she can\'t answer, she opens a support ticket so a real person follows up.',
   },
   {
     icon: <RefreshIcon size={SZ} />, title: 'Replay anytime',

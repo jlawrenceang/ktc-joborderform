@@ -159,7 +159,7 @@ export default function ChatWidget() {
     <>
       {/* Launcher — hidden while the panel is open (the panel has its own close). */}
       {!state.open && (
-        <button ref={launcherRef} type="button" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
+        <button ref={launcherRef} type="button" data-tour="lara-launcher" aria-label={t('Open KTC assistant (Lara)')} onClick={launcherClick}
           style={{
             position: 'fixed', right: 16, bottom: FAB_BOTTOM, zIndex: 60,
             width: 56, height: 56, borderRadius: 999, border: '1px solid var(--glass-brd)', cursor: 'pointer',

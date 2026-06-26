@@ -35,6 +35,10 @@ export const dashboardSteps: TourStep[] = [
     icon: <BoxIcon size={SZ} />, title: 'Open job orders', target: '[data-tour="dash-jobOrders"]',
     body: 'The live queue — submitted, processing, and on-hold orders. Tap to open the working queue. Most of the day-to-day lives there: process orders, confirm payments, record invoices.',
   },
+  {
+    icon: <FlagIcon size={SZ} />, title: 'Needs your attention', target: '[data-tour="dash-queue"]',
+    body: 'Below the tiles, the items actually waiting on you — accounts to approve, consignee requests — appear as a list you can tap straight into. When it\'s clear, you\'re all caught up.',
+  },
 ]
 
 export const checkerSteps: TourStep[] = [

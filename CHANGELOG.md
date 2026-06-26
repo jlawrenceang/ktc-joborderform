@@ -10,6 +10,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.31 — 2026-06-26 (Demo tours refreshed for Lara + the admin work-surface)
+
+The role walkthroughs now showcase the new features: the customer welcome tour gains a **"Meet Lara"** step that spotlights the assistant launcher, and the admin dashboard tour gains a **"Needs your attention"** step for the new drill-down work-surface. Both steps are fully localized (EN + TL). Added `data-tour` hooks on the Lara launcher and the dashboard queue.
+
 ## v1.6.30 — 2026-06-26 (Landing one-page mobile + admin work-surface + agreement DPO/NPC)
 
 - **Landing fits one screen on mobile.** Service descriptions collapse into tap-to-expand dropdowns (title + chevron; descriptions stay visible on desktop, which has the room); the photo hero band is slimmer; the lede + access copy are tightened. No more scrolling on phone (verified 414/390-wide).

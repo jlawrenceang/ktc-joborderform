@@ -110,7 +110,7 @@ export default function Dashboard() {
       <h2 className="ktc-home-greet" style={{ fontSize: 17, margin: '22px 0 10px' }}>
         {t('Needs your attention')}
       </h2>
-      <div className="ktc-glass ktc-card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div data-tour="dash-queue" className="ktc-glass ktc-card" style={{ padding: 0, overflow: 'hidden' }}>
         {queue === null ? (
           <div className="ktc-label" style={{ padding: 16 }}>{t('Loading…')}</div>
         ) : queue.accounts.length === 0 && queue.consignees.length === 0 ? (
