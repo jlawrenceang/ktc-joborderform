@@ -100,12 +100,6 @@ export default function Landing() {
             <p className="ktc-label" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55 }}>
               {t('Create an account to begin accreditation.')}
             </p>
-            <div className="ktc-landing__secure">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: '0 0 auto' }}>
-                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <span>{t('Secure access · official KTC Container Terminal Corp. portal')}</span>
-            </div>
             <NeedHelp />
           </section>
         </div>
@@ -113,7 +107,10 @@ export default function Landing() {
         {/* Footer */}
         <div className="ktc-landing__foot">
           <span className="ktc-label" style={{ fontSize: 12 }}>
-            <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: 4 }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            {t('Secure access')} · <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
           </span>
         </div>
       </main>

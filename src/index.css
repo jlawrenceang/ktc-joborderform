@@ -1520,13 +1520,6 @@
   flex: 1 1 160px;
   text-align: center;
 }
-.ktc-landing__secure {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: hsl(var(--ink-2));
-}
 .ktc-landing__foot {
   margin-top: 14px;
   padding-top: 10px;
