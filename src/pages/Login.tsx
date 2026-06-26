@@ -449,12 +449,16 @@ export default function Login() {
         </p>
 
         <NeedHelp align="center" style={{ marginTop: 14, fontSize: 12 }} />
-        <p className="ktc-label" style={{ marginTop: 8, fontSize: 11.5, opacity: 0.72, textAlign: 'center', lineHeight: 1.7, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: '0 0 auto' }}>
-            <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-          <span>{t('Secure access')} · <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</span>
-        </p>
+        <div className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.75, textAlign: 'center', lineHeight: 1.75 }}>
+          <div>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: 4 }}>
+              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            {t('Secure access')} · {t('SSL-encrypted connection')}
+          </div>
+          <div><Link to="/agreement" className="ktc-link">{t('Privacy & Terms')}</Link></div>
+          <div style={{ opacity: 0.85 }}><span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</div>
+        </div>
         </div>
       </div>
 

@@ -1839,4 +1839,6 @@ export const tl: Record<string, string> = {
   "File your delivery documents and request for pull-out in advance.": "I-file ang inyong delivery documents at mag-request ng pull-out nang maaga.",
   "Assess your charges and process your payments online.": "Tantiyahin ang inyong mga singil at iproseso ang bayad online.",
   "Be updated with our vessel schedules and estimate charges with our rate calculator.": "Manatiling updated sa aming vessel schedules at tantiyahin ang mga singil gamit ang aming rate calculator.",
+  "SSL-encrypted connection": "Naka-encrypt na koneksyon (SSL)",
+  "Privacy & Terms": "Privacy at mga Tuntunin",
 }

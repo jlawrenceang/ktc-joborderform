@@ -1424,7 +1424,7 @@
   width: 100%;
   max-width: 620px;
   padding: 22px 26px 16px;
-  margin-top: 9vh;            /* mobile: clears a slim terminal-photo hero band up top */
+  margin-top: 8vh;            /* mobile: clears a slim terminal-photo hero band up top */
 }
 .ktc-landing__top {
   display: flex;
@@ -1521,14 +1521,14 @@
   text-align: center;
 }
 .ktc-landing__foot {
-  margin-top: 14px;
-  padding-top: 10px;
+  margin-top: 12px;
+  padding-top: 9px;
   border-top: 1px solid var(--glass-brd);
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  align-items: center;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
 }
 
 /* Desktop split — wider card, intro | access two-up with a hairline divider.

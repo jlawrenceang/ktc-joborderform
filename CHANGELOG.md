@@ -10,6 +10,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.34 — 2026-06-27 (Footer trust block + 3-line "Need help?")
+
+- **Trust signals on the landing + login footers:** a "🔒 Secure access · SSL-encrypted connection" line, a **Privacy & Terms** link (to the public `/agreement` view), then the version + copyright. Surfaces the encryption we already practice (verified: HTTPS + HSTS + a tight CSP) to logged-out visitors — the roast's "missing trust indicators" point.
+- **"Need help?" is now three lines** (Need help? / Call … / Email …) for easier scanning on the public pages.
+- Mobile landing still fits one screen (trimmed the photo band 1vh to absorb the added lines).
+
 ## v1.6.33 — 2026-06-26 (Landing: secure-access line → footer)
 
 Completes v1.6.32's tidy-up — the landing's "Secure access" line now sits in the footer beside the version + copyright (it had only been moved on the login page; the landing still showed it in the sign-in rail). Removed the now-dead `.ktc-landing__secure` style.

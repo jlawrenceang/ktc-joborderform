@@ -40,21 +40,20 @@ export default function NeedHelp({
   if (!phone && !email) return null
 
   return (
-    <p className="ktc-label" style={{ margin: 0, fontSize: 12, lineHeight: 1.55, textAlign: align, ...style }}>
-      <span style={{ fontWeight: 600 }}>{t('Need help?')}</span>{' '}
+    <div className="ktc-label" style={{ margin: 0, fontSize: 12, lineHeight: 1.7, textAlign: align, ...style }}>
+      <div style={{ fontWeight: 600 }}>{t('Need help?')}</div>
       {phone && (
-        <>
+        <div>
           {t('Call')}{' '}
           <a className="ktc-link" href={`tel:${phone.replace(/[^+0-9]/g, '')}`}>{phone}</a>
-        </>
+        </div>
       )}
-      {phone && email && <span style={{ opacity: 0.5 }}> · </span>}
       {email && (
-        <>
+        <div>
           {t('Email')}{' '}
           <a className="ktc-link" href={`mailto:${email}`}>{email}</a>
-        </>
+        </div>
       )}
-    </p>
+    </div>
   )
 }
