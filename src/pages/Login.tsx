@@ -266,23 +266,19 @@ export default function Login() {
       {/* The terminal-photo backdrop is rendered once at the app level (PublicBackdrop)
           so it persists from the landing into sign-in / create-account. */}
       <div className="ktc-glass ktc-rise ktc-auth">
-        {/* Desktop-only brand panel — gives sign-in / create-account the same intentional
-            two-column treatment as the landing (hidden on phone, where the panel logo shows). */}
+        {/* Spanning top letterhead (mirrors the landing) + a 2-column body. The left intro
+            stays static; only the right form changes between Sign in / Create account. */}
+        <div className="ktc-auth__top">
+          <PublicBrand logoHeight={50} />
+          <LangToggle />
+        </div>
         <aside className="ktc-auth__brand">
-          <PublicBrand logoHeight={52} />
           <h2 className="ktc-auth__brand-title">{t('KTC Online Portal')}</h2>
           <p className="ktc-auth__brand-lede">
             {t('The online service desk of KTC Container Terminal Corp. — file and track your terminal and port-services work.')}
           </p>
         </aside>
         <div className="ktc-auth__panel">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 7, marginBottom: 10 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Language" role="img" style={{ color: 'hsl(var(--ink-2))' }}>
-            <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-          <LangToggle />
-        </div>
-        <div className="ktc-auth__panel-brand"><PublicBrand logoHeight={50} /></div>
         {notice && <Notice tone="success" style={{ marginBottom: 14 }}>{notice}</Notice>}
         {isLocked && (
           <Notice tone="warning" style={{ marginBottom: 14 }}>

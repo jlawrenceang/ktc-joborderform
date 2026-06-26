@@ -10,6 +10,13 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.42 — 2026-06-27 (Sign-in / create-account fully mirror the landing)
+
+- The auth pages now use the **landing's exact structure**: a **spanning top letterhead** (logo left, address + "Need help?" right) over a **two-column body** ("KTC Online Portal" intro on the left, the form on the right).
+- **Left static, right transforms:** switching between Sign in and Create account now changes *only* the right form — the whole left side (letterhead + intro) stays put (it's a state toggle, not a reload).
+- **Right-aligned** the address + "Need help?" in the top (was left-of-centre, beside the logo).
+- go-live doc: noted the DPO email (`dpo@ktcterminal.com`) on the NPC-registration line.
+
 ## v1.6.41 — 2026-06-27 (Branded email wired in)
 
 ImprovMX forwarding is live for `ktcterminal.com` (`dpo@` / `support@` / catch-all → owner's inbox; MX + SPF verified). Wired into the app:

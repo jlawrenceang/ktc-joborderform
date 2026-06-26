@@ -1453,8 +1453,10 @@
   min-width: 0;
 }
 @media (min-width: 900px) {
-  /* desktop: address + "Need help?" sit to the RIGHT of the logo */
-  .ktc-brand { flex-direction: row; align-items: center; gap: 14px; }
+  /* desktop: logo on the left, address + "Need help?" pushed to the RIGHT, right-aligned */
+  .ktc-brand { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+  .ktc-brand-side { align-items: flex-end; text-align: right; }
+  .ktc-landing__top > .ktc-brand { flex: 1; }
 }
 .ktc-org {
   font-size: 11.5px;
@@ -1608,28 +1610,43 @@
   z-index: 2;
   width: 100%;
   max-width: 440px;
+  padding: 22px 26px 18px;
 }
-.ktc-auth__brand { display: none; }
-.ktc-auth__panel { padding: 34px 34px 30px; }
-.ktc-auth__panel-brand { display: block; margin-bottom: 14px; }
+/* Spanning top letterhead — same logo + address + Need help as the landing. */
+.ktc-auth__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ktc-auth__brand { display: none; }   /* phone: the form's own heading carries it */
 
 @media (min-width: 860px) {
   .ktc-auth {
-    max-width: 860px;
+    max-width: 900px;
     display: grid;
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    padding: 28px 36px 24px;
   }
+  .ktc-auth__top {
+    grid-column: 1 / -1;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-brd);
+  }
+  .ktc-auth__top > .ktc-brand { flex: 1; }
   .ktc-auth__brand {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 14px;
-    padding: 44px 40px;
+    gap: 12px;
+    padding-right: 36px;
     border-right: 1px solid var(--glass-brd);
   }
-  .ktc-auth__brand-logo { height: 56px; align-self: flex-start; }
   .ktc-auth__brand-title {
-    margin: 4px 0 0;
+    margin: 0;
     font-size: clamp(22px, 2.2vw, 30px);
     font-weight: 700;
     letter-spacing: -0.022em;
@@ -1641,6 +1658,5 @@
     line-height: 1.55;
     color: hsl(var(--ink-2));
   }
-  .ktc-auth__panel { padding: 40px 44px 34px; }
-  .ktc-auth__panel-brand { display: none; }
+  .ktc-auth__panel { padding-left: 36px; }
 }
