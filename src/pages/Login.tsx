@@ -449,15 +449,18 @@ export default function Login() {
         </p>
 
         <NeedHelp align="center" style={{ marginTop: 14, fontSize: 12 }} />
-        <div className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.75, textAlign: 'center', lineHeight: 1.75 }}>
-          <div>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: 4 }}>
-              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            {t('Secure access')} · {t('SSL-encrypted connection')}
-          </div>
-          <div><Link to="/agreement" className="ktc-link">{t('Privacy & Terms')}</Link></div>
-          <div style={{ opacity: 0.85 }}><span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</div>
+        <div className="ktc-label" style={{ marginTop: 10, fontSize: 11.5, opacity: 0.78, textAlign: 'center', lineHeight: 1.7 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              {t('Secure access')}
+            </span>
+            <span>· {t('SSL-encrypted connection')} ·</span>
+            <Link to="/agreement" className="ktc-link">{t('Privacy & Terms')}</Link>
+          </span>
+          <div style={{ opacity: 0.85, marginTop: 2 }}><span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.</div>
         </div>
         </div>
       </div>

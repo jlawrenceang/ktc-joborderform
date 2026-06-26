@@ -106,13 +106,16 @@ export default function Landing() {
 
         {/* Footer */}
         <div className="ktc-landing__foot">
-          <span className="ktc-label" style={{ fontSize: 12 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: '-1px', marginRight: 4 }}>
-              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            {t('Secure access')} · {t('SSL-encrypted connection')}
+          <span className="ktc-label" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              {t('Secure access')}
+            </span>
+            <span>· {t('SSL-encrypted connection')} ·</span>
+            <Link to="/agreement" className="ktc-link" style={{ textDecoration: 'none' }}>{t('Privacy & Terms')}</Link>
           </span>
-          <Link to="/agreement" className="ktc-link" style={{ fontSize: 12, textDecoration: 'none' }}>{t('Privacy & Terms')}</Link>
           <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.7 }}>
             <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
           </span>

@@ -1841,4 +1841,5 @@ export const tl: Record<string, string> = {
   "Be updated with our vessel schedules and estimate charges with our rate calculator.": "Manatiling updated sa aming vessel schedules at tantiyahin ang mga singil gamit ang aming rate calculator.",
   "SSL-encrypted connection": "Naka-encrypt na koneksyon (SSL)",
   "Privacy & Terms": "Privacy at mga Tuntunin",
+  "Email us": "Mag-email sa amin",
 }
