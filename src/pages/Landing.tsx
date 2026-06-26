@@ -5,6 +5,7 @@ import LangToggle from '../components/LangToggle'
 import NeedHelp from '../components/NeedHelp'
 import HeroSlideshow from '../components/HeroSlideshow'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
+import { ORG } from '../lib/org'
 
 // Public landing — what an unauthenticated visitor sees at "/" (App routes a
 // signed-in session straight to the role landing instead). Orientation +
@@ -52,7 +53,14 @@ export default function Landing() {
       <main className="ktc-glass ktc-rise ktc-landing__card">
         {/* Header — logo + language (full width above the split) */}
         <div className="ktc-landing__top">
-          <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 52 }} />
+          <div className="ktc-landing__brand">
+            <img src="/ktc-logo.png" alt={ORG.name} style={{ height: 50 }} />
+            <div className="ktc-landing__org">
+              <div>TIN {ORG.tin}</div>
+              <div>{ORG.address}</div>
+              <NeedHelp style={{ marginTop: 3 }} />
+            </div>
+          </div>
           <LangToggle />
         </div>
 
@@ -100,7 +108,6 @@ export default function Landing() {
             <p className="ktc-label" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55 }}>
               {t('Create an account to begin accreditation.')}
             </p>
-            <NeedHelp />
           </section>
         </div>
 

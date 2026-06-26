@@ -1428,10 +1428,21 @@
 }
 .ktc-landing__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 11px;
+  margin-bottom: 14px;
+}
+.ktc-landing__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.ktc-landing__org {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: hsl(var(--ink-2));
 }
 .ktc-landing__grid {
   display: grid;
