@@ -1520,4 +1520,10 @@ export const tl: Record<string, string> = {
   "Secure access · official KTC Container Terminal Corp. portal": "Ligtas na access · opisyal na portal ng KTC Container Terminal Corp.",
   "For accredited customers, consignees, and KTC staff. New here? Create an account below to begin accreditation.": "Para sa accredited na customers, consignees, at KTC staff. Bago dito? Gumawa ng account sa ibaba para simulan ang accreditation.",
   "Not yet arrived": "Hindi pa dumarating",
+  "or": "o",
+  "Continue with Google": "Magpatuloy gamit ang Google",
+  "Finish your registration": "Tapusin ang inyong registration",
+  "Welcome! Two quick things to finish setting up your KTC account: your contact number, and your agreement to the Customer Agreement.": "Maligayang pagdating! Dalawang mabilis na bagay para makumpleto ang inyong KTC account: ang inyong contact number, at ang inyong pagsang-ayon sa Customer Agreement.",
+  "Please read and agree to the Customer Agreement to continue.": "Pakibasa at sang-ayunan ang Customer Agreement para magpatuloy.",
+  "Complete registration": "Kumpletuhin ang registration",
 }

@@ -4,6 +4,7 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import MfaChallenge from './MfaChallenge'
 import SessionConflictModal from './SessionConflictModal'
+import FinishRegistration from './FinishRegistration'
 
 function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
   const { signOut } = useAuth()
@@ -82,6 +83,20 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     if (fullyAuthed) runSessionClaim()
   }, [fullyAuthed, runSessionClaim])
 
+  // OAuth (Google) registration gate: a Google sign-up hasn't agreed to the
+  // Customer Agreement or given a contact number yet (the email/password form
+  // collects both). Check the customer's recorded consent — SCOPED to OAuth
+  // users, so an email/password customer skips this read + gate entirely.
+  const isOauthUser = (session?.user?.app_metadata as { provider?: string } | undefined)?.provider === 'google'
+  const [oauthReg, setOauthReg] = useState<'unknown' | 'needed' | 'done'>('unknown')
+  useEffect(() => {
+    if (!isOauthUser || !session) return
+    let active = true
+    void supabase.from('customers').select('terms_version').eq('user_id', session.user.id).maybeSingle()
+      .then(({ data }) => { if (active) setOauthReg((data as { terms_version: string | null } | null)?.terms_version ? 'done' : 'needed') })
+    return () => { active = false }
+  }, [isOauthUser, session])
+
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -123,6 +138,18 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
         <span className="ktc-label">Loading…</span>
       </div>
     )
+  }
+
+  // Google sign-ups: hold for the consent check, then collect agreement + contact.
+  if (isOauthUser && oauthReg === 'unknown') {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">Loading…</span>
+      </div>
+    )
+  }
+  if (isOauthUser && oauthReg === 'needed') {
+    return <FinishRegistration onDone={() => setOauthReg('done')} />
   }
 
   return <>{children}</>
