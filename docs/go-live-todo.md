@@ -11,8 +11,11 @@ that only the owner can complete. Keep this current — tick items as they're do
 - [ ] **Register with the National Privacy Commission (NPC).** Deferred — the NPC
       references were removed from the agreement for now, but for a controller of
       1,000+ data subjects this remains a real DPA obligation to complete later.
-- [ ] **Set up a dedicated privacy/DPO mailbox** (e.g. `dpo@ktcterminal.com`) and
-      update the agreement contact. *Interim DPO contact is `jla.ktcport@gmail.com`.*
+- [x] **DONE 2026-06-27 — branded email live** via ImprovMX forwarding (MX →
+      `mx1/mx2.improvmx.com`, SPF set): `dpo@ktcterminal.com` (DPO / privacy),
+      `support@ktcterminal.com` (support), `*@ktcterminal.com` catch-all → forward to
+      the owner's inbox. Wired into the agreement (DPO contact) + `support_contact`
+      (support email). *Roast's "professionalism gap" closed.*
 - [ ] **Confirm the liability-cap floor** — currently **₱100,000** (Agreement §5).
       A counsel-confirm item.
 - [ ] **Final PH-counsel pass on the Customer Agreement (v4).** The current text was

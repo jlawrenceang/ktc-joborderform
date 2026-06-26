@@ -39,7 +39,7 @@ You must not:
 
 KTC processes your personal data as a Personal Information Controller and is committed to handling it in line with the Data Privacy Act of 2012 (R.A. 10173) and its Implementing Rules and Regulations.
 
-- **Data Protection Officer (DPO):** **Jan Lawrence Ang**, reachable at **jla.ktcport@gmail.com**, handles data-privacy requests and concerns.
+- **Data Protection Officer (DPO):** **Jan Lawrence Ang**, reachable at **dpo@ktcterminal.com**, handles data-privacy requests and concerns.
 - **Data we collect:** your name, contact number, email, account credentials, **a valid government-issued ID you upload**, customer/company details, and the job-order and payment data you submit.
 - **Purposes:** to register and **verify your identity**, decide accreditation, process job orders and provide terminal services, compute and record charges, communicate with you, maintain security and prevent fraud, and comply with legal and lawful government requirements.
 - **Legal basis:** your **consent** (for identity verification using your uploaded ID and related processing), performance of this Agreement, and compliance with legal obligations.
@@ -49,7 +49,7 @@ KTC processes your personal data as a Personal Information Controller and is com
 - **International transfer:** our providers may process data on servers outside the Philippines; KTC takes steps consistent with the DPA to keep it protected.
 - **Breach notification:** where a personal-data breach requires notification under the DPA, KTC will notify the relevant authorities and affected data subjects within the periods required by law.
 - **Retention:** your **uploaded valid ID and any supporting documents are held only briefly — for identity verification — and are automatically and securely deleted no later than 3 days after upload**. Other account and job-order data is kept while your account is active and as required by law (including customs and tax record-keeping rules), then securely deleted or anonymized.
-- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the relevant data protection authority** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact KTC at **jla.ktcport@gmail.com** (withdrawal may end your Portal access and does not affect prior processing).
+- **Your rights:** to be informed, to access, rectify, erase/block, object, withdraw consent, and to data portability; and to **lodge a complaint with the relevant data protection authority** and seek damages as provided by the DPA. To exercise these or withdraw consent, contact KTC at **dpo@ktcterminal.com** (withdrawal may end your Portal access and does not affect prior processing).
 - **Consent:** by accepting this Agreement you **consent to KTC's collection and processing of your personal data, including the valid government-issued ID you upload**, for the purposes above.
 
 ## 5. Service, Liability, and Indemnity
@@ -70,7 +70,7 @@ KTC processes your personal data as a Personal Information Controller and is com
 - **Notices:** KTC may give notices under this Agreement through the Portal or to the email address on your account; such notices are deemed received when posted or sent. You must keep your contact details current.
 - **Assignment:** you may not assign this Agreement; KTC may assign it to a successor or affiliate.
 - **Entire agreement:** this Agreement is the entire agreement on Portal use and supersedes prior understandings on that subject; it supplements (and does not replace) KTC's terminal service terms and tariffs.
-- Questions: contact KTC via the Portal's **Support** page or at **jla.ktcport@gmail.com**.
+- Questions: contact KTC via the Portal's **Support** page or at **support@ktcterminal.com**.
 
 ---
 

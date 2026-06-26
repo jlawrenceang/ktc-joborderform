@@ -10,6 +10,12 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.41 — 2026-06-27 (Branded email wired in)
+
+ImprovMX forwarding is live for `ktcterminal.com` (`dpo@` / `support@` / catch-all → owner's inbox; MX + SPF verified). Wired into the app:
+- The **support contact email** is now `support@ktcterminal.com` (the "Email us" target on the public pages + the support desk).
+- The **Customer Agreement** now names a proper **dedicated DPO mailbox** `dpo@ktcterminal.com` (privacy / data-protection) and `support@ktcterminal.com` for general questions — closing the earlier "personal-Gmail DPO contact" legal flag **and** the roast's professionalism gap.
+
 ## v1.6.40 — 2026-06-27 (Sign-in / create-account match the landing letterhead)
 
 Extracted the landing's letterhead (logo + address + "Need help?") into a shared `PublicBrand` component, now used on the landing **and** the sign-in / create-account pages — so all three read as one family. On the auth pages the letterhead leads the brand panel (desktop) / the card (phone), and the duplicate footer "Need help?" was removed.
