@@ -27,19 +27,26 @@ The Agreement is shown **inline in a scrollable box** on the registration form, 
 
 Sign-up is blocked until both are ticked (CAPTCHA still applies).
 
-## How acceptance is recorded
+## How acceptance is recorded — server-enforced (`0162`)
 
-Both ticks reference the one Agreement; acceptance is recorded as `AGREEMENT_VERSION` + timestamp:
-- **Auth user metadata**: `terms_version`/`terms_accepted_at` + `privacy_consent_version`/`privacy_consented_at` (always, even before the migration).
-- **`brokers` columns** via migrations `0011` + `0012` — for admin querying.
+Consent is enforced in the **database**, not just the UI (closes the audit's L1 + L2; v1.6.24):
+- **One server-stamped writer** — every path (email/password signup, the pending-banner sync, the valid-ID page, the OAuth `FinishRegistration` step) records through **`record_agreement_consent(p_version)`** (or `complete_oauth_registration`). The six consent columns on `customers` are **server-stamped only** — a raw client UPDATE is pinned back by the `customers` guard trigger, gated by a transaction-local `ktc.allow_consent_write` flag only the consent RPCs set (mirrors the `ktc.allow_owner_change` pattern). Acceptance = `AGREEMENT_VERSION` + timestamp (also mirrored to auth metadata).
+- **No transaction without recorded consent** — `file_job_order` and `open_ticket` (the SECURITY DEFINER write paths) refuse to run unless `has_recorded_consent()` is true. The gate lives **inside the definer function** (which bypasses RLS); the RLS `WITH CHECK` is kept as defense-in-depth.
+
+## Agreement v4 (2026-06-26)
+
+Redlined after a PH-legal-framework review (DPA, e-Commerce Act, Civil Code, fairness) — `src/content/customer-agreement.md`, `AGREEMENT_VERSION` → **v4.0**:
+- **Privacy made truthful** — false NPC-compliance / designated-DPO claims removed; now a genuine commitment + a real contact + a promise to appoint a DPO and register with the NPC. **Owner (Jan Lawrence Ang) named interim DPO.**
+- **Liability cap re-pegged to the Service Invoice** (the JO carries no fee → the old cap was illusory): "the greater of trailing-6-months Service-Invoice charges or **₱100,000**."
+- **Amendments now require affirmative re-acceptance** for material changes (not passive "continued use") — superseding the old "not yet enforced" caveat, though the in-app re-acceptance gate on a version bump is still a future lane.
+- Plus an **authority-to-bind** clause + a **Notices** clause.
 
 ## Status / caveats
 
-- The Agreement is a **working template** — DPO details, retention periods, venue, fees, legal citations are placeholders for KTC + counsel. Not legal advice. Confirm NPC registration obligations.
-- Re-acceptance on a version bump is **not yet enforced** for existing brokers (future lane).
+- Still a **working template pending final PH-counsel sign-off** — NPC registration, dedicated DPO mailbox, and the ₱100k liability floor are owner/counsel items tracked in `docs/go-live-todo.md`.
 - A single document mixes instruments (terms + NDA + privacy); counsel may prefer a standalone Privacy Notice for NPC purposes.
 
 ## Related
 
-- [[Brokers]] · [[Authentication]] · [[Broker Onboarding]] · [[RLS Posture]]
-- ADR-0008, ADR-0009, ADR-0011
+- [[Brokers]] · [[Authentication]] · [[Broker Onboarding]] · [[RLS Posture]] · [[2026-06-26 Public Landing + Lara + Google OAuth + Consent Enforcement]]
+- ADR-0008, ADR-0009, ADR-0011 · go-live: `docs/go-live-todo.md`

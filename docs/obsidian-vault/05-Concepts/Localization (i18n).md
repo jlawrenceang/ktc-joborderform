@@ -15,7 +15,7 @@ The portal ships **bilingual (English + Tagalog/Filipino)**, per-browser switcha
 - **Interpolation:** `t('Hello {name}', { name })` substitutes `{name}` in either language.
 - **Persistence:** per browser via `localStorage` (`ktc_lang` = `en|tl`, `ktc_lang_set` = explicit-choice flag). Default English.
 - **Toggle:** `LangToggle` (EN/FIL) lives in both navs and on the login screen.
-- **First-run chooser:** `src/components/LanguageGate.tsx` shows once after sign-in (gated on `langChosen`), **before** the demo tour, suppressed on pre-auth / `/confirmed` routes. Picking via the nav toggle or login satisfies it, so returning users never see it.
+- **First-run chooser:** folded into the single **`FirstRunSetup`** popup (language + notifications, shown once per account after sign-in, **before** the demo tour; v1.6.19 retired the standalone `LanguageGate.tsx` / `PushPrompt.tsx`). Picking via the nav toggle or login also satisfies it, so returning users never see it.
 - **Tours localize for free** — `Tour.tsx` renders `t(step.title/body)`, so walkthroughs run in the chosen language (and are gated until a language is chosen).
 - **Manuals localized** as `src/content/manual-*.tl.md` (admin / operations / cashier / checker / customer), loaded via `?raw` language-variant imports + a lang switch in `ManualPage.tsx` and `Manual.tsx`.
 

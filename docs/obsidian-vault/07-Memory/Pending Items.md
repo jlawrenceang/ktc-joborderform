@@ -2,7 +2,7 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-23
+last_updated: 2026-06-26
 ---
 
 # 📋 Pending Items
@@ -38,10 +38,12 @@ Phase 0 (schema + derived views + `purchaser` role) is **live in prod and commit
 - [ ] **P9 / data entry:** real X-Ray rate + the merged admin & print fee, bank/GCash details + QR upload (Settings, owner).
 - [x] **Teardown done (2026-06-23):** test orders purged to a clean slate, `jo_number_seq` reset (safe at zero orders) so the first real order is `JO-000001`; 0 releases.
 
-## Go-live gate (NEXT)
+## Go-live gate (NEXT) — owner checklist in `docs/go-live-todo.md`
 
-- [ ] **Counsel sign-off on Customer Agreement v2** — DPO designation, NPC registration check, liability cap amount. Bump `AGREEMENT_VERSION` on material change.
-- [ ] Enforce re-acceptance when `AGREEMENT_VERSION` changes for already-registered customers.
+- [ ] **Google OAuth config** — finish the Supabase URL config (Site URL + redirect allow-list) + set the consent-screen app-name branding, then smoke the flow end-to-end (**ST05 Lane M**). Until enabled the button returns "provider not enabled."
+- [ ] **Re-enable security before the staff dry-run** — Turnstile (Managed CAPTCHA) + MFA enrolment (owner + staff) + rotate the owner password (all down for testing).
+- [ ] **Counsel sign-off on Customer Agreement v4** — final PH-counsel pass; NPC registration; dedicated DPO mailbox; confirm the **₱100k** liability-cap floor. Bump `AGREEMENT_VERSION` on material change. *(Server-side consent recording + the affirmative-re-acceptance clause are done — `0162` / Agreement v4; the in-app re-acceptance gate on a version bump is still unbuilt.)*
+- [ ] **Lara document-verification guide** — owner supplies the content; wire it into Lara's waiting release slot (currently a holding answer). See [[Lara (Customer Assistant)]].
 - [ ] Public-launch call (remove the prod-testing restriction).
 
 ## JO modernization + port-services billing — ✅ BUILT (2026-06-16)

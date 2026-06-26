@@ -2,7 +2,7 @@
 title: Architecture Overview
 tags: [architecture, reference, system-map]
 type: reference
-last_updated: 2026-06-25
+last_updated: 2026-06-26
 ---
 
 # KTC Online Portal — Architecture Overview
@@ -30,12 +30,15 @@ tools point at jta-sys; never use them here — see `docs/agent/runtime-data-saf
 
 | Surface | Who | Entry | Code |
 |---|---|---|---|
-| **Customer portal** | accredited customs brokers ("customers") | `/` | `src/pages/**` |
+| **Public landing** | signed-out visitors | `/` (logged-out) | `src/pages/Landing.tsx` |
+| **Customer portal** | accredited customs brokers ("customers") | `/` (logged-in) | `src/pages/**` |
 | **Admin back office** | owner · admin · operations · cashier · checker · csr | `/admin/**` | `src/admin/**` |
 | **Installable staff PWA** | operational roles (focused single-purpose screens) | `/app/**` | `src/app/**` |
 
-All three are the **same React bundle** (route-code-split); `RoleLanding` (`src/App.tsx`) routes each
-role to where it works. One Supabase backend serves all three.
+All are the **same React bundle** (route-code-split); a **`RootGate`** at `/` sends a signed-out visitor
+to the public `Landing` (orientation + Sign-in / Create-account, **no forced accept gate**) and a signed-in
+session to `RoleLanding` (`src/App.tsx`), which routes each role to where it works. One Supabase backend
+serves all surfaces.
 
 ## Access model — backend-enforced (the load-bearing invariant)
 
@@ -48,6 +51,14 @@ role to where it works. One Supabase backend serves all three.
   `role_permissions` matrix, editable in **Settings → Roles & Gates**.
 - **One session per account** (`claim_session` + `session_alive()` woven into the RLS helpers),
   **idle auto-logout** (customer 15 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).
+- **Pending customers are locked to verify-only** (`0163`) — until an admin approves them, **RLS** hides
+  every business surface (filing, vessel schedule, rate config, the consignee master list, bulletins);
+  route-gating is UX only. Self-signup (incl. Google) exposes nothing.
+- **Consent + sign-up are server-enforced** — `file_job_order` / `open_ticket` refuse to run without
+  `has_recorded_consent()` (the check lives **inside** the definer fn, which bypasses RLS); consent columns
+  are server-stamped via a guard-trigger flag (`0162`); `handle_new_user` rejects disposable-email domains
+  (`0164`). **"Continue with Google"** sign-in (`0161`) routes new OAuth users once through a
+  `FinishRegistration` consent gate. See [Broker Agreement](obsidian-vault/05-Concepts/Broker%20Agreement.md).
 
 ## Two operational spines
 
@@ -69,7 +80,7 @@ elsewhere as contracts.
 
 | Group | Routes (representative) | Owning code |
 |---|---|---|
-| **Public** | `/login` · `/register` (QR walk-in) · `/agreement` · `/verify/:id` (slip QR) · `/confirmed` · `/forgot-password` · `/reset-password` | `src/pages/*` |
+| **Public** | `/` (Landing, logged-out) · `/login` (+ Continue with Google) · `/register` (QR walk-in) · `/agreement` · `/verify/:id` (slip QR) · `/confirmed` · `/forgot-password` · `/reset-password` | `src/pages/*` |
 | **Customer — orders** | `/job-order` · `/job-orders` · `/job-order/:id/pay` · `/job-order/:id/print` (A6 slip) | `src/pages/*` |
 | **Customer — release & requests** | `/releases` · `/requests` (consignee/vessel requests) | `src/pages/Releases`, `MyRequests` |
 | **Customer — tools/account** | `/calculator` · `/vessels` · `/support` · `/account` · `/verify-id` · `/manual` | `src/pages/*` |
@@ -88,7 +99,8 @@ module** (Phase 0 schema only). All applied + tracked in `public._migrations`.
 - **i18n** — English-keyed strings with a Tagalog fallback (`src/lib/i18n.ts`); first-run language chooser.
 - **Notifications** — customer notification center + **web push** (`send-push` edge function, VAPID).
 - **Vessel-schedule sync** — hourly Google Sheet ↔ app (pg_cron + edge functions), LFD mirror.
-- **Onboarding** — per-role demo tours (`Tour`) + Markdown manuals (`MarkdownDoc`).
+- **Onboarding** — per-role demo tours (`Tour`) + Markdown manuals (`MarkdownDoc`); one first-run Setup popup (language + push).
+- **Lara** — deterministic (non-LLM) customer help assistant: a 93-node rule tree + keyword matcher, an RLS-scoped track-order lookup, and a support-ticket fallback. Customer Shell only (`src/components/chat/**`); no new route/table/migration. See [Lara](obsidian-vault/05-Concepts/Lara%20(Customer%20Assistant).md).
 - **Audit & security** — `security_events`, login/status audit, retention crons, and the standing
   `scripts/check-security-invariants.mjs` gate (definer-ACL + owner-guard invariants).
 - **Fuel monitoring** — derived variance on the moves spine (ADR-0025); DB Phase 0 live, frontend deferred.

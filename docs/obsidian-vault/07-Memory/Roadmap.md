@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-23
+last_updated: 2026-06-26
 ---
 
 # 🧭 Roadmap (Phased)
@@ -28,10 +28,12 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 2. **Close Defect D-01** — blank release-desk hold/reject reason isn't server-enforced (mirror the JO side).
 3. ✅ **Teardown done (2026-06-23)** — test data purged + `jo_number_seq` reset so the first real order is `JO-000001`.
 
-## NEXT — Launch gate
+## NEXT — Launch gate (owner checklist: `docs/go-live-todo.md`)
 
-3. **Counsel sign-off on Customer Agreement v2** (DPO, NPC registration, liability cap).
-4. **Public launch** — remove the prod-testing restriction.
+3. **Google OAuth config** — Supabase URL config + consent-screen branding, then smoke (ST05 Lane M).
+4. **Re-enable security** — Turnstile + MFA enrolment + owner password rotation (all down for testing).
+5. **Counsel sign-off on Customer Agreement v4** (final PH pass; NPC registration; DPO mailbox; ₱100k cap). Server-side consent enforcement is already live (`0162`).
+6. **Public launch** — remove the prod-testing restriction.
 
 ## LATER — Hardening & integrations
 

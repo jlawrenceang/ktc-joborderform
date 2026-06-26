@@ -2,12 +2,25 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-25
+last_updated: 2026-06-26
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-26 — Public landing, Lara, Google OAuth, consent enforcement, pending lockdown (v1.6.30)
+
+**Migrations through `0164` applied to prod; `APP_VERSION` = `v1.6.30`.** A long public-facing + access-hardening run (`v1.6.18`–`v1.6.30`). See [[2026-06-26 Public Landing + Lara + Google OAuth + Consent Enforcement]]. In one line each:
+
+- **Public landing** — signed-out `/` is now a real **Landing** page (orientation, **no forced accept gate**) via a `RootGate`; redesigned around real terminal photos (5-photo `HeroSlideshow`, responsive desktop card / mobile photo band, login + signup carry the same backdrop). `src/pages/Landing.tsx`.
+- **Lara** ([[Lara (Customer Assistant)]]) — a deterministic **non-LLM** customer help assistant (93-node rule tree + keyword matcher), an RLS-scoped track-order action, and a `open_ticket` two-strike fallback. Customer Shell only; **no new route/table/migration**.
+- **"Continue with Google"** (`0161`) — Supabase OAuth (email pre-verified) + a one-time **`FinishRegistration`** gate (in `ProtectedRoute`) collecting contact number + Agreement consent via `complete_oauth_registration`; scoped to Google users so email/password is unaffected. Owner must enable the provider + finish URL config.
+- **Consent enforced server-side** (`0162`) — `file_job_order` / `open_ticket` refuse without `has_recorded_consent()` (gate **inside** the definer fn); consent columns server-stamped via a guard-trigger flag; one writer `record_agreement_consent`. See [[Broker Agreement]].
+- **Pending → verify-only lockdown** (`0163`) — a `status='pending'` customer (incl. Google self-signup) is RLS-locked to ID-upload / status / Agreement / account basics; every business surface is hidden until approved. See [[RLS Posture]].
+- **Disposable-email block** (`0164`) — `handle_new_user` rejects 7,578 throwaway domains (DB trigger = the wall; form hint advisory).
+- **Customer Agreement → v4** — PH-legal redline: truthful privacy + owner-as-interim-DPO + NPC refs removed; liability cap re-pegged to the Service Invoice + **₱100k floor**; **affirmative re-acceptance** for material changes; authority-to-bind + Notices clauses.
+- **Admin dashboard drill-down** — pending accounts + consignees surface as clickable rows below the count tiles (a work surface, not a scoreboard).
 
 ## 2026-06-25 — Release-desk reason now server-enforced (v1.6.13)
 
@@ -100,7 +113,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## What is live
 
-- **Auth** — customer email/password registration (contact no. + Agreement v2 consents) → confirm email → `/verify-id`; staff username login; owner failsafe; invite-only staff; CAPTCHA, lockout, 2FA (admin/owner), single session, idle timeouts. See [[Authentication]].
+- **Auth** — customer email/password registration (contact no. + Agreement v4 consents) → confirm email → `/verify-id`, **or "Continue with Google"** (`0161`) → one-time `FinishRegistration` consent step; staff username login; owner failsafe; invite-only staff; CAPTCHA, lockout, 2FA (admin/owner), single session, idle timeouts; **disposable-email block** (`0164`). Pending customers are **verify-only** (`0163`). See [[Authentication]].
 - **Customers** — self-register → `pending` (full portal, held orders) → upload ID → admin approval; 48h TTL; suspend/reject loops. See [[Brokers]].
 - **Consignees** — admin CRUD, search, pagination (2,488 imported), approval, accreditation (address/TIN/2303). See [[Consignees]].
 - **Job Orders** — customer + CSR/operations-on-behalf filing, **one priority number per JO** (weekly reset), gated transitions (`staff_transition_order` + split gates), hold/respond + recoverable reject loops, **per-van X-ray** (checker), DEA/OOG service-done, **[[Two-Gate Completion]]**, base + RPS + **supplement** payments, walk-in payment, ERP invoice recording, printable A6 slip + **verify-QR**, timeline comments + staff-only notes/flags, weekly archive/carry-over. See [[Job Orders]], [[Job Order Lifecycle]].
@@ -109,16 +122,16 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0159_release_desk_reason_required`** (150 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0164_block_disposable_email_domains`** (155 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 
 - **ST05 manual Lanes A–K** on live (owner); preflight P1–P8 re-run green through `0158` (+ new Lane L container rate matrix, server-side Lane J-3 role-matrix check = 0 mismatch). P9 = real rates/fees + bank/GCash/QR entry in Settings.
-- Customer Agreement v2 **counsel sign-off** (DPO designation, NPC registration, liability cap).
+- Customer Agreement **v4** final **PH-counsel sign-off** + NPC registration / dedicated DPO mailbox / ₱100k cap confirm (`docs/go-live-todo.md`). **Google-OAuth** Supabase URL config + consent-screen branding; **re-enable Turnstile + MFA** before the staff dry-run.
 - Per-customer accredited-consignee scoping (master-list typeahead stands, ADR-0007).
 - JO drafts, document attachments; BOC Sheets mirror (blocked on Google service-account creds); 4 Playwright mutation lanes (`fixme`). No Vitest unit suite.
 - Management-API scripts blocked: `SUPABASE_ACCESS_TOKEN` holds a secret key, not a `sbp_` PAT (see `docs/agent/tooling-inventory.md`).
 
 ## Immediate priorities
 
-**See [[Roadmap]] for authoritative sequencing.** Summary: (1) finish the **ST05** manual lanes A–K with the owner + close **Defect D-01** (blank release-desk reason not server-enforced); (2) counsel sign-off on Agreement v2; (3) go-live/public-launch call. (`jo_number_seq` reset + test-data purge are **done** as of 2026-06-23.)
+**See [[Roadmap]] for authoritative sequencing; the owner-actioned launch checklist is `docs/go-live-todo.md`.** Summary: (1) finish the **ST05** manual lanes A–K with the owner (Defect D-01 closed `0159`); (2) **Google-OAuth** config + smoke (Lane M); (3) **re-enable Turnstile + MFA**, rotate owner password; (4) Agreement **v4** counsel pass + NPC/DPO; (5) go-live/public-launch call. (`jo_number_seq` reset + test-data purge are **done** as of 2026-06-23.)

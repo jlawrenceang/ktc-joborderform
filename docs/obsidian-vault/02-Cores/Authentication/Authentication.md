@@ -5,7 +5,7 @@ type: core
 wave: 1
 status: live
 owner: Owner
-last_updated: 2026-06-16
+last_updated: 2026-06-26
 ---
 
 # 🔑 Authentication Core
@@ -34,6 +34,8 @@ Identity, sign-in/registration, the role model (root owner / owner / 5 staff rol
 - `src/lib/AuthContext.tsx` — `useAuth()` exposes `signIn`, `signUp`, `signOut`.
 - Brokers sign in with email. Staff sign in with a **username** (no `@`), mapped to a synthetic `<username>@ktc-staff.local`.
 - CAPTCHA token threaded through `signIn`/`signUp`; server-verified by Supabase Auth. See [[CAPTCHA Bot Protection]].
+- **"Continue with Google" (`0161`, v1.6.21)** — Supabase OAuth; the email comes back already verified (email-confirmation step skipped). Google gives a name + email but not the contact number + Agreement consent the form collects, so a new Google customer is routed once through a **`FinishRegistration`** gate (in `ProtectedRoute`) to provide both, recorded server-side via **`complete_oauth_registration(p_contact, p_version)`**. The gate is **scoped to Google-provider users with no recorded consent** — email/password customers are unaffected. Owner must enable the Google provider + finish the Supabase URL config (`docs/go-live-todo.md`).
+- **Disposable-email block (`0164`)** — `handle_new_user` rejects signups from the 7,578-domain throwaway blocklist (the DB trigger is the wall; the form hint is advisory). Real providers + Google OAuth emails pass.
 
 ## Backend surface (key)
 
@@ -44,7 +46,7 @@ Identity, sign-in/registration, the role model (root owner / owner / 5 staff rol
 
 ## Done
 
-- Email/password customer auth, username staff auth, owner failsafe + root-owner grants, invite-only staff (5 roles), owner-tunable gate matrix, server-side CAPTCHA, TOTP 2FA, single session, idle timeouts, privilege-grant alerting. Email confirmation + password reset wired (Resend).
+- Email/password customer auth, **Google OAuth sign-in** (`0161`, with the `FinishRegistration` consent gate), username staff auth, owner failsafe + root-owner grants, invite-only staff (5 roles), owner-tunable gate matrix, server-side CAPTCHA, **disposable-email block** (`0164`), TOTP 2FA, single session, idle timeouts, privilege-grant alerting. Email confirmation + password reset wired (Resend).
 
 ## Related
 
