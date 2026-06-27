@@ -1538,8 +1538,9 @@
 .ktc-landing__access {
   display: grid;
   gap: 12px;
-  align-content: start;   /* top-align: the auth form is taller than the access rail */
+  align-content: start;   /* top-align — the auth form leads with Back + heading */
 }
+.ktc-landing__access--menu { align-content: center; }   /* the menu's button group sits centered */
 /* Only the right column swaps between landing / sign-in / create-account — fade it in
    on navigation (keyed by pathname in PublicShell). */
 .ktc-public-swap { animation: ktc-fade-in 0.3s ease; }
@@ -1556,12 +1557,12 @@
 }
 .ktc-landing__cta {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: wrap;
 }
 .ktc-landing__cta > .ktc-btn,
 .ktc-landing__cta > .ktc-btn-secondary {
-  flex: 1 1 160px;
+  width: 100%;
   text-align: center;
 }
 .ktc-landing__foot {
@@ -1596,8 +1597,9 @@
   .ktc-landing__access {
     padding-left: 46px;
     border-left: 1px solid var(--glass-brd);
-    align-content: start;             /* top-align: the shared column also holds the taller auth form */
+    align-content: start;             /* top-align — the form leads with Back + heading */
   }
+  .ktc-landing__access--menu { align-content: center; }   /* the menu's button group centered */
   .ktc-landing__cta {
     flex-direction: column;
   }

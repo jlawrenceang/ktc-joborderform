@@ -97,7 +97,7 @@ export default function PublicShell() {
 
           {/* Access — the ONLY part that changes between landing / sign-in / create-account.
               Keyed by pathname so only this right column fades on navigation. */}
-          <section className="ktc-landing__access">
+          <section className={isAuth ? 'ktc-landing__access' : 'ktc-landing__access ktc-landing__access--menu'}>
             <div key={pathname} className="ktc-public-swap">
               <Outlet />
             </div>

@@ -10,6 +10,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.44 — 2026-06-27 (Menu: Google moved up + centered; forms decluttered)
+
+- **"Continue with Google" now lives on the menu (`/`)** alongside Sign in / Create an account (with an "or" divider), and is **removed from the sign-in / create-account forms** — so the three ways in are all on the menu, centered as one group in the right column.
+- Removed the redundant **"KTC Online Portal — Container Terminal Services"** subtitle from the forms (the left intro already carries it).
+
 ## v1.6.43 — 2026-06-27 (Landing + sign-in + create-account unified into one shell)
 
 The public pages are now **one card**. A shared `PublicShell` (React Router layout) renders the top letterhead + the left intro/services + the footer **once** — they persist across `/`, `/login`, `/register` (never re-mounted); only the **right column swaps** (the Sign in / Create account buttons ↔ the auth form) and fades on navigation. So it reads as one screen you move *within*, not three pages.
