@@ -27,6 +27,13 @@ const isXray = (s: string) => s.toLowerCase().includes('x-ray')
 function one<T>(v: T | T[] | null | undefined): T | null { return Array.isArray(v) ? (v[0] ?? null) : (v ?? null) }
 function shape(o: Order): Order { return { ...o, broker: one(o.broker), consignee: one(o.consignee) } }
 const servingNo = (o: Order) => o.serving?.find((s) => !s.vacated_at)?.serving_no ?? null
+// Priority lane is served AHEAD of the regular queue, then re-X-ray. Each lane numbers
+// from 1 independently, so fold the lane rank in front of the number for the sort.
+const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
+const servingKey = (o: Order) => {
+  const s = o.serving?.find((x) => !x.vacated_at)
+  return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity
+}
 
 // Map the raw DB status token to a friendly, translatable label (mirrors the
 // other pages so the chip never shows a bare lowercase token).
@@ -65,7 +72,7 @@ export default function AppChecker() {
       .in('status', ['submitted', 'processing', 'on_hold']).order('created_at', { ascending: true })
     const rows = ((data ?? []) as unknown as Order[]).map(shape)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
-      .sort((a, b) => (servingNo(a) ?? Infinity) - (servingNo(b) ?? Infinity))
+      .sort((a, b) => servingKey(a) - servingKey(b))
     setQueue(rows)
     setLoading(false)
   }, [])

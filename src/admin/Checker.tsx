@@ -26,6 +26,7 @@ interface CheckerOrder {
   broker?: { full_name: string | null } | null
   consignee?: { code: string; name: string } | null
   lines?: { id: string; container_number: string; service_request: string; xray_done_at: string | null; xray_done_by_name: string | null }[]
+  serving?: { service_line: string; serving_no: number; vacated_at: string | null }[]
 }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -33,9 +34,15 @@ function one<T>(v: T | T[] | null | undefined): T | null {
 }
 
 const SELECT =
-  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name)'
+  'id, jo_number, status, xray_performed_at, service_invoice_no, rps_status, created_at, broker:customers(full_name), consignee:consignees(code, name), lines:job_order_lines(id, container_number, service_request, xray_done_at, xray_done_by_name), serving:serving_numbers(service_line, serving_no, vacated_at)'
 
 const isXray = (s: string) => s.toLowerCase().includes('x-ray')
+// Priority lane is served ahead of the regular queue, then re-X-ray (each numbers from 1).
+const LANE_RANK: Record<string, number> = { priority: 0, rexray: 2 }
+const servingKey = (o: CheckerOrder) => {
+  const s = o.serving?.find((x) => !x.vacated_at)
+  return s ? (LANE_RANK[s.service_line] ?? 1) * 1_000_000 + s.serving_no : Infinity
+}
 
 function Clearance({ o }: { o: CheckerOrder }) {
   const { t } = useT()
@@ -105,7 +112,8 @@ export default function Checker() {
       // X-ray still pending (a JO with other services can stay open after its
       // X-ray is done — it leaves this queue but remains findable via lookup)
       .filter((o) => (o.lines ?? []).some((l) => isXray(l.service_request) && !l.xray_done_at))
-      // Query already orders by created_at asc — the JO number's true log order.
+      // Serve the priority lane first, then the regular queue by serving number (not raw filing order).
+      .sort((a, b) => servingKey(a) - servingKey(b))
     setQueue(rows)
     setLoading(false)
   }
