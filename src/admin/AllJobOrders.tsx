@@ -62,7 +62,7 @@ const DotsGlyph = ({ size = 16 }: { size?: number }) => (
 )
 
 const SELECT =
-  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, priority_status, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
+  'id, jo_number, entry_number, consignee_id, vessel_name, voyage_number, vessel_visit, status, priority_status, is_rexray, rexray_status, rexray_billable, parent_job_order_id, admin_note, customer_note, rejected_recoverable, xray_performed_at, service_invoice_no, invoice_pad_no, payment_status, payment_proof_path, payment_submitted_at, rps_status, rps_payment_status, rps_payment_proof_path, rps_payment_submitted_at, completed_at, archived_at, created_at, last_customer_edit_at, broker:customers(full_name, email, contact_number), consignee:consignees(code, name), lines:job_order_lines(container_number, service_request), serving:serving_numbers(service_line, serving_no, week_start, vacated_at), completions:service_completions(service_line, completed_at), supplements:jo_supplements(id, suffix, label, amount, payment_status, payment_proof_path, payment_submitted_at, payment_note, created_at)'
 
 // Lines this order needs, with their per-service completion state (G1).
 function serviceProgress(o: JobOrder): { line: ServiceLine; done: boolean }[] {
@@ -363,6 +363,23 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     setBusyId(null)
   }
 
+  // Re-X-ray (ADR-0035 phase 5): request on a completed order, admin approves → child JO.
+  async function requestRexray(id: string) {
+    if (!window.confirm(t('Request a re-X-ray for this completed order? It creates a suffixed child order (e.g. JO-000001A) for admin approval.'))) return
+    setBusyId(id)
+    const { error } = await supabase.rpc('request_rexray', { p_parent: id })
+    if (error) { setBusyId(null); alert(error.message); return }
+    await load()
+    setBusyId(null)
+  }
+  async function reviewRexray(id: string, approve: boolean) {
+    setBusyId(id)
+    const { error } = await supabase.rpc('review_rexray', { p_id: id, p_approve: approve })
+    if (error) { setBusyId(null); alert(error.message); return }
+    await load()
+    setBusyId(null)
+  }
+
   function openNote(o: AdminJobOrder, target: 'on_hold' | 'rejected') {
     setModal({ id: o.id, jo: o.jo_number ?? '—', target })
     setNote(o.admin_note ?? '')
@@ -522,6 +539,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       <>
         {o.priority_status === 'granted' && <span className="ktc-chip ktc-chip--accent" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>★ {t('Priority')}</span>}
         {o.priority_status === 'requested' && <span className="ktc-chip ktc-chip--warning">{t('Priority requested')}</span>}
+        {o.is_rexray && <span className="ktc-chip ktc-chip--info">{o.rexray_status === 'requested' ? t('Re-X-ray requested') : t('Re-X-ray')}</span>}
         <span className="ktc-chip" title={t('Filed {date}', { date: new Date(o.created_at).toLocaleString() })}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
         {isOpen && (
           <span className="ktc-chip" title={t('X-ray working hours (9 AM–7 PM) since filed')}
@@ -576,6 +594,7 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
       <>
         {o.priority_status === 'granted' && <span className="ktc-chip ktc-chip--accent" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>★ {t('Priority')}</span>}
         {o.priority_status === 'requested' && <span className="ktc-chip ktc-chip--warning">{t('Priority requested')}</span>}
+        {o.is_rexray && <span className="ktc-chip ktc-chip--info">{o.rexray_status === 'requested' ? t('Re-X-ray requested') : t('Re-X-ray')}</span>}
         <span className="ktc-chip" title={t('Filed {date}', { date: new Date(o.created_at).toLocaleString() })}>{t('Batch')}: {batchLabel(o.created_at, t)}</span>
         {isOpen && (
           <span className="ktc-chip" title={t('X-ray working hours (9 AM–7 PM) since filed')}
@@ -680,6 +699,15 @@ export default function AllJobOrders({ app = false }: { app?: boolean }) {
     if (can('approve_priority') && o.priority_status === 'requested') {
       menu.push(<button key="grant-prio" style={btn('solid')} disabled={isBusy} onClick={() => void reviewPriority(o.id, true)}>{t('Approve priority')}</button>)
       menu.push(<button key="deny-prio" style={btn('ghost')} disabled={isBusy} onClick={() => void reviewPriority(o.id, false)}>{t('Deny priority')}</button>)
+    }
+
+    // Re-X-ray: request on a completed (non-re-X-ray) order; admin approves the request.
+    if (can('request_rexray') && o.status === 'completed' && !o.is_rexray) {
+      menu.push(<button key="req-rexray" style={btn('ghost')} disabled={isBusy} onClick={() => void requestRexray(o.id)}>{t('Request re-X-ray')}</button>)
+    }
+    if (can('approve_rexray') && o.is_rexray && o.rexray_status === 'requested') {
+      menu.push(<button key="grant-rexray" style={btn('solid')} disabled={isBusy} onClick={() => void reviewRexray(o.id, true)}>{t('Approve re-X-ray')}</button>)
+      menu.push(<button key="deny-rexray" style={btn('ghost')} disabled={isBusy} onClick={() => void reviewRexray(o.id, false)}>{t('Deny re-X-ray')}</button>)
     }
 
     // Base payment review (proof view / reject inline form).

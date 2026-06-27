@@ -176,6 +176,10 @@ export interface JobOrder {
   completed_at?: string | null
   archived_at?: string | null
   priority_status?: 'requested' | 'granted' | null
+  is_rexray?: boolean
+  rexray_status?: 'requested' | 'approved' | null
+  rexray_billable?: boolean
+  parent_job_order_id?: string | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
   serving?: ServingNumber[]
