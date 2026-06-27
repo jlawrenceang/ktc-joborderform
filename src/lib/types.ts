@@ -175,6 +175,7 @@ export interface JobOrder {
   rps_payment_note?: string | null
   completed_at?: string | null
   archived_at?: string | null
+  priority_status?: 'requested' | 'granted' | null
   consignee?: Consignee | null
   lines?: JobOrderLine[]
   serving?: ServingNumber[]

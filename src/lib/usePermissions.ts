@@ -22,6 +22,8 @@ export type Permission =
   | 'accept_orders'
   | 'complete_orders'
   | 'hold_reject_orders'
+  | 'request_priority'
+  | 'approve_priority'
 
 /**
  * UI mirror of the owner-tweakable role gates (role_permissions, migration
