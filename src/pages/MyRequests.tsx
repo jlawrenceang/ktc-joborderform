@@ -14,7 +14,7 @@ import { useT } from '../lib/i18n'
 // NOTE: vessel requests are NOT a customer path — the vessel schedule is ops-only.
 // If a vessel isn't listed, the customer calls KTC customer service to have ops
 // add it (see the JO filing help line).
-type CReq = { id: string; code: string; name: string; status: string; address: string | null; tin: string | null; note: string | null }
+type CReq = { id: string; code: string; name: string; status: string; address: string | null; tin: string | null; note: string | null; customer_name: string | null; address2: string | null; tel: string | null; mobile: string | null; email: string | null }
 
 const STYLE: Record<string, { bg: string; fg: string }> = {
   pending: { bg: 'var(--c-h40-90-94)', fg: 'var(--c-h35-80-38)' },
@@ -37,7 +37,7 @@ export default function MyRequests() {
     if (!broker?.id) return
     const { data: c } = await supabase
       .from('consignees')
-      .select('id, code, name, status, address, tin, note')
+      .select('id, code, name, status, address, tin, note, customer_name, address2, tel, mobile, email')
       .eq('requested_by', broker.id)
       .order('requested_at', { ascending: false })
     setCons((c ?? []) as CReq[])
@@ -94,8 +94,13 @@ function ConsigneeResubmit({ req, uid, onClose, onDone, onError }: {
 }) {
   const { t } = useT()
   const [name, setName] = useState(req.name)
+  const [customerName, setCustomerName] = useState(req.customer_name ?? '')
   const [address, setAddress] = useState(req.address ?? '')
+  const [address2, setAddress2] = useState(req.address2 ?? '')
   const [tin, setTin] = useState(req.tin ?? '')
+  const [tel, setTel] = useState(req.tel ?? '')
+  const [mobile, setMobile] = useState(req.mobile ?? '')
+  const [email, setEmail] = useState(req.email ?? '')
   const [doc2303, setDoc2303] = useState<File | null>(null)
   const [doc2307, setDoc2307] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
@@ -119,6 +124,8 @@ function ConsigneeResubmit({ req, uid, onClose, onDone, onError }: {
       const { error } = await supabase.rpc('resubmit_consignee', {
         p_id: req.id, p_name: name.trim(), p_address: address.trim() || null, p_tin: tin.trim() || null,
         p_doc_2303: p2303, p_doc_2307: p2307,
+        p_customer_name: customerName.trim() || null, p_address2: address2.trim() || null,
+        p_tel: tel.trim() || null, p_mobile: mobile.trim() || null, p_email: email.trim() || null,
       })
       if (error) throw error
       onDone()
@@ -130,8 +137,13 @@ function ConsigneeResubmit({ req, uid, onClose, onDone, onError }: {
       <div style={{ display: 'grid', gap: 10 }}>
         {req.note && <div className="ktc-label" style={{ fontSize: 12.5, fontStyle: 'italic' }}>{t('KTC asked:')} “{req.note}”</div>}
         <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Consignee name *')}</label><input className="ktc-input" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Customer name (leave blank if same as trade name)')}</label><input className="ktc-input" value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></div>
         <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Business address')}</label><input className="ktc-input" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+        <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Business address line 2')}</label><input className="ktc-input" value={address2} onChange={(e) => setAddress2(e.target.value)} /></div>
         <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('TIN / VAT Reg #')}</label><input className="ktc-input" value={tin} onChange={(e) => setTin(e.target.value)} /></div>
+        <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Tel No.')}</label><input className="ktc-input" value={tel} onChange={(e) => setTel(e.target.value)} /></div>
+        <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Mobile No.')}</label><input className="ktc-input" value={mobile} onChange={(e) => setMobile(e.target.value)} /></div>
+        <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Email address')}</label><input className="ktc-input" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Replace BIR 2303 (optional)')}</label><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2303(e.target.files?.[0] ?? null)} style={{ padding: '7px 10px' }} /></div>
         <div style={{ display: 'grid', gap: 5 }}><label className="ktc-label" style={{ fontSize: 11.5 }}>{t('Replace BIR 2307 (optional)')}</label><input className="ktc-input" type="file" accept="image/*,application/pdf" onChange={(e) => setDoc2307(e.target.files?.[0] ?? null)} style={{ padding: '7px 10px' }} /></div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
