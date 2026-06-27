@@ -67,3 +67,14 @@ Chosen option: **phased overhaul**, built and shipped in seven phases:
 ## References
 
 * Session 2026-06-27 — admin-controls scan + flow spec.
+
+## Addendum — 2026-06-27 (audit closure)
+
+A 75-agent whole-app ultracode audit (run after phases 1–7 shipped) found **59 verified findings**, several introduced by this overhaul — all fixed + re-verified by a closure workflow (which caught one regression). Material post-ship hardening of the decisions above, in migrations `0178`–`0183`:
+
+- **Invoice gate (phase 7)** had two holes — the walk-in/office payment path bypassed it, and the cashier station deadlocked (couldn't record the invoice before confirming). Both closed.
+- **Re-X-ray (phase 5)** hardened: customer notifications suppressed for the internal child; the maker-checker can't be bypassed via the generic accept path; the customer can't cancel/edit the child; an advisory lock prevents a concurrent suffix collision; and it can't be X-rayed before admin approval.
+- **Auto-complete + charges (phases 2/6)** — the completion gate keys on **billed** (priced) supplements only (a requested, un-priced charge no longer blocks completion or shows a phantom balance); billing a charge on a completed order no longer reopens it; ops requests now notify the cashier/admin who must act.
+- **Priority (phase 4)** — granted orders are now actually **served ahead** on both checker queues (lane-tagged P-/R-/# numbers); the manual `restore_serving_number` queue-jump this overhaul retired was finally dropped; `review_priority` requires a pending request.
+
+Full record: [[whole-app-audit-closed]] + `CHANGELOG.md` v1.6.66–73. Status unchanged (Accepted) — this documents hardening, not a reversal.

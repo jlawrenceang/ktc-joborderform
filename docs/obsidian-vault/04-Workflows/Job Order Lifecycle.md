@@ -12,13 +12,14 @@ last_updated: 2026-06-27
 > Reflects migrations through **0156**. For the staff role model see [[Staff Roles & Gates]];
 > for the completion rule see [[Two-Gate Completion]].
 >
-> ⚠️ **2026-06-27 — the ADR-0035 ops overhaul (migrations 0170–0180) supersedes parts of the
-> steps below. Current model:** pending brokers are **verify-only** (can't file — ADR-0032;
-> the old "pending files held" flow is retired); **completion is automatic** once both gates
-> clear; the serving queue now has **priority** + **re-X-ray** lanes (request → admin approve);
-> **charges** are ops-request → cashier-bill; and **payment-confirm requires the ERP + BIR
-> invoice on file**. Source: **ADR-0035**, ADR-0032, + audit fixes 0178–0180. A full
-> step-by-step rewrite is a pending `/wrap`.
+> ⚠️ **2026-06-27 — superseded in part by the ADR-0035 ops overhaul (`0170`–`0177`) + the
+> whole-app audit closure (`0178`–`0183`). Current model:** pending brokers are **verify-only**
+> (can't file — ADR-0032; the "pending files held" flow is retired); **completion is automatic**
+> once both gates clear; the serving queue has **priority** + **re-X-ray** lanes (request → admin
+> approve), lane-tagged P-/R-/# numbers with priority served ahead; **charges** are ops-request →
+> cashier-bill; and **payment-confirm requires the ERP + BIR invoice on file**. Source:
+> **ADR-0035** + [[whole-app-audit-closed]]. A full step-by-step rewrite of the steps below
+> stays carried-forward (the model here is current; the steps still reflect `0156`).
 
 ## Actors
 

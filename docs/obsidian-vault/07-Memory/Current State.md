@@ -2,12 +2,20 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-26
+last_updated: 2026-06-27
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-27 — Ops overhaul (ADR-0035), consignee approval gate, whole-app audit CLOSED (v1.6.73)
+
+**Migrations through `0183` applied to prod; `APP_VERSION` = `v1.6.73`.** See [[2026-06-27 Ops Overhaul ADR-0035 + Whole-App Audit Closed]] + [[whole-app-audit-closed]]. In one line each:
+
+- **Consignee approval gate + full CIS** (`0165`–`0169`) — a consignee must be **approved before it can be used to file** (mirrors the ID gate — "no limbo"); the full CIS is captured online; the **BIR 2303 rule is hard-enforced on every path** (admin / CSV / request / resubmit / approval-guard); JO filing refuses an unapproved consignee. Plus notifications **"Clear read"** + the test account reset to fresh pending.
+- **Job-order ops overhaul** ([ADR-0035](../../adr/0035-job-order-ops-overhaul-queue-priority-rexray-autocomplete-invoice-gate.md), `0170`–`0177`) — **separation-of-duties** (CSR no longer approves; cashier money-only), **fully automatic completion** (from whichever side finishes last), **automatic queue lifecycle** (assign/vacate on status), a **priority lane** (request → admin approve), a **re-X-ray lane** (a completed order's re-inspection as an `A`-suffixed child JO; checker/ops request → admin approve; free now), **charges = ops-request → cashier-bill**, and **payment-requires-invoice** (base payment can't confirm without the ERP service invoice + BIR pad serial).
+- **Whole-app ultracode audit → fixed + CLOSED** (`0178`–`0183`, v1.6.66–73) — a 75-agent audit surfaced **59 findings** (11 high), several from the overhaul; all live-impact ones fixed + re-verified by a closure workflow (which caught 1 regression). Financial-integrity holes, re-X-ray maker-checker + guards, the completion-breaking supplement gate, phantom balances, lane-tagged + priority-served serving numbers, vessel dedup data-loss, fuel-pricing-readable-by-anon, stale copy. Only the **parked fuel module's** 5 findings deferred to the Phase-1 desk; `check-security-invariants` green. See [[whole-app-audit-closed]].
 
 ## 2026-06-26 — Public landing, Lara, Google OAuth, consent enforcement, pending lockdown (v1.6.31)
 
