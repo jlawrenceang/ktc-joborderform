@@ -59,7 +59,7 @@ export const jobOrderSteps: TourStep[] = [
   },
   {
     icon: <ShipIcon size={SZ} />, title: 'Vessel & voyage', target: '[data-tour="jo-vessel"]',
-    body: 'Choose the vessel & voyage from the current schedule. Not listed yet? Tick "vessel not listed" and type it — operations will match it to the call.',
+    body: 'Choose the vessel & voyage from the current schedule. Not listed yet? Contact KTC customer service (or ask Lara) to have it added — only KTC operations can add a vessel.',
   },
   {
     icon: <BoxIcon size={SZ} />, title: 'Add your containers', target: '[data-tour="jo-containers"]',

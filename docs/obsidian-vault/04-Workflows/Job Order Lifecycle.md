@@ -3,14 +3,22 @@ title: Job Order Lifecycle
 tags: [workflow, job-orders, lifecycle]
 type: workflow
 status: live
-last_updated: 2026-06-16
+last_updated: 2026-06-27
 ---
 
 # 🔄 Job Order Lifecycle (source of truth)
 
 > Status legend: ✅ built · 🔸 decided, not yet built · ❓ open decision.
-> Reflects migrations through **0156** (all applied to prod). For the staff role
-> model see [[Staff Roles & Gates]]; for the completion rule see [[Two-Gate Completion]].
+> Reflects migrations through **0156**. For the staff role model see [[Staff Roles & Gates]];
+> for the completion rule see [[Two-Gate Completion]].
+>
+> ⚠️ **2026-06-27 — the ADR-0035 ops overhaul (migrations 0170–0180) supersedes parts of the
+> steps below. Current model:** pending brokers are **verify-only** (can't file — ADR-0032;
+> the old "pending files held" flow is retired); **completion is automatic** once both gates
+> clear; the serving queue now has **priority** + **re-X-ray** lanes (request → admin approve);
+> **charges** are ops-request → cashier-bill; and **payment-confirm requires the ERP + BIR
+> invoice on file**. Source: **ADR-0035**, ADR-0032, + audit fixes 0178–0180. A full
+> step-by-step rewrite is a pending `/wrap`.
 
 ## Actors
 

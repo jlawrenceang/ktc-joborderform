@@ -10,6 +10,11 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.69 — 2026-06-27 (Audit fixes: vessel-tour copy + lifecycle doc)
+
+- **Removed the misleading "tick vessel not listed" tour step** — the New Job Order tour now says to contact KTC customer service (or ask Lara) to add an unlisted vessel, matching the real flow (the manual-entry control was removed long ago). (Audit #7.)
+- **Doc-debt** — the Job Order Lifecycle "source of truth" doc now carries a dated correction note flagging the ADR-0035 ops overhaul (verify-only pending, auto-complete, priority/re-X-ray lanes, ops→cashier billing, invoice-gated payment); a full step rewrite is a pending `/wrap`.
+
 ## v1.6.68 — 2026-06-27 (Audit fixes: priority served ahead + vessel dedup data-loss)
 
 - **Priority lane is now actually served ahead** — both the Checker PWA and the desktop Checker sort the X-ray queue by **lane (priority → regular → re-X-ray) then serving number**, instead of the raw per-lane number (which made `P-1` tie `Q-1`); the desktop Checker now loads serving data too. (Audit #9 — closes the phase-4 follow-up.)
