@@ -343,7 +343,6 @@ export default function Consignees() {
           <div style={{ display: 'grid', gap: 6 }}>
             {list.map((c) => {
               const ss = STATUS_STYLE[c.status] ?? STATUS_STYLE.pending
-              const complete = !!(c.address && c.tin && c.doc_2303_path)
               return (
                 <button key={c.id} type="button" className="ktc-cn-row" onClick={() => { setSelected(c); setEditing(null); setError(null) }}>
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -355,8 +354,8 @@ export default function Consignees() {
                       <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: c.doc_2303_path ? 'var(--c-h150-60-30)' : 'var(--c-h30-70-38)' }}>
                         {c.doc_2303_path ? <><CheckCircleIcon size={11} /> {t('2303 on file')}</> : <><AlertTriangleIcon size={11} /> {t('needs documents')}</>}
                       </span>
+                      {(!c.address || !c.tin) && <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--c-h30-70-38)' }}><AlertTriangleIcon size={11} /> {t('incomplete info')}</span>}
                       {c.requested_by && <span className="ktc-chip ktc-chip--accent" style={{ fontSize: 10 }}>{t('customer-requested')}</span>}
-                      {!complete && c.status !== 'approved' && <span className="ktc-label" style={{ fontSize: 11, display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--c-h30-70-38)' }}><AlertTriangleIcon size={11} /> {t('needs address/TIN/2303')}</span>}
                       {c.tin && <span className="ktc-label" style={{ fontSize: 11 }}>{t('TIN')} {c.tin}</span>}
                     </span>
                   </span>

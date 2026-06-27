@@ -1853,6 +1853,7 @@ export const tl: Record<string, string> = {
   "Print blank CIS": "I-print ang blankong CIS",
   "Needs documents": "Kulang sa dokumento",
   "needs documents": "kulang sa dokumento",
+  "incomplete info": "kulang ang info",
   "2303 on file": "May 2303 na",
   "Trade name (as in invoice) *": "Trade name (gaya sa invoice) *",
   "Customer name (leave blank if same as trade name)": "Customer name (iwang blanko kung kapareho ng trade name)",

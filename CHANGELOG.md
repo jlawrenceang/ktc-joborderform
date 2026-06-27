@@ -10,6 +10,10 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.54 — 2026-06-27 (Consignees: incomplete-info flag)
+
+- Admin Consignees rows now also show an **"incomplete info"** badge when a consignee is missing its business address or TIN — shown on **all** statuses, so the 1,653 approved master-list consignees (all currently doc-less + info-incomplete) are clearly flagged for staff to chase. Pairs with the "2303 on file / needs documents" badge + the "Needs documents" filter. (The unused `needs address/TIN/2303` label it replaced is removed.)
+
 ## v1.6.53 — 2026-06-27 (Consignee approval gate + full CIS capture)
 
 - **Approval gate** — a customer-requested consignee is now **pending** and cannot be used to file until KTC approves it. The Job Order + Releases pickers only offer **approved** consignees (no more "selectable but unverified" limbo), mirroring the ID-verification gate.
