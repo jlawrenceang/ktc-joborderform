@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../lib/i18n'
+import { useWalkthrough, PlayIcon } from './Walkthrough'
 
 // Guided walkthrough: each step can navigate to a page (`to`) and spotlight an
 // element (`target`, a CSS selector — usually a nav link). It returns to `home`
@@ -17,6 +18,8 @@ export interface TourStep {
   // form so the element this step spotlights is actually mounted (the New Job
   // Order wizard paginates on mobile, so the tour drives it step by step).
   onEnter?: () => void
+  // Show a "Watch video walkthrough" button on this step (opens the video player).
+  video?: boolean
 }
 
 export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
@@ -26,6 +29,7 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
   const [rect, setRect] = useState<DOMRect | null>(null)
   const navigate = useNavigate()
   const { t } = useT()
+  const { open: openVideo } = useWalkthrough()
   const s = steps[step]
   const last = step === steps.length - 1
 
@@ -123,6 +127,11 @@ export default function Tour({ steps, onClose, label = 'Quick tour', home }: {
           ))}
         </div>
 
+        {s.video && (
+          <button type="button" className="ktc-btn-secondary" onClick={openVideo} style={{ width: '100%', marginBottom: 12, gap: 8 }}>
+            <PlayIcon /> {t('Watch video walkthrough')}
+          </button>
+        )}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {step > 0 && (
             <button type="button" className="ktc-btn-secondary ktc-btn--sm" onClick={() => setStep(step - 1)}>{t('← Back')}</button>

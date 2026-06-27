@@ -10,6 +10,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 - **doc-governance cap policy synced** (2026-06-24): `docs/agent/doc-governance.md` updated from the old "~220 words (up to ~230)" to the global **soft-150 / confirm-150-200 / hard-200** policy (narrative → `Business Context.md`). The old self-justification (third pillar + extra non-negotiable) is obsolete now that the Mission/Pillars narrative lives in Business Context and `CLAUDE.md` is 198 words.
 - **Business Context onboarding doc added + CLAUDE.md trimmed** (2026-06-24): new canonical `docs/obsidian-vault/01-System/Business Context.md` — one owning file for business background (who we are / who uses it / why) + product scope (two-pillar roadmap, north star, modules), per the global doc-governance layering. Relocated the Mission detail + the full **Pillars & roadmap** narrative out of `CLAUDE.md` into it, bringing the constitution from ~509 → 198 words (under the global hard-200 cap). Wired discoverability pointers from `CLAUDE.md`, `AGENTS.md`, `Home.md`, and `docs/README.md` (cold reader reaches it in ≤2 hops). Live version/migration counts stay linked from `07-Memory/Current State`, not hardcoded. Docs-only; no runtime or DB change.
 
+## v1.6.50 — 2026-06-27 (Home cleanup + walkthrough video into the Quick tour, now MP4)
+
+- **Home:** removed the yard photo banner; the welcome tile is now a proper **opaque glass tile** (was 35% transparent — content was washed out).
+- **Walkthrough video** moved OUT of Home / Menu / Manual and **into the Quick tour** — its last step ("Replay anytime") has a "Watch video walkthrough" button. The `WalkthroughProvider` now wraps `TourProvider` so the Tour can open it.
+- Converted the video to **MP4** (3 MB, plays on iPhones, ~3× faster to load than the 8 MB webm).
+- **Quick tour:** dropped the redundant "Release / Pull-out" step (it's in the Menu anyway).
+- *Still to do: re-record a tighter ~45s cut + add music.*
+
 ## v1.6.49 — 2026-06-27 (Calculator + Lara Tagalog copy sweep)
 
 - Applied the preferred English business terms to the **Rate Calculator** + **Lara (chat)** Tagalog: **"charges"** (not *singil*), **i-estimate** for actions / **"Estimate"** for the step heading, and "rate"/"rates" (already English).

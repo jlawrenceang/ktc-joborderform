@@ -1847,6 +1847,7 @@ export const tl: Record<string, string> = {
   "← Back to menu": "← Bumalik sa menu",
   "Portal walkthrough": "Gabay sa portal",
   "Watch walkthrough": "Panoorin ang gabay",
+  "Watch video walkthrough": "Panoorin ang video",
   "Watch a quick walkthrough": "Manood ng mabilisang gabay",
   "See the portal in action in about a minute.": "Tingnan ang portal sa loob ng halos isang minuto.",
   "Contact us": "Contact us",

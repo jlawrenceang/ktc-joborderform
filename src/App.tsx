@@ -138,8 +138,8 @@ export default function App() {
     <AuthProvider>
     <I18nProvider>
       <BrowserRouter>
-        <TourProvider>
         <WalkthroughProvider>
+        <TourProvider>
         <FirstRunSetup />
         <SessionSupersededOverlay />
         <ServerBusyBanner />
@@ -215,8 +215,8 @@ export default function App() {
         </Routes>
         </RouteFade>
         </Suspense>
-        </WalkthroughProvider>
         </TourProvider>
+        </WalkthroughProvider>
       </BrowserRouter>
     </I18nProvider>
     </AuthProvider>

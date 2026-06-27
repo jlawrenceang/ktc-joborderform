@@ -31,10 +31,6 @@ export const homeSteps: TourStep[] = [
     body: 'Tap Orders to file a new Job Order or follow your existing ones — grouped by filing batch (today / yesterday), with live status, View charges & pay, and Print slip once approved. A badge shows anything needing your action.',
   },
   {
-    icon: <ReceiptIcon size={SZ} />, title: 'Release / Pull-out',
-    body: 'Need to pull out a container? File a Release / Pull-out online from the Menu — upload your DO/BL, settle the charges, then claim your Official Receipt (OR) at the office to take it out. No more lining up just to start.',
-  },
-  {
     icon: <ShipIcon size={SZ} />, title: 'Vessel schedule', target: '[data-tour="tab-vessels"]',
     body: 'Check the current vessel calls, berths, and the Last Free Day before you file — so you know your free-storage deadline.',
   },
@@ -51,8 +47,8 @@ export const homeSteps: TourStep[] = [
     body: 'Tap the chat button anytime to ask Lara — she helps you file and track orders, understand charges, and find rates or vessels. If she can\'t answer, she opens a support ticket so a real person follows up.',
   },
   {
-    icon: <RefreshIcon size={SZ} />, title: 'Replay anytime',
-    body: 'That\'s the quick tour! To watch it again, open Menu and tap Quick tour.',
+    icon: <RefreshIcon size={SZ} />, title: 'Replay anytime', video: true,
+    body: 'That\'s the quick tour! Replay it anytime from Menu → Quick tour — or watch the whole portal as a short video below.',
   },
 ]
 

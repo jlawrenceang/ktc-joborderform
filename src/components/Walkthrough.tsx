@@ -37,9 +37,7 @@ export function WalkthroughProvider({ children }: { children: ReactNode }) {
             </div>
             {/* eslint-disable-next-line jsx-a11y/media-has-caption -- captions are burned into the silent video */}
             <video className="ktc-walkthrough-video" controls autoPlay muted playsInline preload="metadata">
-              {/* Add an MP4 source ABOVE the webm for older iOS/Safari once available:
-                  <source src="/customer-walkthrough.mp4" type="video/mp4" /> */}
-              <source src="/customer-walkthrough.webm" type="video/webm" />
+              <source src="/customer-walkthrough.mp4" type="video/mp4" />
             </video>
           </div>
         </div>
