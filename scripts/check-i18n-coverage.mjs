@@ -74,6 +74,13 @@ if (items.length === 0) {
   console.log('✓ i18n coverage — every t() / TourStep string has a Tagalog entry')
   process.exit(0)
 }
+// --emit: print paste-ready `"exact key": "TODO",` lines (escaped) so a translator
+// fills in the Tagalog value with a guaranteed-matching key.
+if (process.argv.includes('--emit')) {
+  const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')
+  for (const [s] of items) console.log(`  "${esc(s)}": "TODO",`)
+  process.exit(0)
+}
 console.log(`✗ ${items.length} string(s) have no Tagalog (tl) entry — they render English under Filipino:\n`)
 for (const [s, files] of items) {
   console.log(`  "${s.length > 90 ? s.slice(0, 90) + '…' : s.replace(/\n/g, ' ')}"`)
