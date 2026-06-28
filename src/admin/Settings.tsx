@@ -3,7 +3,7 @@ import AdminShell from './AdminShell'
 import SystemHealth from './SystemHealth'
 import { supabase } from '../lib/supabase'
 import { useBroker } from '../lib/useBroker'
-import type { Broker } from '../lib/types'
+import { hasAdminAccess, type Broker } from '../lib/types'
 import { passwordIssue, PASSWORD_HINT } from '../lib/validation'
 import { useT } from '../lib/i18n'
 import LangToggle from '../components/LangToggle'
@@ -40,11 +40,47 @@ function dimCombos(dims: string[]): Record<string, string>[] {
   return out
 }
 
+// T2-26: the Roles & gates matrix rows are driven by the live role_permissions
+// catalogue (so every seeded/future gate auto-appears). This map only supplies
+// human labels for display; an unlabeled gate falls back to its raw key. The
+// insertion order here is the matrix's display order.
+const GATE_LABELS: Record<string, string> = {
+  view_job_orders: 'View job orders',
+  view_xray_queue: 'View the X-ray queue (ops / checker / CSR — not cashier)',
+  file_job_orders: 'File JO on behalf of a customer (walk-ins / in-house)',
+  accept_orders: 'Accept order (submitted → processing)',
+  complete_orders: 'Complete order (needs X-ray + payment done)',
+  hold_reject_orders: 'Hold / reject an order',
+  process_job_orders: 'Mark DEA/OOG service done · requeue / restore',
+  confirm_xray: 'Confirm X-ray per van (checker station)',
+  request_rexray: 'Request a re-X-ray',
+  approve_rexray: 'Approve a re-X-ray',
+  assess_rps: 'Assess RPS (port-services moves)',
+  request_priority: 'Request priority lane',
+  approve_priority: 'Approve priority lane',
+  request_supplement: 'Request a supplement charge',
+  bill_supplement: 'Price / bill a supplement charge',
+  review_payments: 'Review payment proofs / record walk-in',
+  record_invoice: 'Record ERP Service Invoice no. (= PAID)',
+  verify_release_docs: 'Verify release documents (gate pass)',
+  manage_support: 'Support inbox',
+  manage_approvals: 'Account approvals + dashboard',
+  manage_customers: 'Manage customers',
+  manage_consignees: 'Manage consignees',
+  review_consignee_requests: 'Review consignee info requests',
+  manage_vessel_schedule: 'Vessel schedule',
+  manage_pricing: 'Settings · rates & fees',
+  view_fuel_reports: 'View fuel reports',
+  manage_fuel: 'Manage fuel settings',
+  log_fuel: 'Log fuel readings',
+}
+
 export default function Settings() {
   const { t } = useT()
   const { broker: me } = useBroker()
   const isOwner = !!me?.is_owner
   const isRootOwner = !!me?.is_root_owner
+  const hasAdmin = hasAdminAccess(me)
   const [tab, setTab] = useState<'pricing' | 'ops' | 'access' | 'system'>('pricing')
   const [staff, setStaff] = useState<Broker[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,16 +168,40 @@ export default function Settings() {
   const [moveRates, setMoveRates] = useState<MoveRateRow[]>([])
   const [mrBusy, setMrBusy] = useState(false)
   const [mrMsg, setMrMsg] = useState<string | null>(null)
+  const [newMove, setNewMove] = useState('')
+  const [newMoveRate, setNewMoveRate] = useState('')
   useEffect(() => {
     void supabase.from('move_rates').select('move_type, rate, active, sort_order').order('sort_order')
       .then(({ data }) => setMoveRates(((data ?? []) as MoveRateRow[]).map((x) => ({ ...x, rate: x.rate == null ? null : Number(x.rate) }))))
   }, [])
   function setMr(mt: string, rate: number | null) { setMoveRates((xs) => xs.map((x) => (x.move_type === mt ? { ...x, rate } : x))) }
+  function setMrField(mt: string, field: 'active' | 'sort_order', v: boolean | number) {
+    setMoveRates((xs) => xs.map((x) => (x.move_type === mt ? { ...x, [field]: v } : x)))
+  }
   async function saveMoveRates() {
     setMrBusy(true); setMrMsg(null)
     const { error } = await supabase.from('move_rates').upsert(moveRates.map((x) => ({ ...x, updated_at: new Date().toISOString() })), { onConflict: 'move_type' })
     setMrBusy(false)
     setMrMsg(error ? error.message : t('✓ Move rates saved.'))
+  }
+  // Add a move type live (move_type is the PK) — mirrors the charge-types editor:
+  // direct insert, then append to state; active/sort_order edits persist on Save.
+  async function addMove() {
+    const mt = newMove.trim()
+    if (!mt) { setMrMsg(t('Enter the move type name first.')); return }
+    if (moveRates.some((m) => m.move_type.toLowerCase() === mt.toLowerCase())) { setMrMsg(t('That move type already exists.')); return }
+    setMrBusy(true); setMrMsg(null)
+    const rate = newMoveRate.trim() === '' ? null : Number(newMoveRate)
+    const nextSort = moveRates.reduce((mx, m) => Math.max(mx, m.sort_order ?? 0), 0) + 1
+    const { data, error } = await supabase.from('move_rates')
+      .insert({ move_type: mt, rate, sort_order: nextSort })
+      .select('move_type, rate, active, sort_order').single()
+    setMrBusy(false)
+    if (error) { setMrMsg(error.message); return }
+    const row = data as MoveRateRow
+    setMoveRates((xs) => [...xs, { ...row, rate: row.rate == null ? null : Number(row.rate) }])
+    setNewMove(''); setNewMoveRate('')
+    setMrMsg(t('"{mt}" added.', { mt }))
   }
 
   // Additional charge types (0155) — feed the "Add charge" dropdown on a job
@@ -232,7 +292,14 @@ export default function Settings() {
   useEffect(() => { if (isOwner) void loadGates() }, [isOwner])
 
   function toggleGate(role: string, permission: string) {
-    setGates((gs) => gs.map((g) => (g.role === role && g.permission === permission ? { ...g, allowed: !g.allowed } : g)))
+    // A partially-seeded gate has no row for some roles — flip it if present,
+    // otherwise add the row (allowed=true). saveGates persists it via the same
+    // upsert (onConflict role,permission), so the grant path is unchanged.
+    setGates((gs) => {
+      if (gs.some((g) => g.role === role && g.permission === permission))
+        return gs.map((g) => (g.role === role && g.permission === permission ? { ...g, allowed: !g.allowed } : g))
+      return [...gs, { role, permission, allowed: true }]
+    })
   }
   async function saveGates() {
     setGatesBusy(true); setGatesMsg(null)
@@ -476,6 +543,40 @@ export default function Settings() {
     setEmailMsg(next ? t('✓ Customer emails are ON.') : t('✓ Customer emails are suspended.'))
   }
 
+  // Disposable-email blocklist (0190, owner-only RPCs). 7,500+ rows — search-
+  // driven, never list-all. Remove is the "allow a wrongly-blocked domain" override.
+  const [dispSearch, setDispSearch] = useState('')
+  const [dispRows, setDispRows] = useState<{ domain: string }[]>([])
+  const [dispBusy, setDispBusy] = useState(false)
+  const [dispMsg, setDispMsg] = useState<string | null>(null)
+  const [newDomain, setNewDomain] = useState('')
+  async function loadDisposable(search: string) {
+    setDispBusy(true); setDispMsg(null)
+    const { data, error } = await supabase.rpc('list_disposable_domains', { p_search: search.trim() || null, p_limit: 50 })
+    setDispBusy(false)
+    if (error) { setDispMsg(error.message); return }
+    setDispRows((data ?? []) as { domain: string }[])
+  }
+  useEffect(() => { if (isOwner) void loadDisposable('') }, [isOwner])
+  async function addDomain() {
+    const d = newDomain.trim().toLowerCase()
+    if (!d) { setDispMsg(t('Enter a domain first.')); return }
+    setDispBusy(true); setDispMsg(null)
+    const { error } = await supabase.rpc('add_disposable_domain', { p_domain: d })
+    setDispBusy(false)
+    if (error) { setDispMsg(error.message); return }
+    setNewDomain(''); setDispMsg(t('"{d}" added to the blocklist.', { d }))
+    await loadDisposable(dispSearch)
+  }
+  async function removeDomain(d: string) {
+    setDispBusy(true); setDispMsg(null)
+    const { error } = await supabase.rpc('remove_disposable_domain', { p_domain: d })
+    setDispBusy(false)
+    if (error) { setDispMsg(error.message); return }
+    setDispRows((xs) => xs.filter((x) => x.domain !== d))
+    setDispMsg(t('"{d}" removed — that domain can register again.', { d }))
+  }
+
   // Bulletin board moved to its own page (/admin/bulletin) — see BulletinBoardAdmin.
 
   async function createStaff(e: FormEvent) {
@@ -533,6 +634,18 @@ export default function Settings() {
     await load()
   }
 
+  // T2-26: matrix rows = distinct permissions present in role_permissions,
+  // ordered by GATE_LABELS, with any unlabeled/future gate sorted alphabetically
+  // after the known set (and shown by its raw key).
+  const GATE_ORDER = Object.keys(GATE_LABELS)
+  const gateRows = Array.from(new Set(gates.map((g) => g.permission))).sort((a, b) => {
+    const ia = GATE_ORDER.indexOf(a), ib = GATE_ORDER.indexOf(b)
+    if (ia === -1 && ib === -1) return a.localeCompare(b)
+    if (ia === -1) return 1
+    if (ib === -1) return -1
+    return ia - ib
+  })
+
   return (
     <AdminShell>
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
@@ -549,7 +662,7 @@ export default function Settings() {
         <button type="button" onClick={() => setTab('pricing')} className={tab === 'pricing' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Pricing & tariff')}</button>
         <button type="button" onClick={() => setTab('ops')} className={tab === 'ops' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Operations')}</button>
         <button type="button" onClick={() => setTab('access')} className={tab === 'access' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('Access & staff')}</button>
-        {isOwner && (
+        {hasAdmin && (
           <button type="button" onClick={() => setTab('system')} className={tab === 'system' ? 'ktc-btn ktc-btn--sm' : 'ktc-btn-secondary ktc-btn--sm'} style={{ width: 'auto', padding: '7px 14px' }}>{t('System')}</button>
         )}
       </div>
@@ -1024,21 +1137,47 @@ export default function Settings() {
       <div className="ktc-glass" style={{ padding: 18, marginBottom: 18, display: tab === 'pricing' ? undefined : 'none' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('RPS per-move rates')}</h2>
         <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
-          {t('Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Amounts in ₱.')}
+          {t('Charged per move when operations assesses a JO as needing RPS (VATable, added on top of the base). Add a move type, set its rate, reorder with Sort, or untick Active to retire it (existing assessments keep their pricing). Amounts in ₱.')}
         </p>
-        <div style={{ display: 'grid', gap: 8, maxWidth: 420 }}>
+        <div style={{ display: 'grid', gap: 8, maxWidth: 520 }}>
+          <div className="ktc-label" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 11.5, paddingLeft: 2 }}>
+            <span style={{ flex: '1 1 160px', minWidth: 0 }}>{t('Move type')}</span>
+            <span style={{ width: 150, textAlign: 'center' }}>{t('Rate')}</span>
+            <span style={{ width: 70, textAlign: 'center' }}>{t('Sort')}</span>
+            <span style={{ width: 64, textAlign: 'center' }}>{t('Active')}</span>
+          </div>
           {moveRates.map((m) => (
-            <div key={m.move_type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{m.move_type}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div key={m.move_type} style={{
+              display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 10,
+              background: m.active ? 'var(--c-w55)' : 'var(--c-w30)', border: '1px solid var(--glass-brd)', opacity: m.active ? 1 : 0.6,
+            }}>
+              <span style={{ flex: '1 1 160px', minWidth: 0, fontSize: 13, fontWeight: 600 }}>{m.move_type}</span>
+              <span style={{ width: 150, display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
                 <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
                 <input className="ktc-input" type="number" step="0.01" min="0" value={m.rate ?? ''} placeholder={t('Enter rate')}
-                  onChange={(e) => setMr(m.move_type, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 120, padding: '7px 10px' }} />
+                  onChange={(e) => setMr(m.move_type, e.target.value === '' ? null : Number(e.target.value))} style={{ width: 100, padding: '7px 10px' }} aria-label={t('Rate')} />
                 <span className="ktc-label" style={{ fontSize: 11 }}>{t('/ move')}</span>
               </span>
+              <input className="ktc-input" type="number" min="0" value={m.sort_order ?? 0}
+                onChange={(e) => setMrField(m.move_type, 'sort_order', e.target.value === '' ? 0 : Number(e.target.value))}
+                style={{ width: 70, padding: '7px 10px', textAlign: 'center' }} aria-label={t('Sort')} />
+              <label className="ktc-label" style={{ width: 64, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, fontSize: 11, cursor: 'pointer' }}
+                title={m.active ? t('Untick to retire this move type (existing assessments unaffected)') : t('Tick to offer this move type again')}>
+                <input type="checkbox" checked={m.active} onChange={(e) => setMrField(m.move_type, 'active', e.target.checked)} />
+              </label>
             </div>
           ))}
-          {moveRates.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>{t('No move types configured.')}</p>}
+          {moveRates.length === 0 && <p className="ktc-label" style={{ fontSize: 13 }}>{t('No move types yet — add one below.')}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)' }}>
+            <input className="ktc-input" placeholder={t('New move type name')} value={newMove}
+              onChange={(e) => setNewMove(e.target.value)} style={{ flex: '1 1 180px', padding: '7px 10px', fontSize: 13 }} />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span className="ktc-label" style={{ fontSize: 12 }}>₱</span>
+              <input className="ktc-input" type="number" step="0.01" min="0" value={newMoveRate} placeholder={t('rate (optional)')}
+                onChange={(e) => setNewMoveRate(e.target.value)} style={{ width: 130, padding: '7px 10px' }} aria-label={t('Rate')} />
+            </span>
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={mrBusy} onClick={() => void addMove()}>{t('+ Add move')}</button>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16 }}>
           <button className="ktc-btn" type="button" disabled={mrBusy} onClick={() => void saveMoveRates()} style={{ width: 'auto', padding: '10px 20px' }}>
@@ -1137,43 +1276,28 @@ export default function Settings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {([
-                    ['view_job_orders', 'View job orders'],
-                    ['view_xray_queue', 'View the X-ray queue (ops / checker / CSR — not cashier)'],
-                    ['file_job_orders', 'File JO on behalf of a customer (walk-ins / in-house)'],
-                    ['accept_orders', 'Accept order (submitted → processing)'],
-                    ['complete_orders', 'Complete order (needs X-ray + payment done)'],
-                    ['hold_reject_orders', 'Hold / reject an order'],
-                    ['process_job_orders', 'Mark DEA/OOG service done · requeue / restore'],
-                    ['confirm_xray', 'Confirm X-ray per van (checker station)'],
-                    ['assess_rps', 'Assess RPS (port-services moves)'],
-                    ['review_payments', 'Review payment proofs / record walk-in'],
-                    ['record_invoice', 'Record ERP Service Invoice no. (= PAID)'],
-                    ['manage_support', 'Support inbox'],
-                    ['manage_approvals', 'Account approvals + dashboard'],
-                    ['manage_customers', 'Manage customers'],
-                    ['manage_consignees', 'Manage consignees'],
-                    ['manage_vessel_schedule', 'Vessel schedule'],
-                    ['manage_pricing', 'Settings · rates & fees'],
-                  ] as const).map(([perm, label]) => (
-                    <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
-                      <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{t(label)}</td>
-                      {['admin', 'operations', 'cashier', 'checker', 'csr'].map((r) => {
-                        const g = gates.find((x) => x.role === r && x.permission === perm)
-                        return (
-                          <td key={r} style={{ textAlign: 'center', padding: '8px 14px' }}>
-                            <input
-                              type="checkbox"
-                              checked={g?.allowed ?? false}
-                              onChange={() => toggleGate(r, perm)}
-                              aria-label={`${t(r)}: ${t(label)}`}
-                              style={{ width: 17, height: 17, cursor: 'pointer' }}
-                            />
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
+                  {gateRows.map((perm) => {
+                    const label = GATE_LABELS[perm] ?? perm
+                    return (
+                      <tr key={perm} style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
+                        <td style={{ padding: '8px 14px 8px 0', lineHeight: 1.4 }}>{t(label)}</td>
+                        {['admin', 'operations', 'cashier', 'checker', 'csr'].map((r) => {
+                          const g = gates.find((x) => x.role === r && x.permission === perm)
+                          return (
+                            <td key={r} style={{ textAlign: 'center', padding: '8px 14px' }}>
+                              <input
+                                type="checkbox"
+                                checked={g?.allowed ?? false}
+                                onChange={() => toggleGate(r, perm)}
+                                aria-label={`${t(r)}: ${t(label)}`}
+                                style={{ width: 17, height: 17, cursor: 'pointer' }}
+                              />
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1243,6 +1367,44 @@ export default function Settings() {
           </div>
         )}
       </div>
+
+      {/* T2-38: owner-only disposable-email blocklist (search-driven, 7,500+ rows) */}
+      {tab === 'system' && isOwner && (
+        <div className="ktc-glass" style={{ padding: 18, marginBottom: 18 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 600 }}>{t('Disposable-email blocklist')}</h2>
+          <p className="ktc-label" style={{ marginTop: 0, marginBottom: 16, fontSize: 13 }}>
+            {t('Throwaway / disposable email domains blocked from registering. Over 7,500 domains — search to find one. Remove allows a wrongly-blocked legitimate domain to register again; Block adds a new domain. Enter a bare domain like mailinator.com.')}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', maxWidth: 520, marginBottom: 12 }}>
+            <input className="ktc-input" placeholder={t('Search domains…')} value={dispSearch}
+              onChange={(e) => setDispSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void loadDisposable(dispSearch) }}
+              style={{ flex: '1 1 220px', padding: '7px 10px', fontSize: 13 }} aria-label={t('Search domains')} />
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={dispBusy} onClick={() => void loadDisposable(dispSearch)}>{t('Search')}</button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', maxWidth: 520, padding: '10px 12px', borderRadius: 10, border: '1px dashed var(--glass-brd)', marginBottom: 12 }}>
+            <input className="ktc-input" placeholder={t('New domain to block (e.g. mailinator.com)')} value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void addDomain() }}
+              style={{ flex: '1 1 220px', padding: '7px 10px', fontSize: 13 }} aria-label={t('New domain to block')} />
+            <button type="button" className="ktc-btn-secondary ktc-btn--sm" disabled={dispBusy} onClick={() => void addDomain()}>{t('+ Block domain')}</button>
+          </div>
+          <div style={{ display: 'grid', gap: 6, maxWidth: 520 }}>
+            {dispBusy ? (
+              <span className="ktc-label" style={{ fontSize: 13 }}>{t('Loading…')}</span>
+            ) : dispRows.length === 0 ? (
+              <span className="ktc-label" style={{ fontSize: 13 }}>{dispSearch.trim() ? t('No matching domains.') : t('No domains.')}</span>
+            ) : dispRows.map((x) => (
+              <div key={x.domain} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 12px', borderRadius: 10, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
+                <span className="ktc-mono" style={{ fontSize: 13 }}>{x.domain}</span>
+                <button type="button" className="ktc-link" disabled={dispBusy} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--acc-2)' }}
+                  onClick={() => void removeDomain(x.domain)}>{t('Remove')}</button>
+              </div>
+            ))}
+          </div>
+          {dispMsg && <p className="ktc-label" style={{ fontSize: 13, color: 'var(--acc-2)', fontWeight: 600, marginTop: 12 }}>{dispMsg}</p>}
+        </div>
+      )}
 
       {/* G12: cron / outbound / client-error monitor */}
       {tab === 'system' && <SystemHealth />}
