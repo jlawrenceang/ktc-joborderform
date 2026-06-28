@@ -2,9 +2,10 @@
 
 Stable reference for repo-level tooling. Update this file when a tool is added or removed; do not restate these lists in `CLAUDE.md` or `AGENTS.md`.
 
-## Commands (`.claude/commands/`)
+## Commands
 
-- `adr.md` — `/adr` slash command for writing Architecture Decision Records. References `docs/adr/template.md`.
+- **No repo-local commands.** The repo inherits the global JLA framework command roster (`/adr`, `/spec`, `/ship`, `/wrap`, `/master-audit`, `/onboard`, `/scaffold`, `/domain-research`) from `~/.claude/commands/` — owned by the global `CLAUDE.md` Index, not restated here. `/adr` numbers from `docs/adr/README.md` and uses this repo's ADR shape (`docs/adr/template.md`).
+- The stale repo-local `/adr` copy was removed in the v1.1 sync (2026-06-28) — it shadowed and reverted the improved global command.
 
 ## Deploy / hosting tooling
 
@@ -39,9 +40,11 @@ All read the gitignored `.env.local`; none print or commit secrets.
 
 - **None configured for KTC.** The `mcp__supabase__*` / `mcp__claude_ai_Supabase__*` tools available in-session point at **jta-sys**, not KTC — do not use them here (see `runtime-data-safety.md` and ADR-0002). All KTC DB work goes through the direct Postgres connection or the KTC SQL Editor.
 
-## Skills
+## Skills & agents
 
-KTC ships no repo-scoped skills, subagents, or conventions yet. Global/host skills (frontend-design, code-review, etc.) are available via the Skill tool when useful — use selectively for non-trivial work.
+KTC ships no repo-scoped skills, subagents, or conventions yet. Global/host skills (frontend-design, code-review, etc.) are available via the Skill tool when useful — use selectively for non-trivial work. The global framework's full skill roster is owned by the global `CLAUDE.md` Index, not restated here.
+
+- **Jarvis** (global `~/.claude/agents/jarvis.md`, framework v1.1) — experimental author-independent verify/advise sentinel, read-only. **This repo is a designated dogfooding target.** Reach for it at the verify beat before `/ship` on changes touching business logic, money, permissions, or integration contracts; runs scored against the framework's `docs/jarvis-scorecard.md`.
 
 ## Testing (`e2e/`, Playwright)
 
