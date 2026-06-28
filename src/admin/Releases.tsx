@@ -8,6 +8,8 @@ import { prepareUpload } from '../lib/validation'
 import { peso } from '../lib/pricing'
 import { RELEASE_STATUS_LABEL, type ReleaseOrder, type ReleaseSupplement } from '../lib/types'
 import { useT } from '../lib/i18n'
+import { usePageTour } from '../components/TourProvider'
+import { releaseAdminSteps } from './AdminTour'
 
 // Release / Pull-out desks (ADR-0024). Two permission-gated sections sharing one
 // queue of release_orders — an admin/owner sees both:
@@ -58,6 +60,7 @@ const btn = (variant: 'solid' | 'ghost' | 'danger'): CSSProperties => ({
 
 export default function Releases() {
   const { t } = useT()
+  usePageTour('admin-releases', releaseAdminSteps)
   const { can, loading: permLoading } = usePermissions()
   const [rows, setRows] = useState<ReleaseOrder[]>([])
   const [loading, setLoading] = useState(true)
