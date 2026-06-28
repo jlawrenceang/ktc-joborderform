@@ -2,7 +2,7 @@
 title: Two-Gate Completion
 tags: [concept, job-orders, payments, invariant]
 type: concept
-last_updated: 2026-06-16
+last_updated: 2026-06-28
 ---
 
 # ✅ Two-Gate Completion
@@ -16,7 +16,9 @@ An order is "ready" when **ALL** hold (`0086` → `0097` → `0101`):
 1. **Every service line is done** — `jo_all_services_done` (X-ray, incl. **every van**, plus DEA/OOG/other in `service_completions`).
 2. **Base payment confirmed** — `payment_status = 'confirmed'`.
 3. **RPS cleared** — `rps_status <> 'needed'` **OR** `rps_payment_status = 'confirmed'` (`0097` folded RPS into the gate — an unpaid RPS could previously slip through and show PAID on the verify QR).
-4. **Every supplement paid** — no `jo_supplements` row with `payment_status <> 'confirmed'` (`0101`). See [[Additional-Charge Supplements]].
+4. **No billed-but-unpaid supplement** — no `jo_supplements` row with `bill_status = 'billed'` **AND** `payment_status <> 'confirmed'` (`0181`, was "any supplement <> confirmed"). A charge that ops only **requested** but the cashier hasn't **billed** yet does **not** block completion. See [[Additional-Charge Supplements]].
+
+**Re-X-ray exemption** (`0175`/`0181`): a **free** re-X-ray child (`is_rexray AND NOT rexray_billable`) completes on **services-done alone** — gates 2–4 are skipped (there is nothing to pay). A billable re-X-ray still runs the full gate.
 
 ## How it fires (whoever does the last step trips it)
 
@@ -38,4 +40,4 @@ The completion trigger is a **BEFORE UPDATE OF `payment_status`, `rps_payment_st
 
 - [[Job Order Lifecycle]] · [[Additional-Charge Supplements]] · [[Verify-QR Anti-Forgery]] · [[Staff Roles & Gates]]
 - [[Operational Invariants]]
-- Migrations `0086` (initial two-gate), `0087` (per-van + auto-complete trigger), `0091` (office payment trips it), `0094` (backstop), `0096` (`completed_at` on payment path), `0097` (RPS folded in), `0101` (supplements folded in)
+- Migrations `0086` (initial two-gate), `0087` (per-van + auto-complete trigger), `0091` (office payment trips it), `0094` (backstop), `0096` (`completed_at` on payment path), `0097` (RPS folded in), `0101` (supplements folded in), `0175` (free re-X-ray exemption), `0181` (gate on **billed-unpaid** supplements only + matching backstop)

@@ -92,7 +92,7 @@ export default function VerifyId() {
           {t('To activate your account and pass final verification, attach a clear photo or PDF of a valid government-issued ID and submit it for KTC admin approval.')}
         </p>
         <p className="ktc-label" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.55, opacity: 0.85, textAlign: 'left' }}>
-          {t('You can continue to the portal first and prepare job orders — they’ll be held until your account is verified.')}
+          {t('Filing job orders unlocks once a KTC admin approves your account.')}
         </p>
 
         <label style={{ marginTop: 18, display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', textAlign: 'left' }}>

@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 
 ## Reading order
 
-1. `0001` to `0034` in numeric order.
+1. `0001` to `0035` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -45,6 +45,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 | [0032](0032-pending-accounts-verify-only-lockdown.md) | Lock pending accounts to verify-only (a data-exposure boundary) | Accepted | 2026-06-26 | Security |
 | [0033](0033-block-disposable-email-domains.md) | Block disposable / temporary email domains at signup (server-side) | Accepted | 2026-06-26 | Security |
 | [0034](0034-google-oauth-signin-scoped-finish-registration-gate.md) | Google OAuth sign-in + a scoped post-OAuth consent/contact gate | Accepted | 2026-06-26 | Security \| Frontend |
+| [0035](0035-job-order-ops-overhaul-queue-priority-rexray-autocomplete-invoice-gate.md) | Overhaul job-order ops — automatic queue, priority + re-X-ray lanes, auto-complete, invoice-gated payment, CSR grants | Accepted | 2026-06-27 | Business Logic |
 
 ¹ Retroactively captured 2026-06-25; the decisions shipped earlier (0028 at migration 0021; 0029 across ~0132–0139).
 
@@ -53,4 +54,4 @@ ADRs in this folder preserve decision history for the KTC portal.
 - Do not rewrite historical ADR intent to match current code.
 - If implementation diverges, add a dated addendum with rationale.
 - Runtime truth still comes from code (`src/App.tsx`, active implementation) and migrations (`supabase/migrations/`).
-- Write new ADRs with the `/adr` command (see `.claude/commands/adr.md`); use `template.md` as the base and add a row to the log above.
+- Write new ADRs with the `/adr` command (inherited from the global JLA framework — see `docs/agent/tooling-inventory.md`); use `template.md` as the base and add a row to the log above.

@@ -10,7 +10,7 @@ import { useT } from '../lib/i18n'
 const STEPS: { title: string; body: string }[] = [
   { title: 'Create your account', body: 'Sign up with your full name, contact number, email, and a password. Read and accept the KTC Customer Agreement to continue.' },
   { title: 'Confirm your email', body: 'We email you a confirmation link — click it to activate your account. You can resend it from the sign-in page if it doesn’t arrive.' },
-  { title: 'Get verified', body: 'Upload a valid government ID. A KTC admin reviews and approves your account. You can start filing while you wait, but your orders are held until you’re approved.' },
+  { title: 'Get verified', body: 'Upload a valid government ID. A KTC admin reviews and approves your account. Filing job orders unlocks once you’re approved.' },
   { title: 'File a Job Order', body: 'Choose the consignee, enter the Entry Number (C-…), pick the vessel & voyage, then add your container numbers and the service each one needs.' },
   { title: 'Track your orders by batch', body: 'Once filed, your orders are grouped by the day you filed them (today’s batch, yesterday’s, and so on). Follow the live status of every order under the Orders tab — there’s no serving number to wait on.' },
   { title: 'View charges & pay', body: 'Open the order to see the fee breakdown, transfer using the official account details shown, and upload your payment slip. KTC admin reviews and confirms it.' },

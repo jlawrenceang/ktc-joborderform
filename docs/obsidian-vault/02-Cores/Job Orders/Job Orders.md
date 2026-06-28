@@ -5,7 +5,7 @@ type: core
 wave: 1
 status: live
 owner: Customer
-last_updated: 2026-06-27
+last_updated: 2026-06-28
 ---
 
 # 📝 Job Orders Core
@@ -38,7 +38,7 @@ The core transaction: a customer (or CSR / operations on behalf) files a Job Ord
 
 - **Gated transitions** via `staff_transition_order` with the **split gates** `accept_orders` / `hold_reject_orders` ([[Staff Roles & Gates]]); approval is **operations/admin** only and the **cashier is money-only** (dropped hold-reject/complete in `0171`). No admin-only direct UPDATE.
 - **Per-van X-ray** ([[Job Order Lifecycle]] §E) — `record_van_xray` (Checker-only `confirm_xray`); last van rolls up the X-ray service line. A **re-X-ray** child can't be X-rayed before admin approval (`0181`).
-- **[[Two-Gate Completion]] — now fully automatic** — completes the moment all services done **AND** base payment **AND** RPS (if needed) **AND** every **billed** supplement are confirmed; auto-fires from whichever side finishes last (`complete_on_service_done` / `complete_on_payment_confirmed`). **The manual "complete" button is retired** (ADR-0035).
+- **[[Two-Gate Completion]] — now fully automatic** — completes the moment all services done **AND** base payment **AND** RPS (if needed) **AND** every **billed** supplement are confirmed; auto-fires from whichever side finishes last (`complete_on_service_done` / `complete_on_payment_confirmed`). The manual **"Mark completed"** button **remains only as a rare ready-state fallback** — it renders solely when the order is already two-gate-ready, so auto-complete normally fires first (ADR-0035).
 - **Priority + re-X-ray lanes** (ADR-0035) — `request_priority` → `review_priority` (admin); `request_rexray` → `review_rexray` (admin) spawns a suffixed child JO (`JO-000001A`; free by default, `rexray_billable` for later). Both are **request → admin-approve** — the requester can't self-approve. See [[Job Order Lifecycle]] §D.
 - **Staff header edit** — `staff_edit_job_order` (operations/cashier/CSR; **checker + customers excluded**, `0103`).
 

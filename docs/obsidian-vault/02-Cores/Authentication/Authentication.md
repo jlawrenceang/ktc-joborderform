@@ -5,7 +5,7 @@ type: core
 wave: 1
 status: live
 owner: Owner
-last_updated: 2026-06-26
+last_updated: 2026-06-28
 ---
 
 # 🔑 Authentication Core
@@ -14,7 +14,7 @@ last_updated: 2026-06-26
 
 ## Purpose
 
-Identity, sign-in/registration, the role model (root owner / owner / 5 staff roles / customer), invite-only staff creation, and the RLS posture that backs access control.
+Identity, sign-in/registration, the role model (root owner / owner / 6 staff roles / customer), invite-only staff creation, and the RLS posture that backs access control.
 
 ## Runtime routes (key)
 
@@ -25,7 +25,7 @@ Identity, sign-in/registration, the role model (root owner / owner / 5 staff rol
 
 - `customers` row carries `is_root_owner` + `is_owner` + `is_admin` + **`staff_role`** + `status`. `hasAdminAccess(b) = is_admin || is_owner` (`src/lib/types.ts`).
 - **Root owner / owner:** server-only; root mints/revokes secondary owners (`set_owner_access`). Override everything, cannot be locked out. See [[Owner Failsafe]], [[Multi-Owner & Root Grants]].
-- **Staff roles:** `admin · operations · cashier · checker · csr`, created only by the owner. Capabilities run on the owner-tunable [[Staff Roles & Gates]] matrix (`role_permissions` + `has_permission`) — restricted roles are **NOT** `is_admin`.
+- **Staff roles:** `admin · operations · cashier · checker · csr · purchaser` (`purchaser` is the DB-only fuel desk, `0150` — frontend deferred), created only by the owner. Capabilities run on the owner-tunable [[Staff Roles & Gates]] matrix (`role_permissions` + `has_permission`) — restricted roles are **NOT** `is_admin`.
 - **Customers:** self-register, start `pending` (see [[Brokers]]).
 - **2FA / sessions:** TOTP 2FA enforced for admin/owner (server aal2); single session per account (last-login-wins, dead-session RLS cut-off); idle timeouts (customer 15 min / staff 60 min).
 

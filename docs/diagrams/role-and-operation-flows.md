@@ -275,7 +275,7 @@ flowchart TD
     MJO --> RESP["Respond to field-targeted hold → submitted"]
     MJO --> CAN["Cancel (submitted/on_hold) → cancelled"]
     MJO --> PAY["Pay base / RPS / supplements (upload proof)"]
-    MJO --> PRINT["Print slip (processing/completed)"]
+    MJO --> PRINT["Print slip (submitted onward)"]
 
     OK --> MRL["/releases — manage"]
     MRL --> RDOC["Resubmit doc (on_hold) → submitted"]

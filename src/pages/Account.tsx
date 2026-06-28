@@ -82,6 +82,10 @@ export default function Account() {
       updates.status = 'pending'
       updates.decided_at = null
       updates.decision_reason = null
+      // Clear the old ID so /verify-id shows the upload prompt again (it redirects away while
+      // valid_id_path is set) — otherwise the admin would re-review the OLD ID against the NEW
+      // name and the customer has no way to replace it. The stale file is purged by the cron. (T1-02)
+      updates.valid_id_path = null
     }
     const { error } = await supabase.from('customers').update(updates).eq('id', broker.id)
     setSavingProfile(false)
@@ -244,7 +248,7 @@ export default function Account() {
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>{t('Changing your name needs re-verification')}</h2>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6, fontSize: 13.5 }}>
               {t('Your legal name was verified against your ID. To change it to')} <b style={{ color: 'hsl(var(--ink))' }}>{fullName.trim()}</b>,{' '}
-              {t('your account goes back to')} <b>{t('pending')}</b> {t('and you’ll re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime are held until you’re re-approved.')}
+              {t('your account goes back to')} <b>{t('pending')}</b> {t('and you’ll re-upload a valid ID for a KTC admin to re-verify. While it’s pending re-approval, filing Job Orders is locked until KTC approves you again.')}
             </p>
             <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
               <button className="ktc-btn" type="button" disabled={savingProfile} onClick={() => void doSaveProfile()} style={{ width: 'auto', padding: '10px 20px' }}>

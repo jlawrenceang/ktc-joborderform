@@ -78,3 +78,7 @@ A 75-agent whole-app ultracode audit (run after phases 1–7 shipped) found **59
 - **Priority (phase 4)** — granted orders are now actually **served ahead** on both checker queues (lane-tagged P-/R-/# numbers); the manual `restore_serving_number` queue-jump this overhaul retired was finally dropped; `review_priority` requires a pending request.
 
 Full record: [[whole-app-audit-closed]] + `CHANGELOG.md` v1.6.66–73. Status unchanged (Accepted) — this documents hardening, not a reversal.
+
+## Addendum — 2026-06-28 (manual "Mark completed" kept as a fallback)
+
+Phase 2 above says the manual **"Mark completed"** button *retires*. In runtime it is **kept as a rare ready-state fallback**, not removed: `src/admin/AllJobOrders.tsx` still renders it, but **only when the order is already two-gate-ready** (`complete_orders` held · `processing` · base paid · RPS settled · all services done). Auto-complete normally fires first, so the click is a no-op safety net rather than a routine action. Treat the design intent as *"completion is automatic; the button is a last-resort fallback,"* not *"the button is gone."* Status unchanged (Accepted).

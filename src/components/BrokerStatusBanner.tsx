@@ -6,9 +6,10 @@ import { useT } from '../lib/i18n'
 import Notice from './Notice'
 
 // Inline banner shown at the top of the portal to a confirmed-but-not-yet-approved
-// customer. They get full access to browse and prepare job orders (submit is gated
-// server-side). Here we (1) sync consent captured at sign-up, and (2) point them to
-// the /verify-id page to upload the valid ID an admin needs before approving.
+// customer. A pending account is verify-only (migration 0163): filing job orders and
+// every other business surface stay locked until an admin approves it. Here we (1) sync
+// consent captured at sign-up, and (2) point them to the /verify-id page to upload the
+// valid ID an admin needs before approving.
 export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }: { broker: Broker; onRefresh?: () => void; refreshCooling?: boolean }) {
   const { t } = useT()
   const synced = useRef(false)
@@ -49,7 +50,7 @@ export default function BrokerStatusBanner({ broker, onRefresh, refreshCooling }
         <span style={{ flex: 1, minWidth: 200, fontWeight: 500 }}>
           {needsId
             ? t('Upload a valid ID to get verified — orders can’t be filed until a KTC admin approves your account.')
-            : t('A KTC admin is verifying your account. Orders stay held until you’re verified.')}
+            : t('A KTC admin is verifying your account. Filing unlocks once you’re approved.')}
           {refreshBtn && <> {refreshBtn}</>}
         </span>
         {needsId && (

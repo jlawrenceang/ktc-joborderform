@@ -18,7 +18,6 @@ import { searchConsignees } from '../lib/pickerSearches'
 import { useT } from '../lib/i18n'
 
 const STATUS_LABEL: Record<string, string> = {
-  held: 'Pending approval',
   submitted: 'Submitted',
   processing: 'Approved · processing',
   on_hold: 'On hold · info needed',
@@ -29,7 +28,6 @@ const STATUS_LABEL: Record<string, string> = {
 
 // Per-status semantic tone, rendered with the shared .ktc-chip classes.
 const STATUS_TONE: Record<string, string> = {
-  held: 'warning',
   submitted: 'info',
   processing: 'progress',
   on_hold: 'warning',
@@ -276,7 +274,7 @@ export default function MyJobOrders() {
         { count: 'exact' },
       )
       .eq('is_rexray', false)   // re-X-ray child orders are internal KTC ops — hide from the customer
-    if (f === 'active') q = q.in('status', ['held', 'submitted', 'processing', 'on_hold'])
+    if (f === 'active') q = q.in('status', ['submitted', 'processing', 'on_hold'])
     else if (f === 'action')
       // On hold, a rejected payment proof on a live order, or an unpaid additional
       // charge ("balance to pay") on a live order. (Rejected is terminal — no action.)
@@ -398,7 +396,7 @@ export default function MyJobOrders() {
                   <button key={o.id} type="button" className="ktc-jo-zcard" onClick={() => openOrder(o)}>
                     <div className="ktc-jo-zcard-head" style={{ justifyContent: 'space-between' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
-                        <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? t('Draft')}</b>
+                        <b className="ktc-mono" style={{ fontSize: 14 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
                         <StatusBadge status={o.status} />
                         <PayPill o={o} />
                         <ClearedBadge o={o} />
@@ -420,7 +418,7 @@ export default function MyJobOrders() {
                 const count = o.lines?.length ?? 0
                 return (
                   <button key={o.id} type="button" className="ktc-jo-litem" onClick={() => openOrder(o)} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <b className="ktc-mono" style={{ fontSize: 13, flex: '0 0 auto' }}>{o.entry_number ?? o.jo_number ?? t('Draft')}</b>
+                    <b className="ktc-mono" style={{ fontSize: 13, flex: '0 0 auto' }}>{o.entry_number ?? o.jo_number ?? '—'}</b>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
                     <PayPillMini o={o} />
                     <span title={t('{count} container vans', { count })} aria-label={t('{count} container vans', { count })}
@@ -455,7 +453,7 @@ export default function MyJobOrders() {
               style={{ width: '100%', maxWidth: 560, maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '15px 20px', borderBottom: '1px solid var(--glass-brd)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minWidth: 0 }}>
-                  <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? t('Draft (no number yet)')}</b>
+                  <b className="ktc-mono" style={{ fontSize: 15 }}>{o.jo_number ?? o.entry_number ?? '—'}</b>
                   <StatusBadge status={o.status} />
                   <PayPill o={o} />
                   <ClearedBadge o={o} />
@@ -490,11 +488,6 @@ export default function MyJobOrders() {
                 )}
 
                 <div style={{ marginTop: 16 }}>
-                  {o.status === 'held' && (
-                    <div style={{ fontSize: 12.5, color: 'var(--c-h30-60-38)', marginBottom: 12, lineHeight: 1.5 }}>
-                      {t('Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.')}
-                    </div>
-                  )}
                   {o.status === 'on_hold' && (
                     <>
                       {o.admin_note && (
@@ -537,18 +530,18 @@ export default function MyJobOrders() {
                   )}
 
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {['held', 'submitted'].includes(o.status) && (
+                    {o.status === 'submitted' && (
                       <button type="button" className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex' }}
                         onClick={() => { setEditingId(o.id); setError(null) }}>
                         {t('Edit order')}
                       </button>
                     )}
-                    {!['held', 'rejected', 'cancelled'].includes(o.status) && (
+                    {!['rejected', 'cancelled'].includes(o.status) && (
                       <Link to={`/job-order/${o.id}/print`} target="_blank" className="ktc-btn ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
                         {t('Print slip')} ↗
                       </Link>
                     )}
-                    {!['held', 'cancelled', 'rejected'].includes(o.status) && (
+                    {!['cancelled', 'rejected'].includes(o.status) && (
                       <Link to={`/job-order/${o.id}/pay`} className="ktc-btn-secondary ktc-btn--sm" style={{ display: 'inline-flex', textDecoration: 'none' }}>
                         {payBtnLabel(o)}
                       </Link>
@@ -577,11 +570,11 @@ export default function MyJobOrders() {
                     orderId={o.id}
                     userId={broker?.user_id ?? ''}
                     canComment
-                    canAttach={['held', 'submitted', 'processing', 'on_hold'].includes(o.status)}
+                    canAttach={['submitted', 'processing', 'on_hold'].includes(o.status)}
                   />
 
-                  {/* Cancel — only before processing starts (held/submitted/on_hold). */}
-                  {['held', 'submitted', 'on_hold'].includes(o.status) && (
+                  {/* Cancel — only before processing starts (submitted/on_hold). */}
+                  {['submitted', 'on_hold'].includes(o.status) && (
                     <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--glass-brd)' }}>
                       {cancelId === o.id ? (
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', fontSize: 13 }}>

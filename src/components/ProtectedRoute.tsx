@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import MfaChallenge from './MfaChallenge'
 import SessionConflictModal from './SessionConflictModal'
 import FinishRegistration from './FinishRegistration'
+import ReConsent from './ReConsent'
+import { AGREEMENT_VERSION } from '../content/legal'
 
 function AwaitingEmailConfirmation({ email }: { email: string | undefined }) {
   const { signOut } = useAuth()
@@ -97,6 +99,24 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     return () => { active = false }
   }, [isOauthUser, session])
 
+  // Re-consent gate: a customer whose recorded agreement version no longer matches the current
+  // AGREEMENT_VERSION must re-accept before the portal renders (has_recorded_consent() only checks
+  // the version is non-null, so a bump never re-gated). Scoped to customers (staff_role null);
+  // staff/owner hold no agreement, and a missing row isn't a consenting customer either. (T1-07)
+  const [consent, setConsent] = useState<'unknown' | 'ok' | 'needed'>('unknown')
+  useEffect(() => {
+    if (!session) { setConsent('unknown'); return }
+    let active = true
+    void supabase.from('customers').select('staff_role, terms_version').eq('user_id', session.user.id).maybeSingle()
+      .then(({ data }) => {
+        if (!active) return
+        const row = data as { staff_role: string | null; terms_version: string | null } | null
+        if (!row || row.staff_role) { setConsent('ok'); return }
+        setConsent(row.terms_version === AGREEMENT_VERSION ? 'ok' : 'needed')
+      })
+    return () => { active = false }
+  }, [session])
+
   if (loading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -149,8 +169,18 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     )
   }
   if (isOauthUser && oauthReg === 'needed') {
-    return <FinishRegistration onDone={() => setOauthReg('done')} />
+    return <FinishRegistration onDone={() => { setOauthReg('done'); setConsent('ok') }} />
   }
+
+  // Re-consent gate (customers only): hold until known, block on an agreement-version mismatch.
+  if (consent === 'unknown') {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        <span className="ktc-label">Loading…</span>
+      </div>
+    )
+  }
+  if (consent === 'needed') return <ReConsent onDone={() => setConsent('ok')} />
 
   return <>{children}</>
 }

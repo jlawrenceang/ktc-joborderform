@@ -95,16 +95,16 @@ export const enSimple: Record<string, string> = {
     "A KTC admin is verifying your account. You may continue filing job orders, but they will be held until you are verified. For more information, please contact customer service at",
   "A valid ID is required before you can approve":
     "A valid ID is required before you can approve.",
-  "A KTC admin is verifying your account. Orders stay held until you’re verified.":
-    "A KTC admin is verifying your account. Your orders will be held until you are verified.",
+  "A KTC admin is verifying your account. Filing unlocks once you’re approved.":
+    "A KTC admin is verifying your account. You can file job orders once you are approved.",
   "Add each container number and the service it needs — or Bulk paste a whole list at once. Then submit; you'll get a serving number per service line.":
     "Add each container number and the service it needs, or use Bulk paste to add a whole list at once. Then submit, and you will receive a serving number per service line.",
   "Adds a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…) to your sign-in. Once enabled it's enforced":
     "Adds a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…) to your sign-in. Once enabled, it is always required",
   "All registered customer accounts and their status. Approve/reject pending ones under Approvals; suspend or reactivate approved accounts here.":
     "All registered customer accounts and their status. Please approve or reject pending accounts under Approvals; suspend or reactivate approved accounts here.",
-  "and you’ll re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime are held until you’re re-approved.":
-    "and you will re-upload a valid ID for a KTC admin to re-verify. Job orders you file in the meantime will be held until you are re-approved.",
+  "and you’ll re-upload a valid ID for a KTC admin to re-verify. While it’s pending re-approval, filing Job Orders is locked until KTC approves you again.":
+    "and you will re-upload a valid ID for a KTC admin to re-verify. While your account is pending re-approval, you cannot file Job Orders until KTC approves you again.",
   "Archives every completed order that has a Service Invoice number (= paid). Also runs automatically every Monday.":
     "Archives every completed order that has a Service Invoice number (= paid). This also runs automatically every Monday.",
   "Bank account + QRPH QR shown when a customer pays online. Online payments (GCash / Maya / banks) all route through the QR. Leave fields blank to hide them.":
@@ -113,8 +113,6 @@ export const enSimple: Record<string, string> = {
     "before it can be approved. Only approved consignees are visible to customers.",
   "can’t be processed until you pass final verification":
     "cannot be processed until you pass final verification",
-  "Can’t be processed until you pass final verification — upload your valid ID, then a KTC admin verifies your account and it’s sent automatically.":
-    "Cannot be processed until you pass final verification. Please upload your valid ID, after which a KTC admin will verify your account and it will be sent automatically.",
   "Can't scan? Enter this key manually:":
     "Unable to scan? Please enter this key manually:",
   "Cancel this order? This can’t be undone.":
@@ -405,8 +403,8 @@ export const enSimple: Record<string, string> = {
     "Please unlock editing first",
   "Upload a clear photo or PDF of the deposit / transfer receipt.":
     "Please upload a clear photo or PDF of the deposit or transfer receipt.",
-  "Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they're held until a KTC admin reviews and approves your account.":
-    "Please upload a valid government ID and a KTC admin will review your account. You may file Job Orders while you wait, but they are held until a KTC admin reviews and approves your account.",
+  "Upload a valid government ID and a KTC admin will review your account. Filing Job Orders unlocks once a KTC admin reviews and approves your account.":
+    "Please upload a valid government ID and a KTC admin will review your account. You can file Job Orders once a KTC admin reviews and approves your account.",
   "Upload a valid ID to get verified — you can file now, but orders are held until a KTC admin approves your account.":
     "Please upload a valid ID to get verified — you may file now, but orders are held until a KTC admin approves your account.",
   "Upload your valid ID for final verification (banner above); once a KTC admin approves you, your held orders are sent automatically.":
@@ -577,8 +575,8 @@ export const enSimple: Record<string, string> = {
     "To activate your account and pass final verification, please attach a clear photo or PDF of a valid government-issued ID and submit it for KTC admin approval.",
   "Write a comment or attach a document.":
     "Please write a comment or attach a document.",
-  "You can continue to the portal first and prepare job orders — they’ll be held until your account is verified.":
-    "You may continue to the portal first and prepare job orders — they will be held until your account is verified.",
+  "Filing job orders unlocks once a KTC admin approves your account.":
+    "You can file job orders once a KTC admin approves your account.",
   "You don’t have access to the support inbox.":
     "You do not have access to the support inbox.",
   "You’ve been signed out":

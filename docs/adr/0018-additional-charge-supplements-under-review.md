@@ -76,3 +76,12 @@ Chosen option: **B** (migrations `0101`, `0104`).
 * `supabase/migrations/0101_jo_supplements.sql` (`jo_supplements`, `add_supplement`, `submit_supplement_proof`, `review_supplement_payment`, `record_supplement_office_payment`; gate + revert)
 * `supabase/migrations/0104_open_supplement_flag.sql` (`has_open_supplement`, `sync_open_supplement` trigger, backfill)
 * `src/admin/AllJobOrders.tsx` (operations "Add charge"), `src/admin/CashierStation.tsx` (supplement review), `src/pages/Payment.tsx` (per-charge PaySection)
+
+## Current-State Addendum (2026-06-28)
+
+The **"under review" revert is superseded** by the ADR-0035 ops overhaul; the original decision body above is preserved for history.
+
+* **A charge billed on a completed order no longer reopens it** (`0183`, audit #426). `bill_supplement` / `add_supplement` leave a completed order `completed`; release is held instead by the `has_open_supplement` gate. This killed a spurious "approved / now processing" notice + serving number.
+* **The completion gate now keys on *billed-unpaid* supplements only** (`0181`, was "every supplement `<> confirmed`"): `not exists (jo_supplements where bill_status = 'billed' and payment_status <> 'confirmed')`. A charge only *requested* (ADR-0035's ops-request → cashier-bill split, `0176`) does not block, and a **free re-X-ray** child is exempt (`0175`).
+* **`has_open_supplement`** is likewise set only by **billed-unpaid** supplements (`0182`).
+* See [[Two-Gate Completion]], [[Additional-Charge Supplements]], and ADR-0035.

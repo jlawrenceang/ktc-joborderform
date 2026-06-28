@@ -16,7 +16,7 @@ export const homeSteps: TourStep[] = [
   },
   {
     icon: <IdCardIcon size={SZ} />, title: 'Get verified', target: '[data-tour="id-banner"]',
-    body: 'Upload a valid government ID and a KTC admin will review your account. You can file Job Orders while you wait — but they\'re held until a KTC admin reviews and approves your account.',
+    body: 'Upload a valid government ID and a KTC admin will review your account. Filing Job Orders unlocks once a KTC admin reviews and approves your account.',
   },
   {
     icon: <PinIcon size={SZ} />, title: 'Bulletin board', target: '[data-tour="home-bulletin"]',

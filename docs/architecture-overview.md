@@ -56,8 +56,9 @@ backend serves all surfaces.
   close a file-on-behalf-and-approve gap); the **cashier is money-only** (`review_payments` ·
   `record_invoice` · `bill_supplement`). Three job-order escalations run a **request → admin-approve**
   split, each a *distinct* permission so the requester can never self-approve: **priority**
-  (`request_priority` → `review_priority`), **re-X-ray** (`request_rexray` → `review_rexray`), and
-  **additional charges** (`request_supplement` → cashier `bill_supplement`). Confirming a **base payment
+  (`request_priority` → `approve_priority`), **re-X-ray** (`request_rexray` → `approve_rexray`), and
+  **additional charges** (`request_supplement` → cashier `bill_supplement`) — the approve side runs via
+  the `review_priority` / `review_rexray` RPCs. Confirming a **base payment
   requires the ERP service-invoice + BIR pad serial on file** (`record_service_invoice`, `0177`/`0178`).
 - **One session per account** (`claim_session` + `session_alive()` woven into the RLS helpers),
   **idle auto-logout** (customer 15 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).

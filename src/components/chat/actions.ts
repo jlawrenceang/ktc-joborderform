@@ -30,7 +30,6 @@ function consigneeName(c: unknown): string {
 
 // Per-status one-liner for the track result (t() keys, grounded in MyJobOrders).
 const STATUS_LINE: Record<string, string> = {
-  held: 'Pending approval — saved as a Draft (no JO number yet).',
   submitted: 'Submitted — in KTC’s queue. You can still Edit or Cancel it.',
   processing: 'Approved · processing — you can print the A6 slip and the base charge is now payable.',
   on_hold: 'On hold — KTC needs info. Open the order, fix the flagged fields, add a reply, and Resubmit.',
@@ -46,7 +45,6 @@ const PAY_LINE: Record<'none' | 'balance' | 'paid', string> = {
 
 // Compact status label for the "all my orders" list (mirrors MyJobOrders).
 const STATUS_LABEL: Record<string, string> = {
-  held: 'Pending approval',
   submitted: 'Submitted',
   processing: 'Approved · processing',
   on_hold: 'On hold · info needed',
@@ -94,7 +92,7 @@ export const trackOrder: ActionFn = async (vars, { t }) => {
   }
   if (!data) {
     return {
-      bubbles: [t('I couldn’t find order {jo} on your account. If it’s still a Draft it has no JO number yet — check My Job Orders.', { jo })],
+      bubbles: [t('I couldn’t find order {jo} on your account — check My Job Orders to confirm the number.', { jo })],
       options: [
         { label: 'Open My Job Orders', to: 'nav.myOrders' },
         { label: 'Try another number', to: 'track.input' },
@@ -159,7 +157,7 @@ export const listMyOrders: ActionFn = async (_vars, { t }) => {
     s === 'balance' ? ' · ' + t('Balance to pay') : s === 'paid' ? ' · ' + t('Paid') : ''
 
   const lines = rows.map((o) => {
-    const id = o.jo_number ?? o.entry_number ?? t('Draft')
+    const id = o.jo_number ?? o.entry_number ?? '—'
     const status = t(STATUS_LABEL[o.status] ?? o.status)
     return `• ${id} — ${status}${payChip(joPaymentState(o))}`
   })

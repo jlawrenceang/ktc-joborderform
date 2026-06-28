@@ -2,12 +2,22 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-27
+last_updated: 2026-06-28
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-28 — Phase 1 go-live blockers, owner-failsafe backstop, ops-overhaul doc-sync (v1.6.75)
+
+**Migrations through `0185` applied to prod; `APP_VERSION` = `v1.6.75`.** In one line each:
+
+- **Phase 1 go-live blockers — 7 T1 fixes** (v1.6.75) — Google sign-in button gated behind a runtime flag (no more silent no-op); name-change re-verification clears the old ID so the upload page reappears; all "file while pending / held" copy rewritten to the verify-only truth (pending can't file; held model retired); rejected consignee requests are recoverable (`0185`, below); a dedicated **Collect RPS at the window** cashier bucket (walk-in RPS after base is paid); pending customers get an in-app support channel (`/support` whitelist + contact card); and an **agreement re-consent gate** (`ReConsent`) that re-prompts customers on an `AGREEMENT_VERSION` bump.
+- **Coherence doc-sync (31 items)** — runtime-vs-doc drift fixed across cores, ADRs (0016/0018/0035 addenda), the role matrix, and version/migration snapshots (chiefly ADR-0035 ops-overhaul drift).
+- **Job-order slip printable from filing onward** (v1.6.74) — the printable slip + "Print slip" link (customer **and** staff) now appear from `submitted` onward (was `processing`/`completed`); status-aware watermark/banner; slip now carries Vessel & Voyage.
+- **Owner failsafe hardened — email-keyed backstop** (`0184`) — `is_owner()`/`is_admin()` also return true when the JWT email is the owner's, so a missing/flag-wrong `customers` row can't lock the owner out (MFA still enforced). The old `jla.ktcport@gmail.com` "admin fallback" is now a **rejected customer** — there is **one** privileged account. See [[Owner Failsafe]].
+- **Recoverable rejected consignee request** (`0185`) — a rejected consignee request is now visible in My Requests and re-requestable (was bricked by the global unique-name index).
 
 ## 2026-06-27 — Ops overhaul (ADR-0035), consignee approval gate, whole-app audit CLOSED (v1.6.73)
 
@@ -124,13 +134,13 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 - **Auth** — customer email/password registration (contact no. + Agreement v4 consents) → confirm email → `/verify-id`, **or "Continue with Google"** (`0161`) → one-time `FinishRegistration` consent step; staff username login; owner failsafe; invite-only staff; CAPTCHA, lockout, 2FA (admin/owner), single session, idle timeouts; **disposable-email block** (`0164`). Pending customers are **verify-only** (`0163`). See [[Authentication]].
 - **Customers** — self-register → `pending` (full portal, held orders) → upload ID → admin approval; 48h TTL; suspend/reject loops. See [[Brokers]].
 - **Consignees** — admin CRUD, search, pagination (2,488 imported), approval, accreditation (address/TIN/2303). See [[Consignees]].
-- **Job Orders** — customer + CSR/operations-on-behalf filing, **one priority number per JO** (weekly reset), gated transitions (`staff_transition_order` + split gates), hold/respond + recoverable reject loops, **per-van X-ray** (checker), DEA/OOG service-done, **[[Two-Gate Completion]]**, base + RPS + **supplement** payments, walk-in payment, ERP invoice recording, printable A6 slip + **verify-QR**, timeline comments + staff-only notes/flags, weekly archive/carry-over. See [[Job Orders]], [[Job Order Lifecycle]].
+- **Job Orders** — customer + CSR/operations-on-behalf filing, **three auto-assigned serving lanes** (regular / priority / re-X-ray; assigned + vacated automatically on status, weekly reset; ADR-0035), gated transitions (`staff_transition_order` + split gates), hold/respond + recoverable reject loops, **per-van X-ray** (checker), DEA/OOG service-done, **[[Two-Gate Completion]]**, base + RPS + **supplement** payments, walk-in payment, ERP invoice recording, printable A6 slip + **verify-QR**, timeline comments + staff-only notes/flags, weekly archive/carry-over. See [[Job Orders]], [[Job Order Lifecycle]].
 - **Account** — `/account` self-service (name/contact/email/password; name change → re-verify). See [[Authentication]].
 - **Administration** — approvals, customers, consignees, JO queue, **stations** (operations / checker / [[Cashier Station|cashier]] / [[Support Tickets|CSR support]]), payments review + walk-in, rates/fees/tariff/charge-rules/RPS-rates config, staff + **[[Staff Roles & Gates|role gates]]** + root-owner grants, **[[Staff Notifications]]** bell, bottom-tab nav, Logs, System health, manuals + tours. See [[Administration]].
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0164_block_disposable_email_domains`** (155 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` … **`0185_recoverable_rejected_consignee`** (176 files; numbering split across a portal lane and a fuel lane) — **all applied + tracked** in `public._migrations`. RLS + role-permission matrix (`has_permission`) + `session_alive()` woven into all helpers; pg_cron jobs (see [[System Scale]]). Email (Resend) fully wired (consolidated nudge, `0099`).
 
 ## In progress / not yet
 

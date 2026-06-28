@@ -16,7 +16,7 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 
 - After your first sign-in you land on the **Verify ID** page: tick the data-privacy consent and upload one valid government ID (or skip and do it later from the banner on your home page).
 - A KTC admin reviews and approves your account. You'll get an **approval email**.
-- **You can already file job orders while you wait** — they are kept on hold (shown as *Draft — no number yet*) and are sent to KTC automatically the moment you're approved. Up to 10 held orders.
+- **Filing Job Orders unlocks once a KTC admin approves your account.** Until then your account is verify-only — just upload your valid ID (above) and wait for the approval email.
 - **Important:** upload your ID within **48 hours** of confirming your email, or the account is closed and you must register again.
 - Your uploaded ID is deleted from our servers **no later than 3 days after upload** (Agreement §4).
 
@@ -28,7 +28,7 @@ Everything you need to file and track Job Orders for X-ray inspection, DEA exam,
 - **Vessel not listed?** If your vessel isn't in the dropdown, **call KTC customer service** to have it added to the schedule — you can't add a vessel yourself.
 - Each container row gets the **service** it needs (X-Ray, DEA, OOG Stripping…).
 - **Bulk paste:** paste a whole list of container numbers at once — one row per container is created and duplicates are skipped.
-- On submit (verified accounts) the order gets its permanent **JO number** (JO-000123).
+- On submit the order gets its permanent **JO number** (JO-000123).
 
 ### Your orders by batch
 

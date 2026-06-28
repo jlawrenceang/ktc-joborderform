@@ -20,27 +20,25 @@ export default function Home() {
   const firstName = (broker?.full_name || session?.user.email || '').split(' ')[0]
 
   // Light at-a-glance counts (own orders via RLS). "Active" = orders actually in
-  // the live pipeline — `held` is a DRAFT (a pending account's order, hidden from
-  // KTC until the account is verified), so it is NOT counted as active.
-  const [stats, setStats] = useState({ active: 0, pending: 0, orderAttention: 0 })
+  // the live pipeline. Only APPROVED accounts can file (migration 0163), and their
+  // orders are created directly as `submitted` — the old `held`/Draft model is retired.
+  const [stats, setStats] = useState({ active: 0, orderAttention: 0 })
   useEffect(() => {
     void (async () => {
-      const [{ count: active }, { count: pending }, { count: orderAttention }] = await Promise.all([
+      const [{ count: active }, { count: orderAttention }] = await Promise.all([
         // Exclude re-X-ray children — they're internal KTC orders hidden from the customer's
         // list (MyJobOrders filters is_rexray=false), so counting them desyncs tile vs list.
         supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).in('status', ['submitted', 'processing', 'on_hold']),
-        // `held` = a draft awaiting account approval (hidden from KTC until verified) — shown as "pending".
-        supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false).eq('status', 'held'),
         supabase.from('job_orders').select('id', { count: 'exact', head: true }).eq('is_rexray', false)
           .or('status.eq.on_hold,and(status.eq.rejected,rejected_recoverable.eq.true),and(payment_status.eq.rejected,status.in.(submitted,processing,completed))'),
       ])
-      setStats({ active: active ?? 0, pending: pending ?? 0, orderAttention: orderAttention ?? 0 })
+      setStats({ active: active ?? 0, orderAttention: orderAttention ?? 0 })
     })()
   }, [])
 
   // A pending account that hasn't uploaded a valid ID has ONE open action —
-  // verify (upload ID) — which also releases its held draft order(s). Count it
-  // as an attention item so the dashboard never says "0" while the ID is missing.
+  // verify (upload ID) — which is what unlocks filing once a KTC admin approves it.
+  // Count it as an attention item so the dashboard never says "0" while the ID is missing.
   const needsVerify = broker?.status === 'pending' && !broker?.valid_id_path
   const attention = stats.orderAttention + (needsVerify ? 1 : 0)
   // If verification is the only thing pending, send them straight to it.
@@ -65,11 +63,6 @@ export default function Home() {
         <Link to="/job-orders" className="ktc-glass ktc-stat">
           <span className="ktc-stat-num">{stats.active}</span>
           <span className="ktc-stat-label">{t('Active orders')}</span>
-          {stats.pending > 0 && (
-            <span style={{ fontSize: 11, fontWeight: 700, marginTop: 5, padding: '2px 9px', borderRadius: 999, background: 'var(--c-h40-90-94)', color: 'var(--c-h35-80-38)' }}>
-              {t('{n} pending approval', { n: stats.pending })}
-            </span>
-          )}
         </Link>
         <Link to={attentionTo} className={`ktc-glass ktc-stat${attention > 0 ? ' ktc-stat--alert' : ''}`}>
           <span className="ktc-stat-num">{attention}</span>

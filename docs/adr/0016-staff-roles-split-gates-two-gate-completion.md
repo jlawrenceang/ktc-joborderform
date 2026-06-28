@@ -77,3 +77,14 @@ Chosen option: **B.**
 * `supabase/migrations/0094_review_security_hardening.sql` (`enforce_two_gate_complete` backstop; `is_admin` owner-only)
 * `supabase/migrations/0096…0097` (stamp `completed_at` on the payment path; fold RPS into the gate; ops regains `process_job_orders` to close DEA/OOG)
 * `src/admin/AllJobOrders.tsx`, `src/admin/Settings.tsx` (Roles & Gates editor)
+
+## Current-State Addendum (2026-06-28)
+
+The authoritative seeded matrix above (`0086`) is **stale for cashier + csr** after the ADR-0035 ops overhaul; preserved for history. The current seeds (owner can still re-tune):
+
+* **cashier — money lane only** (`0171`): **lost `complete_orders` and `hold_reject_orders`**; holds `review_payments`, `record_invoice`, `bill_supplement` (`0176`), `view_job_orders`. Completion is now automatic, so the cashier no longer completes orders.
+* **csr — gained `request_priority`** (`0174`) and `review_consignee_requests` (`0138`), on top of `file_job_orders` / `manage_support` / `view_job_orders`. Still never changes a JO status (`0171` confirmed accept/hold-reject are off CSR).
+* **New ADR-0035 gates** (each a *distinct* permission, requester can't self-approve): `request_priority` → `approve_priority` (`0174`), `request_rexray` → `approve_rexray` (`0175`), `request_supplement` (ops) → `bill_supplement` (cashier) (`0176`).
+* **purchaser** (`0150`) — DB-only fuel desk, frontend-deferred.
+* The two-gate completion predicate's supplement clause was also narrowed to **billed-unpaid only** (`0181`) — see ADR-0018's addendum + [[Two-Gate Completion]].
+* The live matrix is owned by [[Staff Roles & Gates]] (verified against `role_permissions`).

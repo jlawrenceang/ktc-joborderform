@@ -5,7 +5,7 @@ type: core
 wave: 1
 status: live
 owner: Owner
-last_updated: 2026-06-16
+last_updated: 2026-06-28
 ---
 
 # 🛡️ Administration Core
@@ -20,9 +20,9 @@ The internal staff portal: approvals, customer + consignee management, job-order
 
 Staff capabilities run on the [[Staff Roles & Gates]] matrix (`role_permissions` + `has_permission`, owner-tunable in Settings → **Roles & Gates**). Roles: **admin · operations · cashier · checker · csr** (+ owner/root owner). Each lands where its role works (`RoleLanding`).
 
-- **Operations** (`/admin/job-orders`) — accept orders, assess RPS, mark DEA/OOG done, monitor X-ray, **tag additional charges**, complete; **edit JO headers** (`staff_edit_job_order`, `0103`); manage the vessel schedule.
+- **Operations** (`/admin/job-orders`) — accept orders, assess RPS, mark DEA/OOG done, monitor X-ray, **request additional charges** (cashier bills, `0176`); **edit JO headers** (`staff_edit_job_order`, `0103`); manage the vessel schedule. Completion is **automatic** (ADR-0035) — no manual "complete" step.
 - **Checker** (`/admin/checker`) — **per-van X-ray entry confirmation only** (`record_van_xray`, `confirm_xray`; tablet-first tap list). View only otherwise.
-- **Cashier** ([[Cashier Station]], `/admin/cashier`) — focused payments desk: review online proofs, **record walk-in/office payments**, review supplement payments (4 sections incl. additional charges), record the ERP invoice (= PAID), complete once paid; edit JO headers.
+- **Cashier** ([[Cashier Station]], `/admin/cashier`) — **money-only** payments desk: review online proofs, **record walk-in/office payments**, **bill** ops-requested additional charges + review supplement payments, record the ERP invoice (= PAID); edit JO headers. Completion is **automatic** on the last confirmed payment (`0171`/`0172`) — the cashier no longer completes orders.
 - **CSR** (`/admin/support`) — file JOs for customers + work the [[Support Tickets|support inbox]]; never changes order status.
 - **Admin / owner** (`/admin`) — full back office (admin holds every gate **except `confirm_xray`**, `0095`).
 
@@ -38,7 +38,7 @@ Staff capabilities run on the [[Staff Roles & Gates]] matrix (`role_permissions`
 
 ## Job-order processing (gated transitions)
 
-The old admin-only direct UPDATE is gone — explicit actions go through **`staff_transition_order`** with the **split gates** (`accept_orders` / `hold_reject_orders` / `complete_orders`, `0086`/`0097`). Completion obeys [[Two-Gate Completion]]. See [[Job Order Lifecycle]].
+The old admin-only direct UPDATE is gone — explicit actions go through **`staff_transition_order`** with the **split gates** (`accept_orders` / `hold_reject_orders` / `complete_orders`, `0086`/`0097`). Completion now fires **automatically** from whichever side finishes last (ADR-0035, `0171`/`0172`) and obeys [[Two-Gate Completion]]; the manual "Mark completed" button remains only a rare ready-state fallback. See [[Job Order Lifecycle]].
 
 ## Settings (owner-only unless gated)
 

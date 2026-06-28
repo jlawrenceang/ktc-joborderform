@@ -2,7 +2,7 @@
 title: Cashier Station
 tags: [concept, payments, cashier, administration]
 type: concept
-last_updated: 2026-06-16
+last_updated: 2026-06-28
 ---
 
 # 💵 Cashier Station
@@ -18,7 +18,7 @@ A focused payments desk for the **cashier** role at `/admin/cashier` (`0091`), s
 
 ## Gates
 
-All cashier actions need **`review_payments`** (or `record_invoice` for the invoice). The cashier also holds `complete_orders` / `hold_reject_orders` but **not** `accept_orders` — see [[Staff Roles & Gates]].
+All cashier actions need **`review_payments`** (or `record_invoice` for the invoice). `0171` made the cashier **money-only** — it no longer holds `complete_orders`, `hold_reject_orders`, or `accept_orders`; completion is automatic on the last confirmed payment. See [[Staff Roles & Gates]].
 
 ## Related
 

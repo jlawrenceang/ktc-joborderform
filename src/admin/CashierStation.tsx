@@ -116,6 +116,9 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
 
   const toReview = orders.filter((o) => o.payment_status === 'submitted' || o.rps_payment_status === 'submitted')
   const toCollect = orders.filter((o) => o.status === 'processing' && (o.payment_status === 'unpaid' || o.payment_status === 'rejected'))
+  // RPS collection is independent of base-payment state: an order assessed an RPS charge AFTER
+  // its X-ray payment was already confirmed must still be settleable at the window (T1-05).
+  const toCollectRps = orders.filter((o) => o.rps_status === 'needed' && o.rps_payment_status !== 'confirmed' && o.rps_payment_status !== 'submitted')
   // Record the ERP invoice on a completed order, OR on a live order whose base proof is
   // awaiting review — since 0177 the invoice must be on file BEFORE the base payment can
   // be confirmed, so the cashier needs to record it here without leaving the station.
@@ -204,9 +207,16 @@ export default function CashierStation({ app = false }: { app?: boolean }) {
               <Card key={o.id} o={o}>
                 <span className="ktc-chip">{o.payment_status === 'rejected' ? t('Proof rejected') : t('Unpaid')}</span>
                 <button className="ktc-btn ktc-btn--sm" disabled={busyId === o.id} onClick={() => setOffice({ id: o.id, kind: 'base', label: o.jo_number ?? '—' })}>{t('Record office payment')}</button>
-                {o.rps_status === 'needed' && o.rps_payment_status !== 'confirmed' && (
-                  <button className="ktc-btn-secondary ktc-btn--sm" disabled={busyId === o.id} onClick={() => setOffice({ id: o.id, kind: 'rps', label: `${o.jo_number ?? '—'} · RPS` })}>{t('Record RPS office payment')}</button>
-                )}
+              </Card>
+            ))}
+          </Section>
+
+          {/* 2b — Collect RPS at the window (independent of base payment) */}
+          <Section title={t('Collect RPS at the window')} count={toCollectRps.length} sub={t('Orders assessed an RPS charge that is still due — collectable here even after the X-ray payment is already settled.')}>
+            {toCollectRps.length === 0 ? <span className="ktc-label" style={{ fontSize: 13.5 }}>{t('No RPS collections pending.')}</span> : toCollectRps.map((o) => (
+              <Card key={o.id} o={o}>
+                <span className="ktc-chip ktc-chip--warning">{o.rps_payment_status === 'rejected' ? t('RPS proof rejected') : t('RPS unpaid')}</span>
+                <button className="ktc-btn ktc-btn--sm" disabled={busyId === o.id} onClick={() => setOffice({ id: o.id, kind: 'rps', label: `${o.jo_number ?? '—'} · RPS` })}>{t('Record RPS office payment')}</button>
               </Card>
             ))}
           </Section>

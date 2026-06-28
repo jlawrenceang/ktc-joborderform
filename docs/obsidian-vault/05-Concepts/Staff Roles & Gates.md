@@ -2,7 +2,7 @@
 title: Staff Roles & Gates
 tags: [concept, security, roles, rbac, administration]
 type: concept
-last_updated: 2026-06-22
+last_updated: 2026-06-28
 ---
 
 # 👥 Staff Roles & Gates
@@ -14,7 +14,7 @@ The KTC admin portal runs on a **single owner-tunable permission matrix**, not h
 `customers.staff_role` ∈ `admin · operations · cashier · checker · csr · purchaser` (customers = `null`). Base set was `admin/cashier/checker` (`0035`); **operations** added (`0056`), **csr** added (`0086`), **purchaser** added (`0150`).
 
 - **admin** — the full back office. Holds every gate **except `confirm_xray`** (dropped `0095`).
-- **operations** — the terminal floor: accept orders, assess RPS, mark DEA/OOG done, **request** additional charges + **priority** + **re-X-ray**, monitor X-ray (no confirm); manage the vessel schedule; edit JO headers. (Completion is automatic — no manual click.) `/app/operations`.
+- **operations** — the terminal floor: accept orders, assess RPS, mark DEA/OOG done, **request** additional charges + **priority** + **re-X-ray**, monitor X-ray (no confirm); manage the vessel schedule; edit JO headers. (Completion is automatic; the manual "Mark completed" button stays only as a rare ready-state fallback.) `/app/operations`.
 - **cashier** — the **money lane only** (`0171`): review payments (online proof + walk-in), record the ERP invoice (**required before confirming a base payment**, `0177`), **bill requested charges** (`bill_supplement`, `0176`); edit JO headers. **No** accept / hold-reject / complete. `/app/cashier` station.
 - **checker** — **X-ray entry confirmation** (BOC performs the X-ray; the checker confirms entry per van) + **request re-X-ray** on a completed order (`0175`). View only otherwise. `/app/checker`.
 - **csr** — customer-service desk: file JOs for customers + work the support inbox + **review consignee requests** (`review_consignee_requests`, `0138`) + **request priority** (`0174`). **Never** changes order status (`0171` pulled accept/hold-reject back off CSR). `/app/support`. All customer comms funnel through CSR (operations lost `manage_support` in `0086`).

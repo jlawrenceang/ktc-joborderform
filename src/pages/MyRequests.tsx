@@ -74,10 +74,10 @@ export default function MyRequests() {
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid hsl(var(--line-soft))' }}>
                 <span style={{ flex: 1, minWidth: 160, fontSize: 14 }}>
                   <b>{c.code}</b> – {c.name}
-                  {c.status === 'needs_info' && c.note && <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 2, fontStyle: 'italic' }}>“{c.note}”</div>}
+                  {(c.status === 'needs_info' || c.status === 'rejected') && c.note && <div className="ktc-label" style={{ fontSize: 11.5, marginTop: 2, fontStyle: 'italic' }}>“{c.note}”</div>}
                 </span>
                 {badge(c.status)}
-                {c.status === 'needs_info' && <button type="button" className="ktc-btn ktc-btn--sm" onClick={() => setEditC(c)} style={{ width: 'auto', padding: '6px 12px', fontSize: 12.5 }}>{t('Edit & resubmit')}</button>}
+                {(c.status === 'needs_info' || c.status === 'rejected') && <button type="button" className="ktc-btn ktc-btn--sm" onClick={() => setEditC(c)} style={{ width: 'auto', padding: '6px 12px', fontSize: 12.5 }}>{t('Edit & resubmit')}</button>}
               </div>
             ))}
           </div>

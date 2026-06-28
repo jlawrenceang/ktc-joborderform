@@ -3,7 +3,7 @@ title: Job Order Lifecycle
 tags: [workflow, job-orders, lifecycle]
 type: workflow
 status: live
-last_updated: 2026-06-27
+last_updated: 2026-06-28
 ---
 
 # 🔄 Job Order Lifecycle (source of truth)
@@ -59,9 +59,9 @@ The explicit staff actions go through **`staff_transition_order(p_id, p_status, 
 - **File on behalf** (CSR/admin) → `submitted`. ✅ (`/admin/new-job-order`, `file_job_orders` — **operations does NOT have it**, revoked in `0060`; staff filings bypass caps.)
 - **Account approved** → that customer's `held` → `submitted` (release trigger). ✅
 - **Accept** → `submitted` / `on_hold` → `processing`. Gate **`accept_orders`** (operations / admin).
-- **Hold for info** (+note, +field list) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / cashier / admin). **`hold_job_order()`** sets `needs_fields` (subset of consignee/entry/vessel/containers) to flag which fields the customer must re-enter; empty set = general hold (note only).
+- **Hold for info** (+note, +field list) → `submitted` / `processing` / `on_hold` → `on_hold`. Gate **`hold_reject_orders`** (operations / admin — cashier lost it `0171`). **`hold_job_order()`** sets `needs_fields` (subset of consignee/entry/vessel/containers) to flag which fields the customer must re-enter; empty set = general hold (note only).
 - **Reject** (+note) → open → `rejected`. Gate **`hold_reject_orders`**; **always terminal** (`rejected_recoverable = false`). ✅ (`0154`)
-- **Complete** → open → `completed`. Gate **`complete_orders`** (operations / cashier / admin) **AND** the [[Two-Gate Completion]] readiness must hold; otherwise raises. Usually auto-fired (see D/E) rather than clicked.
+- **Complete** → open → `completed`. Gate **`complete_orders`** (operations / admin — cashier lost it `0171`) **AND** the [[Two-Gate Completion]] readiness must hold; otherwise raises. Usually auto-fired (see D/E) rather than clicked.
 - **Respond to hold with field-targeted resubmit** (customer) → `on_hold` → `submitted`. ✅ **`resubmit_needs_info()`** enforces field-lock server-side (only updates flagged fields in `needs_fields`; other values ignored). (`0154`)
 - **Edit own order** (customer) → content change while `held`/`submitted`. ✅ (`update_job_order`; locks at `processing`+.)
 - **Staff edit header** (`0103`) → consignee / entry / vessel / voyage / vessel-visit on any non-cancelled/-rejected order. Gate `process_job_orders OR review_payments OR manage_support` (operations / cashier / CSR — **checker excluded**, **customers excluded**). `staff_edit_job_order`.
@@ -72,9 +72,12 @@ The explicit staff actions go through **`staff_transition_order(p_id, p_status, 
 ## D. Numbering & priority
 
 - **JO number `JO-######`** ✅ — **permanent identity**; `ensure_jo_number` on first live status; global, atomic, never reused.
-- **Priority queue number** ✅ — generalized in **`0100`**: **ONE priority number per JO** (`serving_numbers.service_line = 'queue'`), assigned on `submitted`, **weekly reset** (Mon, Asia/Manila). Replaces the old per-line xray/dea/oog serving numbers (re-compartmentalizable later).
-  - **Edit / respond-to-hold** → keeps its number (active number is never reassigned). **Cancel / reject** → vacated (burned, unreusable). **Resubmit after reject** → back of line; admin **"↩ Restore #N"** (same week).
-  - Surfaces: `now_serving()` board (My Job Orders + stations), priority chip on cards, the A6 slip.
+- **Serving numbers — automatic, three lanes** ✅ (ADR-0035, `0173`/`0174`): a JO's serving number is **assigned and vacated automatically on status change** (no manual click), **weekly reset** (Mon, Asia/Manila):
+  - **regular** (`serving_numbers.service_line = 'queue'`) — active while `submitted`/`processing`; assigned on entry, vacated when pulled out (`on_hold`/`rejected`/`cancelled`/`completed`).
+  - **priority** (`'priority'`, P-n) — **requested by CSR/operations → approved by admin** (`request_priority`/`approve_priority`); served **ahead** of the regular lane. Since `0174` this is the **only** way to jump the line.
+  - **re-X-ray** — a completed order's re-inspection runs as an `A`-suffixed child JO (`request_rexray`/`approve_rexray`, checker/ops request → admin approve) with its own serving number.
+  - **Edit / respond-to-hold** → keeps its place (idempotent re-assign). **Cancel / reject / complete** → vacated (burned, unreusable). **Reject is terminal** (`0154`, no resubmit); a returning order (un-hold / re-approve) gets a **NEW tail number**. The old admin **"↩ Restore #N"** / `restore_serving_number` was **dropped** (`0182`).
+  - Surfaces: `now_serving()` board (stations), priority/lane chips on cards, the A6 slip.
 
 ## E. Services & per-van X-ray
 
@@ -97,7 +100,9 @@ See [[Two-Gate Completion]]. An order may reach `completed` **only** when **ALL*
 1. every service line is done (incl. all X-ray vans), AND
 2. base `payment_status = 'confirmed'`, AND
 3. RPS is `not_needed` OR `rps_payment_status = 'confirmed'`, AND
-4. **every supplement** is `confirmed`.
+4. **no billed-but-unpaid supplement** — no `jo_supplements` row with `bill_status = 'billed'` AND `payment_status <> 'confirmed'` (`0181`, was "every supplement confirmed"); a charge ops only **requested** but the cashier hasn't **billed** does not block.
+
+**Re-X-ray exemption** (`0175`/`0181`): a **free** re-X-ray child (`is_rexray AND NOT rexray_billable`) completes on services-done alone — gates 2–4 are skipped.
 
 Enforced in `jo_ready_to_complete()` + the `complete_on_payment_confirmed` BEFORE-trigger (auto-fires when the **last** payment of base/RPS/supplement lands) + the `enforce_two_gate_complete` raw-update backstop + `staff_transition_order`. Whoever does the last of "services" / "payments" trips the completion.
 

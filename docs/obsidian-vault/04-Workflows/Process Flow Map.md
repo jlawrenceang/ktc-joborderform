@@ -2,13 +2,15 @@
 title: Process Flow Map & Gap Analysis
 tags: [workflow, process, gaps, map]
 type: workflow
-last_updated: 2026-06-25
+last_updated: 2026-06-28
 ---
 
 # 🗺️ Process Flow Map & Gap Analysis (2026-06-25)
 
-End-to-end flow as **built today**, then the gaps. Diagrams are Mermaid —
+End-to-end flow as built on **2026-06-25**, then the gaps. Diagrams are Mermaid —
 they render on GitHub and in Obsidian.
+
+> **⚠️ Partly superseded (2026-06-28).** This map predates the **ADR-0035 ops overhaul** (`0170`–`0183`). The serving-number model below ("per line") and the single checker → completed edge are now stale: runtime has **three auto-assigned serving lanes** (regular / priority / re-X-ray), **separation-of-duties** (cashier money-only; CSR no approval), and **automatic two-gate completion**. For the current state machine, **[[Job Order Lifecycle]] is the source of truth.**
 
 ## A. Account lifecycle
 
@@ -32,7 +34,7 @@ flowchart LR
 flowchart TD
   ADM[Staff files for customer<br/>walk-in / in-house] --> SUB
   F[Customer files JO] -->|pending account| H[held<br/>no JO no., ≤10]
-  F -->|approved account| SUB[submitted<br/>JO-###### + serving № per line]
+  F -->|approved account| SUB[submitted<br/>JO-###### + auto serving № — 3 lanes]
   H -->|account approved| SUB
   SUB -->|admin approve| PR[processing<br/>printable slip]
   SUB & PR -->|admin hold: staff flag<br/>which fields to fix| OH[on_hold<br/>needs_fields set]

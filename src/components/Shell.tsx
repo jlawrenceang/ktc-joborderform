@@ -16,6 +16,7 @@ import AccountMenu from './AccountMenu'
 import BottomNav from './BottomNav'
 import Clock from './Clock'
 import ChatWidget from './chat/ChatWidget'
+import NeedHelp from './NeedHelp'
 
 const IDLE_LOGOUT_MS = 15 * 60 * 1000 // auto sign-out after 15 min of inactivity (warning at 14)
 
@@ -36,7 +37,9 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
   // Routes a pending customer may still open inside the Shell. /verify-id (ID upload)
   // is a standalone non-Shell page and stays reachable on its own; the Agreement is
   // also a public route. Everything else is replaced by the verify-only panel.
-  const pendingAllowed = pathname === '/account' || pathname === '/agreement'
+  // /support is whitelisted so a pending (verify-only) customer still has an in-app
+  // support channel — open_ticket allows pending accounts (0112). (T1-06)
+  const pendingAllowed = pathname === '/account' || pathname === '/agreement' || pathname === '/support'
   const verifyOnly = pending && !pendingAllowed
 
   // While pending, auto-pull the account status every 60s (visible tab only)
@@ -80,13 +83,15 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
           <div className="ktc-glass" style={{ padding: 18, marginTop: 12 }}>
             <h1 className="ktc-title">{t('Finish verifying your account')}</h1>
             <p className="ktc-label" style={{ marginTop: 10, lineHeight: 1.6 }}>
-              {t('Your account is awaiting approval. Upload a valid ID for verification — once a KTC admin approves you, the full portal unlocks. In the meantime you can manage your account and read the Customer Agreement.')}
+              {t('Your account is awaiting approval. Upload a valid ID for verification — once a KTC admin approves you, the full portal unlocks. In the meantime you can manage your account, read the Customer Agreement, or contact us if you need help.')}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap', alignItems: 'center' }}>
               <Link to="/verify-id" className="ktc-btn" style={{ textDecoration: 'none' }}>{t('Upload valid ID')}</Link>
               <Link to="/account" className="ktc-link">{t('My Account')}</Link>
               <Link to="/agreement" className="ktc-link">{t('Customer Agreement')}</Link>
+              <Link to="/support" className="ktc-link">{t('Get help')}</Link>
             </div>
+            <div style={{ marginTop: 14 }}><NeedHelp /></div>
           </div>
         </div>
       ) : (

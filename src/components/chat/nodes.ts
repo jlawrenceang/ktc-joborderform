@@ -184,7 +184,7 @@ export const NODES: NodeRegistry = {
 
   'status.glossary': {
     kind: 'message', ticketCategory: 'job_order',
-    body: 'What each status means — Pending approval (Draft, no number yet) · Submitted (in the queue; you can Edit/Cancel) · Approved · processing (services running; print the A6 slip; base charge payable) · On hold (KTC needs info — fix the flagged fields and Resubmit) · Completed (services done; settle any balance, claim your OR) · Not approved (closed, no resubmit) · Cancelled. Tip: My Job Orders auto-refreshes every minute.',
+    body: 'What each status means — Submitted (in the queue; you can Edit/Cancel) · Approved · processing (services running; print the A6 slip; base charge payable) · On hold (KTC needs info — fix the flagged fields and Resubmit) · Completed (services done; settle any balance, claim your OR) · Not approved (closed, no resubmit) · Cancelled. Tip: My Job Orders auto-refreshes every minute.',
     then: [
       { label: 'Track an order by number', to: 'track.input' },
       { label: 'See all my orders', to: 'nav.myOrders' },
@@ -536,7 +536,7 @@ export const NODES: NodeRegistry = {
 
   'acct.get_approved': {
     kind: 'message', ticketCategory: 'account',
-    body: 'The accreditation flow: 1) Sign up (full name, contact number, email, password), 2) read the KTC Customer Agreement to the end + tick consent + pass the security check, 3) confirm your email and sign in, 4) upload one valid government ID on the Verify ID page, 5) wait for KTC to review and approve (you get an approval email; status becomes Verified). You can file Job Orders while you wait — held as Draft (up to 10) and sent automatically on approval. Important: upload your ID within 48 hours of confirming your email, or the account closes and you re-register.',
+    body: 'The accreditation flow: 1) Sign up (full name, contact number, email, password), 2) read the KTC Customer Agreement to the end + tick consent + pass the security check, 3) confirm your email and sign in, 4) upload one valid government ID on the Verify ID page, 5) wait for KTC to review and approve (you get an approval email; status becomes Verified). Filing Job Orders unlocks once you’re approved. Important: upload your ID within 48 hours of confirming your email, or the account closes and you re-register.',
     then: [
       { label: 'Upload my valid ID now', to: 'nav.verifyId' },
       { label: 'Why is my account still pending?', to: 'acct.why_pending' },
@@ -555,7 +555,7 @@ export const NODES: NodeRegistry = {
 
   'acct.why_pending': {
     kind: 'message', ticketCategory: 'account',
-    body: '“Pending verification” means a KTC admin still has to review your account. Two usual reasons: you haven’t uploaded a valid ID yet (do it from the home banner or Verify ID — this is what unlocks approval), or you’ve uploaded it and KTC is still reviewing (you’ll get an approval email once verified). Reminder: upload within 48 hours of confirming your email or the account closes. You can keep filing meanwhile — orders stay held until you’re approved.',
+    body: '“Pending verification” means a KTC admin still has to review your account. Two usual reasons: you haven’t uploaded a valid ID yet (do it from the home banner or Verify ID — this is what unlocks approval), or you’ve uploaded it and KTC is still reviewing (you’ll get an approval email once verified). Reminder: upload within 48 hours of confirming your email or the account closes. Filing Job Orders unlocks once you’re approved.',
     then: [
       { label: 'Upload my valid ID', to: 'nav.verifyId' },
       { label: 'What can I do while pending?', to: 'acct.pending_capabilities' },
@@ -565,7 +565,7 @@ export const NODES: NodeRegistry = {
 
   'acct.pending_capabilities': {
     kind: 'message', ticketCategory: 'account',
-    body: 'A pending (not-yet-verified) account already has the full portal. While you wait you can browse, use the Rates calculator, check Vessels, and file Job Orders — they’re saved as held (Draft — no number yet, up to 10) and sent to KTC automatically the moment you’re approved (they can’t be processed until then). Once verified, your held orders go live and each gets its permanent JO number.',
+    body: 'While your account is pending, it’s verify-only: you can upload a valid ID, check your status, read the Customer Agreement, and manage your account basics (email/password). Filing Job Orders — plus the Rates calculator, the vessel schedule, and the rest of the portal — unlocks once a KTC admin approves you. Upload your valid ID within 48 hours of confirming your email so the review can start.',
     then: [
       { label: 'How do I get approved?', to: 'acct.get_approved' },
       { label: 'Upload my valid ID', to: 'nav.verifyId' },
@@ -600,7 +600,7 @@ export const NODES: NodeRegistry = {
 
   'acct.change_name': {
     kind: 'message', ticketCategory: 'account',
-    body: 'Edit your name in My Account → Personal details, then Save changes. Heads up: if your account is already Verified, changing your legal name sends it back to pending for re-verification — you’ll re-upload a valid ID so KTC can re-check, because your details must match your ID. Any Job Orders you file meanwhile are held until you’re re-approved.',
+    body: 'Edit your name in My Account → Personal details, then Save changes. Heads up: if your account is already Verified, changing your legal name sends it back to pending for re-verification — you’ll re-upload a valid ID so KTC can re-check, because your details must match your ID. While it’s pending re-approval, filing Job Orders is locked until KTC approves you again.',
     then: [{ label: 'Open My Account', to: 'nav.account' }, { label: 'Back to menu', to: 'root' }],
   },
 
