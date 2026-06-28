@@ -4,7 +4,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 
 ## Reading order
 
-1. `0001` to `0035` in numeric order.
+1. `0001` to `0036` in numeric order.
 2. Then check each ADR for **Current-State Addendum** sections.
 
 ## Log
@@ -46,6 +46,7 @@ ADRs in this folder preserve decision history for the KTC portal.
 | [0033](0033-block-disposable-email-domains.md) | Block disposable / temporary email domains at signup (server-side) | Accepted | 2026-06-26 | Security |
 | [0034](0034-google-oauth-signin-scoped-finish-registration-gate.md) | Google OAuth sign-in + a scoped post-OAuth consent/contact gate | Accepted | 2026-06-26 | Security \| Frontend |
 | [0035](0035-job-order-ops-overhaul-queue-priority-rexray-autocomplete-invoice-gate.md) | Overhaul job-order ops — automatic queue, priority + re-X-ray lanes, auto-complete, invoice-gated payment, CSR grants | Accepted | 2026-06-27 | Business Logic |
+| [0036](0036-cash-basis-billing-consignee-payment-terms-deferrals.md) | Cash-basis billing + consignee `payment_terms` flag (default cash); defer ERP API / terminal-tariff auto-bridge / credit; manual release-billing loop | Accepted | 2026-06-28 | Business Logic |
 
 ¹ Retroactively captured 2026-06-25; the decisions shipped earlier (0028 at migration 0021; 0029 across ~0132–0139).
 
