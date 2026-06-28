@@ -71,6 +71,19 @@ export function isStaff(b: Pick<Broker, 'is_admin' | 'is_owner' | 'staff_role'> 
   return !!b && (b.is_admin || b.is_owner || !!b.staff_role)
 }
 
+/** Per-role landing page — each restricted role opens on its own work home
+ *  (admin/owner default to the admin dashboard). Single source for both the
+ *  admin shell start-link and the focused app's "open full portal". */
+export function staffHome(b: Pick<Broker, 'staff_role'> | null | undefined): string {
+  switch (b?.staff_role) {
+    case 'checker': return '/admin/checker'
+    case 'operations': return '/admin/job-orders'
+    case 'cashier': return '/admin/cashier'
+    case 'csr': return '/admin/support'
+    default: return '/admin'
+  }
+}
+
 // Also the consignee approval status (the accreditation *feature* UI was
 // removed 2026-06-11; the DB table remains — see the ADR-0007 addendum).
 export type AccreditationStatus = 'pending' | 'approved' | 'rejected' | 'needs_info'

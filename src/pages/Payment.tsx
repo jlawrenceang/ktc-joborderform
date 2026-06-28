@@ -122,10 +122,15 @@ export default function Payment() {
   const rpsDue = order.rps_status === 'needed' && (breakdown?.rpsAmount ?? 0) > 0
   const rpsConfirmed = order.rps_payment_status === 'confirmed'
   const fullySettled = !!breakdown && breakdown.total > 0 && breakdown.balance <= 0.005
+  // A genuinely-zero order (e.g. a free, non-billable re-X-ray) has nothing to settle —
+  // don't render a ₱0 charge box + slip upload. Guard on hasMissingRates so an
+  // unconfigured-rates order (total 0 because rates aren't set) isn't mistaken for free.
+  const noChargeDue = !!breakdown && breakdown.total <= 0.005 && !breakdown.hasMissingRates
+  const settled = fullySettled || noChargeDue
   const supplements = (order.supplements ?? []).filter((s) => s.amount != null)   // un-billed (requested) charges aren't payable yet
   const outstandingSupps = supplements.filter((s) => s.payment_status !== 'confirmed')
-  const clearedForRelease = !!order.xray_performed_at && fullySettled && outstandingSupps.length === 0
-  const anythingToPay = !fullySettled || outstandingSupps.length > 0
+  const clearedForRelease = !!order.xray_performed_at && settled && outstandingSupps.length === 0
+  const anythingToPay = (!fullySettled && !noChargeDue) || outstandingSupps.length > 0
   const qrPath = info.get('qr_path')
   const qrUrl = qrPath ? supabase.storage.from('payment-qr').getPublicUrl(qrPath).data.publicUrl : null
   const qrFileName = (qrPath?.split('/').pop()) || 'ktc-payment-qr.png'
@@ -145,6 +150,11 @@ export default function Payment() {
       {clearedForRelease && (
         <Notice tone="success" style={{ marginBottom: 16 }}>
           ✓ <b>{t('Cleared for release')}</b> — {t('X-ray done and balance fully paid. Collect your gate pass / official Service Invoice at the KTC office.')}
+        </Notice>
+      )}
+      {noChargeDue && !clearedForRelease && outstandingSupps.length === 0 && (
+        <Notice tone="success" style={{ marginBottom: 16 }}>
+          ✓ <b>{t('No payment required')}</b> — {t('There are no charges to settle for this order.')}
         </Notice>
       )}
       {outstandingSupps.length > 0 && (
@@ -193,9 +203,9 @@ export default function Payment() {
                     <td className="ktc-mono" style={{ textAlign: 'right', color: 'var(--c-h150-60-30)' }}>− {peso(breakdown!.paid)}</td></tr>
                 )}
                 <tr style={{ borderTop: '1px solid hsl(var(--line-soft))' }}>
-                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{fullySettled ? t('Balance') : t('Balance due')}</td>
-                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: fullySettled ? 'var(--c-h150-60-30)' : 'var(--acc-2)' }}>
-                    {fullySettled ? t('PAID') : peso(breakdown?.balance ?? charges.total)}
+                  <td style={{ padding: '12px 0', fontWeight: 700, fontSize: 15 }}>{settled ? t('Balance') : t('Balance due')}</td>
+                  <td className="ktc-mono" style={{ textAlign: 'right', fontWeight: 700, fontSize: 17, color: settled ? 'var(--c-h150-60-30)' : 'var(--acc-2)' }}>
+                    {noChargeDue ? t('No charge') : fullySettled ? t('PAID') : peso(breakdown?.balance ?? charges.total)}
                   </td>
                 </tr>
               </tbody>

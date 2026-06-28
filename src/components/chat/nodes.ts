@@ -573,14 +573,12 @@ export const NODES: NodeRegistry = {
     ],
   },
 
-  // TODO: wire the document-verification guide when provided. Holding answer only —
-  // do not fabricate the steps.
   'acct.doc_verification': {
     kind: 'message', ticketCategory: 'account',
-    body: 'KTC verifies the documents you submit (like your valid ID, and DO/BL for releases) before approving or assessing charges. A full step-by-step guide is coming shortly. In the meantime I can connect you to our team for the specifics of your case.',
+    body: 'Here’s how ID verification works, step by step. 1) After you confirm your email, open the Verify ID screen — or tap “Upload valid ID” on your home banner. 2) Tick the consent box, then attach a clear photo or PDF of a valid government-issued ID (you can review it before sending). 3) Tap Submit for verification. 4) A KTC admin reviews it; you’ll get an approval email once it’s verified, and filing Job Orders unlocks then. Important: upload your ID within 48 hours of confirming your email, or the pending account is closed and you’d have to register again.',
     then: [
+      { label: 'Upload my valid ID', to: 'nav.verifyId' },
       { label: 'Ask KTC about my documents', to: 'ticket.account' },
-      { label: 'See KTC contact options', to: 'nav.support' },
       { label: 'Back to menu', to: 'root' },
     ],
   },
@@ -679,6 +677,7 @@ export const NODES: NodeRegistry = {
       { label: 'A concern about Logistics / trucking', to: 'feedback.logistics' },
       { label: 'A complaint', to: 'feedback.complaint' },
       { label: 'A suggestion', to: 'feedback.suggestion' },
+      { label: 'Report an app problem', to: 'bug.report' },
       { label: 'Back to menu', to: 'root' },
     ],
   },
