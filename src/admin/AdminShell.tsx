@@ -73,6 +73,8 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
             below) instead of as a separate rail pill — only set once the role is
             known so the owner's badge never flashes a generic "Admin". */}
         <AccountMenu
+          accountTo="/admin/account"
+          accountLabel="My Account"
           settingsTo={broker?.is_admin || broker?.is_owner ? '/admin/settings' : undefined}
           settingsLabel="Settings"
           role={role || undefined}

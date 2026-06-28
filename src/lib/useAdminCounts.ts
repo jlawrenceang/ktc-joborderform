@@ -42,9 +42,6 @@ const DEFS: CountDef[] = [
     run: () => num(supabase.from('job_order_lines').select('id, job_orders!inner(status)', { count: 'exact', head: true })
       .is('xray_done_at', null).ilike('service_request', '%x-ray%')
       .in('job_orders.status', ['processing', 'on_hold'])) },
-  // Unlisted vessels customers filed against, waiting to be linked.
-  { route: '/admin/vessel-schedule', perm: 'manage_vessel_schedule',
-    run: async () => { const { data } = await supabase.rpc('pending_vessel_requests'); return ((data as unknown[]) ?? []).length } },
 ]
 
 export function useAdminCounts(): Record<string, number> {

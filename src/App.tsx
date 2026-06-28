@@ -56,6 +56,7 @@ const CashierStation = lazyWithReload(() => import('./admin/CashierStation'))
 const VesselSchedule = lazyWithReload(() => import('./admin/VesselSchedule'))
 const Logs = lazyWithReload(() => import('./admin/Logs'))
 const Security = lazyWithReload(() => import('./admin/Security'))
+const AccountStaff = lazyWithReload(() => import('./admin/AccountStaff'))
 const SupportInbox = lazyWithReload(() => import('./admin/SupportInbox'))
 const AdminNotifications = lazyWithReload(() => import('./admin/NotificationsPage'))
 const AdminReleases = lazyWithReload(() => import('./admin/Releases'))
@@ -197,6 +198,7 @@ export default function App() {
 
           {/* Admin portal */}
           <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
+          <Route path="/admin/account" element={<Admin><AccountStaff /></Admin>} />
           <Route path="/admin/approvals" element={<Admin><Approvals /></Admin>} />
           <Route path="/admin/customers" element={<Admin><Brokers /></Admin>} />
           <Route path="/admin/customers/:id" element={<Admin><CustomerDetail /></Admin>} />
