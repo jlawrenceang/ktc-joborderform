@@ -6,6 +6,7 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import type { ServingNumber } from '../lib/types'
 import { useT } from '../lib/i18n'
 import { CameraIcon } from '../components/icons'
+import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from '../admin/AdminTour'
 
@@ -177,6 +178,7 @@ export default function AppChecker() {
         </div>
       ) : (
         <>
+          <div style={{ marginTop: 14 }}><NowServing /></div>
           {error && (
             <div role="alert" style={{ margin: '12px 0', fontSize: 14, fontWeight: 600, color: 'var(--c-h0-65-40)', padding: '11px 14px', borderRadius: 10, background: 'var(--c-h0-75-97)', border: '1px solid var(--c-h0-70-88)' }}>{error}</div>
           )}

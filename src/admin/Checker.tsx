@@ -5,6 +5,7 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import { usePermissions } from '../lib/usePermissions'
 import { batchLabel, formatAge } from '../lib/batch'
 import XrayQueueTable, { type QueueRow } from '../components/XrayQueueTable'
+import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from './AdminTour'
 import { useT } from '../lib/i18n'
@@ -257,6 +258,7 @@ export default function Checker() {
 
   return (
     <AdminShell>
+      <NowServing />
       <div style={{ margin: '14px 4px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
         <div>
           <h1 className="ktc-title">{t('X-ray Queue')}</h1>

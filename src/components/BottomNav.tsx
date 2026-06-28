@@ -8,6 +8,7 @@ import { useT } from '../lib/i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 import InstallButton from './InstallButton'
+import PushToggle from './PushToggle'
 import { WatchWalkthroughButton, PlayIcon } from './Walkthrough'
 
 // Persistent bottom tab bar — the single navigation on ALL widths (a centered
@@ -159,6 +160,7 @@ export default function BottomNav() {
                 <span style={{ flex: 1 }}>{t('Dark mode')}</span>
                 <ThemeToggle />
               </div>
+              <PushToggle variant="menu" />
               <InstallButton />
               <button type="button" className="ktc-menu-setting" onClick={() => void handleSignOut()}>
                 <span style={{ flex: 1 }}>{t('Sign out')}</span>

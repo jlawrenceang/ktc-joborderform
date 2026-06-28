@@ -5,7 +5,7 @@ import { useAutoRefresh } from '../lib/useAutoRefresh'
 import PushToggle from './PushToggle'
 import NotificationRow from './NotificationRow'
 import { useT } from '../lib/i18n'
-import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, BuildingIcon, type IconProps } from './icons'
+import { BellIcon, CreditCardIcon, ChatIcon, IdCardIcon, BuildingIcon, ReceiptIcon, RefreshIcon, type IconProps } from './icons'
 
 // Staff-side notification center — the mirror of the customer NotificationBell,
 // but routed BY PERMISSION (0085). RLS on staff_notifications already filters
@@ -32,6 +32,8 @@ export const ICON: Record<string, (p: IconProps) => ReactNode> = {
   release_new: IdCardIcon,
   release_payment: CreditCardIcon,
   consignee: BuildingIcon,
+  supplement: ReceiptIcon, // an extra charge tacked onto a JO (0183)
+  rexray: RefreshIcon,     // a re-X-ray request (0183) — repeat of the scan
 }
 
 export function fmtWhen(iso: string): string {
