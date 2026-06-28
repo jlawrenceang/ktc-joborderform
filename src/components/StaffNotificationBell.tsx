@@ -16,6 +16,7 @@ type Notif = {
   kind: string
   title: string
   job_order_id: string | null
+  release_order_id: string | null
   ticket_id: string | null
   created_at: string
 }
@@ -25,6 +26,8 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   rps_payment: CreditCardIcon,
   support: ChatIcon,
   account: IdCardIcon,
+  release_new: IdCardIcon,
+  release_payment: CreditCardIcon,
 }
 
 function fmtWhen(iso: string): string {
@@ -43,7 +46,7 @@ export default function StaffNotificationBell() {
     const [{ data: notifs }, { data: reads }] = await Promise.all([
       supabase
         .from('staff_notifications')
-        .select('id, required_permission, kind, title, job_order_id, ticket_id, created_at')
+        .select('id, required_permission, kind, title, job_order_id, release_order_id, ticket_id, created_at')
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
@@ -79,6 +82,7 @@ export default function StaffNotificationBell() {
     // id over the same way the customer bell does); support → the inbox;
     // account verifications → the approvals desk; anything else → the admin home.
     if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/admin/job-orders'); return }
+    if (n.release_order_id) { navigate('/admin/releases'); return }
     if (n.ticket_id) { navigate('/admin/support'); return }
     if (n.kind === 'account') { navigate('/admin/approvals'); return }
     navigate('/admin')

@@ -7,6 +7,7 @@ export interface Consignee {
   tin: string | null
   doc_2303_path: string | null
   doc_2307_path?: string | null
+  payment_terms?: 'cash' | 'credit'
   requested_by?: string | null
   note?: string | null
   created_at?: string | null
@@ -199,6 +200,8 @@ export interface ReleaseOrder {
   consignee_id: string | null
   bl_number: string
   doc_path: string | null
+  /** Staff-uploaded bill / SOA (release-docs bucket, bills/<id>.<ext>); 0188. */
+  bill_doc_path?: string | null
   status: ReleaseStatus
   verified_at?: string | null
   amount?: number | null

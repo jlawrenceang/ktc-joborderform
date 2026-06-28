@@ -13,7 +13,7 @@ import {
 // badge; the dropdown lists recent notifications (read + unread) with the
 // unread ones highlighted. Backed by the 0071 triggers + mark_notifications_read.
 // The Home dashboard keeps its inline bar for a louder "you have updates" cue.
-type Notif = { id: string; job_order_id: string | null; kind: string; title: string; created_at: string; read_at: string | null }
+type Notif = { id: string; job_order_id: string | null; release_order_id: string | null; kind: string; title: string; created_at: string; read_at: string | null }
 
 // Per-kind line icon (shared set) — replaces the old emoji map.
 const ICON: Record<string, (p: IconProps) => ReactNode> = {
@@ -32,6 +32,12 @@ const ICON: Record<string, (p: IconProps) => ReactNode> = {
   consignee_approved: CheckCircleIcon,
   consignee_rejected: BanIcon,
   consignee_needs_info: AlertTriangleIcon,
+  release_payable: ReceiptIcon,
+  release_confirmed: CreditCardIcon,
+  release_rejected: CreditCardIcon,
+  release_released: CheckCircleIcon,
+  release_on_hold: AlertTriangleIcon,
+  release_cancelled: BanIcon,
 }
 
 function fmtWhen(iso: string): string {
@@ -50,7 +56,7 @@ export default function NotificationBell() {
     const [{ data }, { count }] = await Promise.all([
       supabase
         .from('notifications')
-        .select('id, job_order_id, kind, title, created_at, read_at')
+        .select('id, job_order_id, release_order_id, kind, title, created_at, read_at')
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
@@ -86,6 +92,7 @@ export default function NotificationBell() {
     // orders list (auto-opening that order); account/announcement → Home.
     if (n.kind === 'support_reply') { navigate('/support'); return }
     if (n.kind.startsWith('consignee_')) { navigate('/requests'); return }
+    if (n.release_order_id) { navigate('/releases'); return }
     if (n.job_order_id) { sessionStorage.setItem('ktc_jo_filed_id', n.job_order_id); navigate('/job-orders'); return }
     navigate('/')
   }
