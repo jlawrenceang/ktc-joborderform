@@ -9,6 +9,7 @@ import IdleWarning from '../components/IdleWarning'
 import StaffNotificationBell from '../components/StaffNotificationBell'
 import AccountMenu from '../components/AccountMenu'
 import AdminBottomNav from './AdminBottomNav'
+import AdminTopNav from './AdminTopNav'
 import { useT } from '../lib/i18n'
 import { staffHome } from '../lib/types'
 import { VERSION_LABEL, VERSION_FULL } from '../version'
@@ -59,7 +60,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
   const home = staffHome(broker)
 
   return (
-    <div className="ktc-page ktc-page--wide ktc-page--tabbar">
+    <div className="ktc-page ktc-page--wide ktc-page--admin ktc-page--tabbar">
       <nav className="ktc-nav ktc-nav--app" aria-label={t('Admin')}>
         <Link to={home} aria-label={t('Go to start page')} style={{ display: 'inline-flex', flex: '0 0 auto', padding: '0 4px' }}>
           <img src="/ktc-logo.png" alt="KTC" style={{ height: 32 }} />
@@ -77,6 +78,8 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
           role={role || undefined}
         />
       </nav>
+
+      <AdminTopNav />
 
       <div className="ktc-stagger">{children}</div>
 

@@ -44,12 +44,13 @@ const DashIcon = GridIcon
 
 const ReleaseIcon = () => (<svg {...ip}><rect x="2" y="7" width="13" height="11" rx="1" /><path d="M15 11h4l3 3v4h-7" /><path d="M6 18.5a1.5 1.5 0 0 0 3 0M16 18.5a1.5 1.5 0 0 0 3 0" /></svg>)
 
-type Dest = { to: string; label: string; perm?: Permission; anyPerm?: Permission[]; icon: ReactNode; end?: boolean }
-const canSee = (d: Dest, can: (p: Permission) => boolean) =>
+export type Dest = { to: string; label: string; perm?: Permission; anyPerm?: Permission[]; icon: ReactNode; end?: boolean }
+export const canSee = (d: Dest, can: (p: Permission) => boolean) =>
   (!d.perm || can(d.perm)) && (!d.anyPerm || d.anyPerm.some(can))
 
-// Everything a role can reach — the ⊞ Menu grid. Order = the admin's mental map.
-const GRID: Dest[] = [
+// Everything a role can reach — the ⊞ Menu grid (also the desktop top-nav, ≥1280px).
+// Order = the admin's mental map.
+export const GRID: Dest[] = [
   { to: '/admin', label: 'Dashboard', perm: 'manage_approvals', icon: <DashIcon />, end: true },
   { to: '/admin/job-orders', label: 'Job Orders', perm: 'view_job_orders', icon: <OrdersIcon /> },
   { to: '/admin/new-job-order', label: 'New JO', perm: 'file_job_orders', icon: <NewIcon /> },
@@ -114,7 +115,7 @@ export default function AdminBottomNav() {
   return (
     <>
       {createPortal(
-        <nav className="ktc-tabbar" aria-label={t('Sections')}>
+        <nav className="ktc-tabbar ktc-tabbar--admin" aria-label={t('Sections')}>
           {tabs.map((tab) => (
             <NavLink key={tab.to} to={tab.to} end={tab.end}
               className={({ isActive }) => `ktc-tab${isActive ? ' is-active' : ''}`}>

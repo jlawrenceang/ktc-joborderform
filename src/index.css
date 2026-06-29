@@ -529,12 +529,35 @@
     overflow-x: clip;
   }
   .ktc-page--wide { max-width: 960px; }
-  /* Large desktops (≥1280px) only: give the admin/ops working column more room
-     for dense tables (Job-Orders, Cashier, Logs) — on a big monitor 960px wastes
-     half the screen. Mobile, tablet, and normal desktop (≤1279px) keep the loved
-     app-like sizes unchanged; this is purely additive for big screens. */
+  /* HYBRID admin layout (owner's choice) — dense desktop, app-like mobile.
+     At ≥1280px the admin/ops working screens become a near-full-width ops console
+     with a desktop top-nav, and the floating bottom-tab gives way to it. Mobile,
+     tablet, and normal desktop (≤1279px) are UNTOUCHED.
+     CRITICAL: every override here is gated on the ADMIN-ONLY markers
+     (.ktc-page--admin on AdminShell's container, .ktc-tabbar--admin on the admin
+     bottom-nav) — the customer Shell shares .ktc-tabbar / .ktc-page--wide /
+     .ktc-page--tabbar and has NO desktop nav, so a GLOBAL rule would strip the
+     customer's only navigation on a big monitor. Admin-scoped → customer shell is
+     byte-identical at every width. */
+  .ktc-admin-topnav { display: none; }
   @media (min-width: 1280px) {
-    .ktc-page--wide { max-width: 1200px; }
+    .ktc-page--admin { max-width: min(1600px, 94vw); }
+    .ktc-tabbar--admin { display: none; }
+    .ktc-page--admin.ktc-page--tabbar { padding-bottom: 48px; }
+    .ktc-admin-topnav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-wrap: wrap;
+      margin: -4px 0 16px;
+      padding: 6px 8px;
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+      backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+      border: 1px solid var(--glass-brd);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm), var(--edge);
+    }
   }
   /* Clear the floating bottom tab bar (customer shell). Two-class selector so it
      wins over the base + mobile .ktc-page padding regardless of source order.

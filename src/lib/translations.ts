@@ -15,6 +15,7 @@
 
 export const tl: Record<string, string> = {
   "Awaiting ops acceptance": "Naghihintay na tanggapin ng operations",
+  "Admin sections": "Mga seksyon ng admin",
   // --- Phase-5 batch: error-blind loaders + specific highs ---
   "Couldn't load — tap Retry": "Hindi ma-load — i-tap ang Subukan ulit",
   "Retry": "Subukan ulit",
