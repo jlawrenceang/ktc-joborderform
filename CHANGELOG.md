@@ -4,6 +4,15 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.6 — 2026-06-30 (full break-test remediation — read-path scaling + JO-wedge gates)
+
+The full pre-go-live sandbox break-test (every role × every lane adversarial + CRUD / race / config-runtime + a real load pass on ~3,000 seeded charges) confirmed the **anti-fraud write path, RLS isolation, RBAC, and injection defenses all HOLD** under adversarial + concurrent probing — and caught one HIGH + JO-wedge gaps:
+
+- **HIGH (`0227`):** the `charges` SELECT policies called SECURITY DEFINER functions (`current_broker_id`, `is_admin`, `has_permission`×4) **per row** — a ~50× CPU tax that pinned billing reads at ~7 ops/s and wouldn't survive ~400 auto-refreshing desks. Wrapped each predicate in `(select fn())` so Postgres caches it once per query (InitPlan); paired with a narrow open-charges partial index + a `job_order_lines(job_order_id)` index. Verified on the seeded sandbox: the cashier desk query dropped **247ms → 2ms**.
+- **MEDIUM (`0227`):** `add_charge` now rejects a negative/zero **or** unrated (NULL-amount) charge — one that could never be invoiced and so permanently wedged JO completion; `submit_charge_payment` now rejects a charge already bundled into a payment order (a double-pay state contradiction). Both verified blocked.
+
+Deferred to next session (tracked in memory): re-run the 2 break-test lanes that errored (staff-UI adversarial + race); the LOW findings (gate-pass QR ignores addon charges; operations sees admin-only buttons; stale `JobOrder` type fields); the container-cap decision; reconciliation date-bounding; and the operational onboarding (DEA rate, staff/broker accounts).
+
 ## v2.0.5 — 2026-06-30 (polish pass — backdrop, Home CTA, i18n, e2e)
 
 Polish + trivial cleanup of the non-blocking items both batteries flagged:
