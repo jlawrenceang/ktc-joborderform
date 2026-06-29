@@ -193,9 +193,14 @@ test.describe('customer lifecycle (live v2.0.0 — charges cutover)', () => {
     }
 
     // ── HAPPY 4 · Job Order (skips without seed data) ────────────────────────
-    // The JO form is a 3-step Wizard; on the desktop Playwright viewport it stacks
-    // ALL steps on one page with a single submit (no Next buttons), so we drive
-    // consignee + entry + vessel + container, then confirm the review modal.
+    // The JO form is a 3-step Wizard (src/components/Wizard.tsx). On DESKTOP it
+    // STACKS all steps on one page with a single submit; on MOBILE it PAGINATES
+    // (one step per screen, Back/Next): step 1 = consignee + entry, step 2 = vessel,
+    // step 3 = containers. So on mobile we must drive the "Next →" button between
+    // steps — and each Next is gated by that step's own validation, so the prior
+    // step's fields have to be filled before it'll advance.
+    const isMobile = test.info().project.name.startsWith('mobile')
+    const next = async () => { if (isMobile) await page.getByRole('button', { name: /Next/i }).click({ timeout: 6000 }) }
     let joId = ''
     if (!seedOk) {
       verdicts.jobOrder = 'SKIPPED (no approved consignee + current vessel)'
@@ -207,22 +212,34 @@ test.describe('customer lifecycle (live v2.0.0 — charges cutover)', () => {
         // a match (a bare letter can return "No matches" depending on the data).
         const { data: cc } = await admin.from('consignees').select('code').eq('status', 'approved').limit(1).maybeSingle()
         const term = (cc as { code?: string } | null)?.code ?? 'a'
+        // A REAL active service for the container line. file_job_order rejects an
+        // uncatalogued service (KTC-09) and seed_job_order_billing (0212) only bills
+        // a line whose service_request is non-empty AND catalogued — the line's
+        // default placeholder isn't guaranteed to be a live service, so pick one.
+        const { data: sv } = await admin.from('service_rates').select('service').eq('active', true).order('sort_order').limit(1).maybeSingle()
+        const svcName = (sv as { service?: string } | null)?.service ?? ''
         await page.goto(`${BASE}/job-order`); await settle(page)
-        // 1) consignee typeahead (id=consignee, minChars=1) — now backed by the
+        // Step 1) consignee typeahead (id=consignee, minChars=1) — now backed by the
         //    `search_consignees` RPC (ADR-0037/0218: id/code/name only, no full-list
         //    select). Results are <button>s inside role=listbox — NOT role=option.
         await page.locator('#consignee').fill(term)
         const opt = page.locator('[role=listbox] button').first()
         await opt.waitFor({ timeout: 10000 })
         await opt.click()
-        // 2) entry number (C-…)
+        // …and the entry number (C-…); then advance to step 2 (mobile only).
         await page.locator('#entry').fill(`C-${String(STAMP).slice(-9)}`)
-        // 3) vessel & voyage — wait for the async-loaded options, pick the first
-        //    real one (index 0 is the "Select a vessel…" placeholder).
-        await page.locator('#vessel option').nth(1).waitFor({ timeout: 8000 })
+        await next()
+        // Step 2) vessel & voyage. selectOption AUTO-WAITS until the async-loaded
+        //    options are present, so no separate wait is needed — and a native
+        //    <select>'s collapsed options have no layout box, so a 'visible' waitFor
+        //    on `#vessel option` would time out. index 0 is the placeholder → pick 1.
         await page.locator('#vessel').selectOption({ index: 1 })
-        // 4) at least one container (4 letters + 7 digits)
+        await next()
+        // Step 3) at least one container (4 letters + 7 digits) + a REAL service on
+        //    the line (the service <select> sits beside the container input — exclude
+        //    #vessel so this resolves to the line's select on the stacked desktop too).
         await page.getByPlaceholder(/Container number/i).first().fill(`KTCU${String(STAMP).slice(-7)}`)
+        if (svcName) await page.locator('select.ktc-input:not(#vessel)').first().selectOption(svcName)
         // submit → review modal → confirm
         await page.getByRole('button', { name: /Submit Job Order/i }).click({ timeout: 6000 })
         await page.getByRole('button', { name: /Confirm & submit/i }).click({ timeout: 8000 })
@@ -320,5 +337,12 @@ test.describe('customer lifecycle (live v2.0.0 — charges cutover)', () => {
     // ── Assert: no dead wire, no leak ────────────────────────────────────────
     const bad = Object.entries(verdicts).filter(([, s]) => /DEAD WIRE|^LEAK/.test(s))
     expect(bad, `dead wires / leaks found: ${JSON.stringify(bad)}`).toHaveLength(0)
+    // The v2.0.0 charges cutover is the POINT of this lane: a SKIPPED or INCONCLUSIVE
+    // jobOrder / baseCharge / chargeUi means the charge assertions never actually ran,
+    // so it must FAIL rather than slip through green. These three MUST verify ALIVE.
+    const unverified = (['jobOrder', 'baseCharge', 'chargeUi'] as const)
+      .filter((k) => !/^ALIVE/.test(verdicts[k] ?? ''))
+      .map((k) => [k, verdicts[k] ?? '(missing)'])
+    expect(unverified, `charge-path verdicts must be ALIVE (the v2.0.0 cutover is the point): ${JSON.stringify(unverified)}`).toHaveLength(0)
   })
 })

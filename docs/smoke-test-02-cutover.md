@@ -114,10 +114,23 @@ and an empty **owner column** — you walk the identical path and tick whether y
 
 ---
 
-## Part C — Findings log (filled as the battery + sandbox run)
+## Part C — Findings log (ultracode battery, 2026-06-29)
 
-| Source (test #) | Severity | Finding | Status |
-|---|---|---|---|
-| _(filled during the battery — e.g. "Jarvis F1/F2 already fixed in 0222")_ | | | |
+Battery verdict: **NOT go-live ready → remediated.** The **5 anti-fraud money gates all PASS** (confirm-needs-ERP+BIR, completion-needs-payment, re-seed money-safety, reversed-stays-terminal, reconciliation) and the kept flows (calculator, release desk, auth, record_van_xray) are healthy. The blockers were dropped-column orphans the `0220` discovery skipped (plain `payment_status`):
 
-**Go-live gate:** Part A 1–8 pass · sandbox clean · Part B every row "agree" with the owner · Part C has no open high/critical.
+| Severity | Finding | Status |
+|---|---|---|
+| **CRITICAL** | `notify_jo_change` trigger read dropped `payment_status`/`payment_note` → every non-rexray job_order UPDATE errored (no transition/completion; cashier couldn't confirm the final charge) | ✅ FIXED `0223` + probed (transitions OK); deployed v2.0.1 |
+| **HIGH** | `remind_unpaid_orders` cron read `job_orders.payment_status` | ✅ FIXED `0223` (charges-based) + probed |
+| **HIGH** | `Home.tsx` dashboard + `BottomNav.tsx` badge `.or('…payment_status…')` on job_orders (400 / silent-0) | ✅ FIXED → `my_attention_count()` RPC; deployed v2.0.1 |
+| **HIGH** | e2e never verifies the charge path — JO-wizard driver throws, baseCharge/chargeUi SKIPPED, gate only fails on /DEAD WIRE/ | ⬜ TODO (test-quality; app is fine) — task 19 |
+| **HIGH** | Hero photos 404 (public/photos/[0-9]*.jpg are 289 MB, gitignored → not deployed) | ⬜ DEFERRED — web-optimize the ~8 used + commit, or CDN-host |
+| MEDIUM | `ktc-chip--error` class undefined → rejected/cancelled chips render grey | ✅ FIXED (CSS alias); deployed v2.0.1 |
+| MEDIUM | a11y: compliance inputs (ERP/BIR/OR/reason) + proof file input labelled by placeholder only | ⬜ TODO (quick aria-labels) |
+| MEDIUM | roast: login submit looks disabled; register card grey/white seam (public ~74/100) | ⬜ TODO (polish) |
+| LOW | NULL-amount charge can be invoiced/confirmed/complete at zero value (rate-config edge) | ⬜ consider blocking invoice/confirm on NULL/0 amount |
+| LOW | `effective_rate` EXECUTE-able by authenticated (override-rate disclosure); admin desk seq-scans; CAPTCHA smoke skipped (localhost guard) | ⬜ review |
+
+**Battery gaps (could not fully run — need provisioning):** `authenticated.spec` (a TEST Supabase project + creds); CAPTCHA/Turnstile gate; auth rate-limit (mgmt token); roast of the gated app + UX/a11y of the gated charge screens (customer + cashier creds + seeded data); a real load run (no harness + 0 prod data); the **data-isolated sandbox break-test** (separate KTC DB).
+
+**Go-live gate:** Part A 1–8 pass · sandbox clean · Part B every row "agree" with the owner · Part C has no open high/critical. **Current: critical + high orphans fixed + deployed; remaining = e2e coverage + photos + a11y/roast polish + the gated-app/sandbox verification.**

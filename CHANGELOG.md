@@ -4,6 +4,15 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.2 — 2026-06-29 (battery remediation — photos, a11y, e2e coverage, low edges)
+
+The remaining triaged items from the pre-go-live battery (after the v2.0.1 critical hotfix):
+
+- **Hero photos fixed (404 → live).** The terminal backdrops were 13 MB originals, gitignored, so they never deployed — every public page showed a broken void. Web-optimized all 30 (max 1920px, mozjpeg q76; **291 MB → 12 MB**) and committed them so the slideshow + per-role backdrops ship.
+- **Accessibility.** Programmatic labels on the compliance/money inputs (ERP control no., BIR serial, collection OR / reject / void reasons), the per-charge bundle-select checkbox, and the customer payment-proof file input (were placeholder/title only — invisible to screen readers).
+- **e2e charge-path coverage.** `customer-lifecycle` now actually drives the JO wizard (selectOption on vessel, mobile-pagination Next, selects a service so a charge seeds) and **fails on a skipped/inconclusive charge verdict** (it was silently passing green without verifying the cutover); the CAPTCHA smoke test now exercises the Turnstile gate against prod.
+- **Low edges (`0224`).** `record_charge_invoice` refuses a NULL/0-amount charge (closes the zero-value-completion leak — forces the rate to be set first); `effective_rate` revoked from `authenticated` (a customer can no longer RPC a consignee's confidential override rate; the definer functions that use it are unaffected).
+
 ## v2.0.1 — 2026-06-29 (cutover hotfix — pre-go-live test battery)
 
 The ultracode pre-go-live test battery (e2e · jarvis · billing-integrity · security · ux/a11y · roast · load · regression) confirmed the **5 anti-fraud money gates all hold**, and caught dropped-column orphans the `0220` discovery missed (it skipped plain `payment_status` as "noisy" — exactly the gap that bit):

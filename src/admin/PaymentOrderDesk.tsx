@@ -327,6 +327,7 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
                 checked={selected.has(c.id)}
                 disabled={!final}
                 onChange={() => toggle(c.id)}
+                aria-label={t('Select charge {label} to bundle', { label: c.label })}
                 title={final ? t('Select to bundle into a payment order') : t('Record the invoice first')}
                 style={{ marginTop: 3, width: 16, height: 16, cursor: final ? 'pointer' : 'not-allowed' }}
               />
@@ -352,8 +353,10 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
           invId === c.id ? (
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
               <input className="ktc-input ktc-mono" value={invErp} onChange={(e) => setInvErp(e.target.value.toUpperCase())}
+                aria-label={t('ERP control number')}
                 placeholder={t('ERP control no. (OR-INV / BI-INV)')} autoFocus style={{ maxWidth: 215, width: '100%', padding: '7px 11px', fontSize: 13 }} />
               <input className="ktc-input ktc-mono" value={invBir} onChange={(e) => setInvBir(e.target.value)}
+                aria-label={t('BIR invoice serial')}
                 placeholder={t('BIR invoice serial (4-8 digits)')} inputMode="numeric" style={{ maxWidth: 190, width: '100%', padding: '7px 11px', fontSize: 13 }} />
               <button className="ktc-btn ktc-btn--sm" disabled={busyId === c.id || !invErp.trim() || !invBir.trim()} onClick={() => void saveInvoice(c.id)}>{t('Save invoice')}</button>
               <button type="button" className="ktc-link" style={{ fontSize: 12.5 }} onClick={() => { setInvId(null); setInvErp(''); setInvBir('') }}>{t('Cancel')}</button>
@@ -527,6 +530,11 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
           className={modal?.kind === 'collect' ? 'ktc-input ktc-mono' : 'ktc-input'}
           value={modalText}
           onChange={(e) => setModalText(modal?.kind === 'collect' ? e.target.value.toUpperCase() : e.target.value)}
+          aria-label={
+            modal?.kind === 'collect' ? t('OR number')
+              : modal?.kind === 'rejectCharge' ? t('Reject reason')
+                : t('Reason')
+          }
           placeholder={
             modal?.kind === 'collect' ? t('OR number')
               : modal?.kind === 'rejectCharge' ? t('Why? (shown to the customer)')

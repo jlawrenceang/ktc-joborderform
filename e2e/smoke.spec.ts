@@ -148,9 +148,12 @@ test.describe('KTC portal — unauthenticated smoke', () => {
   test('login enforces CAPTCHA: Turnstile mounts and the submit is gated', async ({ page }) => {
     // Test builds (Phase 2, localhost) are deliberately built WITHOUT the
     // Turnstile site key so minted sessions aren't blocked — only prod
-    // meaningfully runs this check.
+    // meaningfully runs this check. Key the skip off the EFFECTIVE baseURL the
+    // run resolves to (DEPLOYED), NOT the raw BASE_URL string: a localhost
+    // BASE_URL is ignored and the run targets prod, where the Turnstile gate (a
+    // non-negotiable) MUST be exercised — keying off raw BASE_URL skipped it.
     test.skip(
-      !!process.env.E2E_SUPABASE_URL && (process.env.BASE_URL ?? '').includes('localhost'),
+      !!process.env.E2E_SUPABASE_URL && DEPLOYED.includes('localhost'),
       'CAPTCHA is intentionally disabled on the localhost test build',
     )
     await page.goto('/login')

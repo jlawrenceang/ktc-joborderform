@@ -150,6 +150,7 @@ export default function JobOrderCharges({ jobOrderId }: { jobOrderId: string }) 
                   {payable && broker && (
                     <ChargePay
                       chargeId={c.id}
+                      label={c.label}
                       userId={broker.user_id}
                       status={c.payment_status}
                       note={c.payment_note}
@@ -200,8 +201,9 @@ export default function JobOrderCharges({ jobOrderId }: { jobOrderId: string }) 
 // Compact per-charge slip uploader — mirrors the Payment page proof flow
 // (validate → upload to payment-slips → submit_charge_payment). Owns its own
 // file/busy state so each charge settles independently.
-function ChargePay({ chargeId, userId, status, note, onDone }: {
+function ChargePay({ chargeId, label, userId, status, note, onDone }: {
   chargeId: string
+  label: string
   userId: string
   status: string
   note: string | null
@@ -243,6 +245,7 @@ function ChargePay({ chargeId, userId, status, note, onDone }: {
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
         {!file ? (
           <input className="ktc-input" type="file" accept="image/*,application/pdf" disabled={busy}
+            aria-label={t('Upload payment proof for {label}', { label })}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) setFile(f) }} style={{ maxWidth: 340, width: '100%', padding: '10px 13px' }} />
         ) : (
           <>

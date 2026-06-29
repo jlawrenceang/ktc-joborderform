@@ -77,9 +77,8 @@ android/
 /build/
 *.idsig
 
-# KTC terminal source photos — huge originals (~13MB each, ~290MB total); only the
-# optimized hero.jpg / dash-customer.jpg / dash-admin.jpg are committed + shipped.
-public/photos/[0-9]*.jpg
+# KTC terminal photos — web-optimized (max 1920px, mozjpeg q76, ~300–550KB each)
+# and committed so the hero/backdrop slideshow ships (were 13MB originals, gitignored).
 
 _jarvis_audit*.mjs
 _*.mjs
