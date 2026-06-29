@@ -52,9 +52,9 @@
     pointer-events: none;
     background-image:
       linear-gradient(to bottom,
-        color-mix(in srgb, var(--cc-canvas) 85%, transparent),
-        color-mix(in srgb, var(--cc-canvas) 70%, transparent) 42%,
-        color-mix(in srgb, var(--cc-canvas) 88%, transparent)),
+        color-mix(in srgb, var(--cc-canvas) 88%, transparent),
+        color-mix(in srgb, var(--cc-canvas) 80%, transparent) 45%,
+        color-mix(in srgb, var(--cc-canvas) 93%, transparent)),
       var(--app-bg-photo, none);
     background-size: cover, cover;
     background-position: center, center;

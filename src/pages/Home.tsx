@@ -68,6 +68,12 @@ export default function Home() {
         </p>
       </div>
 
+      {broker?.status === 'approved' && (
+        <Link to="/job-order" className="ktc-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'fit-content', marginBottom: 16, fontSize: 14.5, fontWeight: 650, padding: '13px 22px', textDecoration: 'none' }}>
+          + {t('New Job Order')}
+        </Link>
+      )}
+
       {loadError ? (
         <div style={{ marginBottom: 16 }}>
           <Notice

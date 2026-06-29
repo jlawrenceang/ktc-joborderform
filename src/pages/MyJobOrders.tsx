@@ -411,7 +411,7 @@ export default function MyJobOrders() {
                     <div style={{ display: 'grid', gap: 3, marginTop: 9, fontSize: 13 }}>
                       <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.vessel_name ? `${o.vessel_name}${o.voyage_number ? ' · ' + o.voyage_number : ''}` : '—'}</span>
-                      <span className="ktc-label" style={{ fontSize: 12.5 }}>{t('{count} container vans', { count })}</span>
+                      <span className="ktc-label" style={{ fontSize: 12.5 }}>{t(count === 1 ? '{count} container van' : '{count} container vans', { count })}</span>
                     </div>
                   </button>
                 )
@@ -421,12 +421,13 @@ export default function MyJobOrders() {
             <div style={{ display: 'grid', gap: 6 }}>
               {orders.map((o) => {
                 const count = o.lines?.length ?? 0
+                const vanLabel = t(count === 1 ? '{count} container van' : '{count} container vans', { count })
                 return (
                   <button key={o.id} type="button" className="ktc-jo-litem" onClick={() => openOrder(o)} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <b className="ktc-mono" style={{ fontSize: 13, flex: '0 0 auto' }}>{o.entry_number ?? o.jo_number ?? '—'}</b>
                     <span style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.consignee ? o.consignee.name : t('No consignee')}</span>
                     <PayPillMini o={o} />
-                    <span title={t('{count} container vans', { count })} aria-label={t('{count} container vans', { count })}
+                    <span title={vanLabel} aria-label={vanLabel}
                       style={{ flex: '0 0 auto', minWidth: 24, height: 22, padding: '0 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 999, background: 'var(--c-w35)', border: '1px solid var(--glass-brd)', fontSize: 12, fontWeight: 700 }}>{count}</span>
                   </button>
                 )
@@ -553,7 +554,7 @@ export default function MyJobOrders() {
 
                   {/* Containers */}
                   <div style={{ marginTop: 16 }}>
-                    <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Containers')} · {t('{count} container vans', { count })}</span>
+                    <span className="ktc-label" style={{ fontSize: 12, fontWeight: 600 }}>{t('Containers')} · {t(count === 1 ? '{count} container van' : '{count} container vans', { count })}</span>
                     {count === 0 ? (
                       <div className="ktc-label" style={{ fontSize: 13, marginTop: 6 }}>{t('No containers on this order.')}</div>
                     ) : (

@@ -4,6 +4,15 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.5 — 2026-06-30 (polish pass — backdrop, Home CTA, i18n, e2e)
+
+Polish + trivial cleanup of the non-blocking items both batteries flagged:
+
+- **Calmer role backdrop** — the terminal-photo scrim is dimmer (80% mid / 93% bottom canvas) so the photo no longer lowers contrast behind the data-dense admin app or the customer footer (roast: the main thing holding the surface under 90).
+- **Customer Home** — added a primary "+ New Job Order" CTA (the dashboard was sparse — counts only, no action).
+- **i18n** — "1 container van" now reads singular (was "1 container vans"); added Tagalog for the 5 v2.0.2 a11y labels (ERP control no. / BIR serial / reject reason / bundle-select / proof upload).
+- **e2e** — fixed the stale admin-landing assertion (the nav was flattened from a "Customers" dropdown to top-level links).
+
 ## v2.0.4 — 2026-06-29 (seeded battery — Payment-Order collection fix)
 
 The seeded test-project suite (authenticated e2e + gated roast/ux + the 5-gate money break-test, on an isolated project with real seeded charges) confirmed the cutover is sound — **all 5 anti-fraud gates BLOCKED, the charge path ALIVE, the authenticated mutation lanes pass 5/5, the gated screens score 92/100, photos load, a11y labels render** — and caught the sibling of the `0225` bug:
