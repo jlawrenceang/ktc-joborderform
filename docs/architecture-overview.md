@@ -2,7 +2,7 @@
 title: Architecture Overview
 tags: [architecture, reference, system-map]
 type: reference
-last_updated: 2026-06-27
+last_updated: 2026-06-29
 ---
 
 # KTC Online Portal — Architecture Overview
@@ -62,6 +62,12 @@ backend serves all surfaces.
   requires the ERP service-invoice + BIR pad serial on file** (`record_service_invoice`, `0177`/`0178`).
 - **One session per account** (`claim_session` + `session_alive()` woven into the RLS helpers),
   **idle auto-logout** (customer 15 min / staff 60 min), **server-side CAPTCHA** (Managed Turnstile).
+- **MFA / aal2 enforced server-side *and* app-wide** — an account with a verified TOTP factor must reach
+  aal2 (`aal_satisfied()` woven into `is_admin`/`is_owner`/`has_permission`, `0049`/`0055`); the owner's
+  **crown-jewel RPCs** (`reset_staff_password` · `promote_new_staff` · `set_owner_access`) gate on the
+  hardened `is_owner()` so a phished password alone can't mint staff (`0198`, 2026-06-29). At the UI a
+  top-level **`MfaGate`** (above `<Routes>`) renders *only* the MFA challenge while a session is
+  aal1-needing-aal2 — no app surface or App-root overlay can leak before the second factor (v1.7.5).
 - **Pending customers are locked to verify-only** (`0163`) — until an admin approves them, **RLS** hides
   every business surface (filing, vessel schedule, rate config, the consignee master list, bulletins);
   route-gating is UX only. Self-signup (incl. Google) exposes nothing.

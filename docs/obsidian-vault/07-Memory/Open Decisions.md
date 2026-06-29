@@ -2,7 +2,7 @@
 title: Open Decisions
 tags: [memory, decisions, register]
 type: memory
-last_updated: 2026-06-25
+last_updated: 2026-06-29
 ---
 
 # 🗳️ Open Decisions Register
@@ -10,6 +10,8 @@ last_updated: 2026-06-25
 Decisions/questions awaiting the OWNER, grouped by what they unblock. Each has a **recommendation** so most can be confirmed quickly. Mark answers inline; move resolved items to the relevant ADR / spec.
 
 > ⚠️ **Partially stale (last full pass 2026-06-13).** Go-live gate is now **ST05** (not ST02 — see [[Current State]]). Several rate/storage questions (B4/B5 rates, C7/D3 storage) are now addressed by **ADR-0024** (release/pull-out pricing) and **ADR-0027** (per-service rate granularity + tiered foreign storage). The **queue / completion / priority / re-X-ray** design is now decided + shipped (**ADR-0035**) and the whole-app audit is **closed** ([[whole-app-audit-closed]]). Re-confirm the still-open `(Owner: ___)` items; move resolved ones to their ADR.
+
+> **2026-06-29 — ADR-0037 ratified.** The JO/billing **move-spine** model is now decided (every move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement; retire supplements). **One open sequencing call:** fold **Phase B** into **Phase A** (RPS + add-on charges become standalone linked JOs from day one) vs. **A-then-B** — to finalize at Phase A kickoff. Strategic north-star questions (**D1** what KTC's existing TOS is; **D2** which pillar first; **D3** cargo scope) remain open below.
 
 ## A. Blocking the current build (operations role + vessel schedule) — ✅ ANSWERED 2026-06-13
 

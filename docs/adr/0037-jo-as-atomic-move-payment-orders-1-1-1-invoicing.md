@@ -1,9 +1,10 @@
 # ADR-0037: Model every operational move as a Job Order, with Payment Orders and 1:1:1 invoicing
 
-* Status: Proposed
+* Status: Accepted (ratified by the owner 2026-06-29)
 * Deciders: Owner (Jan Lawrence Ang), engineering
 * Date: 2026-06-29
 * Category: Architecture
+* Build note: ratified for a pre-launch build. The A→B→C→D phasing stands; the one open sequencing choice — **fold B into A** (RPS + add-on charges become standalone JOs from day one) vs. **A-then-B** — is to be finalized at Phase A kickoff (next session). Phase A is the go-live requirement.
 
 ## Context and Problem Statement
 

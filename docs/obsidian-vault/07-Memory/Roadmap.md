@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-06-26
+last_updated: 2026-06-29
 ---
 
 # 🧭 Roadmap (Phased)
@@ -12,6 +12,8 @@ last_updated: 2026-06-26
 Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NORTH STAR**.
 
 > **Active focus (2026-06-22):** portal / job-orders. The **fuel-monitoring** module ([ADR-0025](../../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) was started as a parallel lane and is **parked after Phase 0** (schema live, no frontend) — see PARKED below.
+
+> **Active focus (2026-06-29):** Phase-5 verification + **v1.7.0→v1.7.5 shipped** (see [[Current State]]). **Next major work = [ADR-0037](../../adr/0037-jo-as-atomic-move-payment-orders-1-1-1-invoicing.md)** *(Accepted)* — the **move-spine** architecture (every operational move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement; retire supplements). A **pre-launch clean reshape**; **Phase A** (`payment_orders` + per-JO ERP+BIR invoice + cashier confirm gate) is the go-live **BIR-compliance** build and ships first (B/C/D = the move-spine build-out). Carry-over backlog: [[Pending Items]].
 
 ## COMPLETED ✅ (through v1.1.0, 2026-06-13)
 

@@ -2,7 +2,7 @@
 title: Home
 tags: [index]
 type: home
-last_updated: 2026-06-28
+last_updated: 2026-06-29
 ---
 
 # KTC Portal Knowledge Home
@@ -13,14 +13,14 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v1.6.77` live on `portal.ktcterminal.com` |
-| Migrations | **176 files** (`0001` … `0185`), all applied + tracked (split portal + fuel lanes) |
+| Version | `v1.7.5` live on `portal.ktcterminal.com` |
+| Migrations | **~190 files** (`0001` … `0201`), all applied + tracked (split portal + fuel lanes) |
 | Public face | signed-out `/` = a public **Landing** (terminal-photo hero); **Lara** non-LLM customer assistant; **"Continue with Google"** sign-in |
 | Access hardening | pending customers **verify-only** at the RLS layer (`0163`); consent **server-enforced** (`0162`); disposable-email block (`0164`) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
 | Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
-| Active focus | **Job-order ops overhaul** shipped (ADR-0035: auto-complete · priority + re-X-ray lanes · ops→cashier billing · invoice-gated payment), then a **59-finding ultracode audit fixed + closed** (v1.6.66–73). **Fuel monitoring** ([ADR-0025](../adr/0025-fuel-monitoring-derived-variance-on-moves-spine.md)) parked after Phase 0 (schema live, no UI; 5 audit findings → Phase-1 desk) |
-| Go-live gate | `docs/go-live-todo.md` — Google-OAuth config · re-enable Turnstile + MFA · Agreement v4 counsel pass + NPC/DPO · ST05 manual Lanes A–K (D-01 closed `0159`) · launch call |
+| Active focus | **Phase-5 verification + v1.7.0→v1.7.5 shipped** (2026-06-29): audit Phases 2–4 merged, UX/UI batch + 8-config e2e recalibration, **security-audit fixes `0196`–`0201`** (incl. owner→staff-minting prevention), **Hybrid admin layout**, and a **whole-app MfaGate**. **Next major work = [ADR-0037](../adr/0037-jo-as-atomic-move-payment-orders-1-1-1-invoicing.md)** *(Accepted)* — the move-spine architecture (every move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement). Pre-launch clean reshape; **Phase A first**. Fuel monitoring still parked after Phase 0 |
+| Go-live gate | `docs/go-live-todo.md` — **MFA now enrolled + owner password rotated** (2026-06-29); still: Google-OAuth config · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) still blank · ADR-0037 **Phase A** (the BIR-invoice compliance build) · full sandbox break-test · ST05 manual Lanes A–K · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live

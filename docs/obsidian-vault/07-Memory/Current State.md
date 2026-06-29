@@ -2,12 +2,23 @@
 title: Current State
 tags: [memory, current]
 type: memory
-last_updated: 2026-06-28
+last_updated: 2026-06-29
 ---
 
 # 📌 Current State (Runtime-Aligned)
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
+
+## 2026-06-29 — Audit Phases 2–4 shipped + Phase-5 verification + whole-app MFA gate + ADR-0037 (v1.7.0→v1.7.5)
+
+**Migrations through `0201` applied to prod; `APP_VERSION` = `v1.7.5`.** See [[2026-06-29 Phase-5 Verification, v1.7.0-v1.7.5, MFA Gate, ADR-0037 Move-Spine]]. In one line each:
+
+- **Audit Phases 2–4 shipped (v1.7.0)** — the unmerged ops gaps + staff manuals/tours + **full Tagalog i18n** (strict coverage guard) merged to main; two **dormant scaffolds** — SMS (`0193`, `send-sms`) + the BOC customs Sheet mirror (re-scoped to X-ray inspection) — awaiting owner activation creds.
+- **2 live-bug hotfix (v1.7.1, `0194`)** — a release-supplement money gap (pay/confirm on a **cancelled** release) + the AppChecker/Checker **submitted-order dead-end** (post-`0187`).
+- **Phase-5 UX/UI batch (v1.7.2)** — 13 **error-blind data loaders** → error+Retry (the read-side of "green tests, dead app"), shared **Modal**/**Notice** a11y, de-glassed Home tiles, Lara FAB hides on input focus, semantic-token aliases, a new **offline banner**, Approvals false-"ID removed" copy fixed, JO-filing confirmation, Brokers search+pagination; **e2e recalibrated** to an 8-config matrix (the smoke "14/14 fail" was a `BASE_URL=localhost` footgun, not stale selectors) + a `layout.spec` overflow guard; `0195` release-trigger ACL.
+- **Security-audit fixes (v1.7.3, `0196`–`0201`)** — disposable-email table RLS lockdown, `cancel_release_order` base-payment guard, the **crown-jewel-RPC aal2-hardening** (`reset_staff_password`/`promote_new_staff`/`set_owner_access` now gate on hardened `is_owner()` — the **owner→staff-minting prevention**), JO `submit_supplement_proof` guard, staff-notif session gate, invoice-before-confirm trigger (base only); + the **Hybrid admin layout** (dense full-width ops console ≥1280px, app-like mobile/tablet) + Suspend retoned to danger-red.
+- **Whole-app MFA gate (v1.7.4/v1.7.5)** — MFA now renders **before** the first-run setup; a top-level **MfaGate** wraps the whole app so the challenge can't be leaked at aal1. Owner **enrolled TOTP + rotated the owner password**. (Supabase TOTP has no native backup codes — recovery is server-side factor-deletion; proper codes = carry-over.)
+- **ADR-0037 ratified (Accepted)** — every operational move = a JO; **1:1:1 ERP/BIR invoicing** (draft→final); **Payment-Order N:1**; **payment-before-movement** (bidirectional gate); retire supplements. A **pre-launch clean reshape**; **Phase A** (payment_orders + per-JO invoices + cashier gate) is the go-live compliance build. See [[target-architecture-jo-payment-invoice]].
 
 ## 2026-06-28 — Break-test security/integrity hardening (v1.6.77)
 

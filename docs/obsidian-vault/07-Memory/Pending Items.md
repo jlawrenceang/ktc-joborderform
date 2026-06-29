@@ -2,12 +2,23 @@
 title: Pending Items
 tags: [memory, pending, backlog]
 type: memory
-last_updated: 2026-06-26
+last_updated: 2026-06-29
 ---
 
 # 📋 Pending Items
 
 Detailed backlog. For sequencing, see [[Roadmap]]. (Completed items moved to [[Completed Milestones]] / `CHANGELOG.md`.)
+
+## 2026-06-29 carry-over — next session (NOW)
+
+The Phase-5 verification + v1.7.0→v1.7.5 + the MFA gate all shipped (see [[Current State]]). Outstanding:
+
+- [ ] **ADR-0037 Phase A — the move-spine build (ratified, go-live-grade):** `payment_orders` (the cashier collection unit, N:1 over JOs) + a per-JO **ERP + BIR invoice** (draft→final, payment only against final) + the cashier confirm gate, for today's JO types. **Open sequencing call:** fold **Phase B** in (RPS + add-on charges become standalone linked JOs from day one) vs. A-then-B. Pre-launch = a **clean reshape**. See ADR-0037 + [[target-architecture-jo-payment-invoice]].
+- [ ] **Staged MFA work (deferred from v1.7.5 for owner-lockout safety):** A2 mandatory-enrollment gate · B step-up re-auth on the crown-jewel actions · C out-of-band email/SMS alert on staff-mint/owner-grant/password-reset · proper **backup/recovery codes** (Supabase TOTP has none natively — recovery is currently server-side `auth.mfa_factors` deletion; document the break-glass). The DB-side aal2 prevention (`0198`) is already live. The A2 gate must **exempt automated test accounts**.
+- [ ] **Security audit-low #5 — consignee-PII scoping:** approved consignees expose TIN/email/mobile to every approved broker; column-scope the broker SELECT (risk: don't break the typeahead). Deferred 2026-06-29.
+- [ ] **Full sandbox break-test** — params in memory `sandbox-breaktest-params.md` (100 users, ~1000 consignees, ~10 containers/JO up to 150; 20→50→100→200 load ramp; GoTrue minting needs **different IPs** / admin API; 8-config UI lens). Run on the isolated test env, never prod.
+- [ ] **Test-environment setup** — a Supabase **branch** of the project (prod-faithful) or a refreshed test project, so the sandbox + the MFA/step-up tests run with all security ON and never touch live data.
+- [ ] **Domain consolidation** — `ktcport.com` (a real **WordPress** marketing site) + `erp.ktcport.com` (**Frappe** ERP, the official BIR-invoice system of record, not API-integrated) + `ktcterminal.com` (the portal + email). Confirm who runs what + the consolidation plan; the docs don't yet record the WP site. (The old `ktcbbernal` ktcport.com app-password was revoked 2026-06-29.)
 
 ## ST05 smoke test — open items (NOW)
 
