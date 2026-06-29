@@ -83,3 +83,5 @@ public/photos/[0-9]*.jpg
 
 _jarvis_audit*.mjs
 _*.mjs
+scratch_*.mjs
+scratch*.mjs
