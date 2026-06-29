@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, type ReactNode } from 'react'
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { lazyWithReload } from './lib/lazyWithReload'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
@@ -9,6 +9,8 @@ import FirstRunSetup from './components/FirstRunSetup'
 import ProtectedRoute from './components/ProtectedRoute'
 import SessionSupersededOverlay from './components/SessionSupersededOverlay'
 import ServerBusyBanner from './components/ServerBusyBanner'
+import MfaChallenge from './components/MfaChallenge'
+import { supabase } from './lib/supabase'
 import RouteLoader from './components/RouteLoader'
 import HeroSlideshow from './components/HeroSlideshow'
 import PublicShell from './components/PublicShell'
@@ -136,6 +138,45 @@ function PublicBackdrop() {
   )
 }
 
+// Pre-auth / public paths where a (possibly transient) session must NOT be
+// MFA-gated: the login flow, email-confirmation, password reset, the public
+// agreement, and the public slip-verification QR target (/verify/:id).
+const MFA_BYPASS = new Set([
+  '/login', '/register', '/confirmed', '/forgot-password', '/reset-password',
+  '/agreement', '/irr', '/terms', '/privacy',
+])
+
+// ONE gate for the WHOLE app. A logged-in session with an enrolled TOTP factor
+// must pass the aal2 challenge before ANYTHING app-related renders — routes,
+// first-run setup, notifications, overlays, tours, Lara, modals. Nothing leaks
+// at aal1. (The connectivity banner is rendered OUTSIDE this gate so a network
+// notice still shows during the challenge.) ProtectedRoute keeps its own aal
+// read for the aal2-gated single-session claim; by the time any route mounts
+// here the session is already aal2, so its MFA branch is now defense-in-depth.
+function MfaGate({ children }: { children: ReactNode }) {
+  const { session } = useAuth()
+  const { pathname } = useLocation()
+  const [aal, setAal] = useState<{ current: string; next: string } | null>(null)
+  useEffect(() => {
+    if (!session) { setAal(null); return }
+    let active = true
+    void supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (active) setAal({ current: data?.currentLevel ?? 'aal1', next: data?.nextLevel ?? 'aal1' })
+    })
+    return () => { active = false }
+  }, [session])
+
+  // Logged-out, or on a public/pre-auth path → never gate (login + public flow).
+  if (!session || MFA_BYPASS.has(pathname) || pathname.startsWith('/verify/')) return <>{children}</>
+  // Session present but the level isn't known yet → hold so the app can't flash first.
+  if (!aal) return <RouteLoader />
+  // MFA enrolled but not yet satisfied → render ONLY the challenge, nothing else.
+  if (aal.next === 'aal2' && aal.current !== 'aal2') {
+    return <MfaChallenge onVerified={() => setAal({ current: 'aal2', next: 'aal2' })} />
+  }
+  return <>{children}</>
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -143,9 +184,10 @@ export default function App() {
       <BrowserRouter>
         <WalkthroughProvider>
         <TourProvider>
+        <ServerBusyBanner />
+        <MfaGate>
         <FirstRunSetup />
         <SessionSupersededOverlay />
-        <ServerBusyBanner />
         <PublicBackdrop />
         <Suspense fallback={<RouteLoader />}>
         <RouteFade>
@@ -221,6 +263,7 @@ export default function App() {
         </Routes>
         </RouteFade>
         </Suspense>
+        </MfaGate>
         </TourProvider>
         </WalkthroughProvider>
       </BrowserRouter>

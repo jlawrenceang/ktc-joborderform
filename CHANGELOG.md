@@ -4,6 +4,14 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.5 — 2026-06-29 (MFA gate covers the whole app)
+
+Follow-up to v1.7.4: the MFA challenge lived at the route level (`ProtectedRoute`), so App-root overlays (`FirstRunSetup`, `SessionSupersededOverlay`) sat *beside* it and could surface at aal1. Added a **top-level `MfaGate`** in `App.tsx`: when a session is at aal1 with `nextLevel='aal2'`, it renders **only** `MfaChallenge` — the entire app (routes, both shells, notifications, Lara, tours, modals, the setup modal) is now *behind* the gate. The connectivity banner (`ServerBusyBanner`) is the one intentional exception. Public/logged-out paths (`/login`, `/agreement`, `/confirmed`, `/verify/:id`) bypass it; `/verify-id` stays gated. jarvis-verified: no aal1 leak, uncircumventable (backend also fails closed at aal1), no lockout/loop. A wrong MFA code does not kick you out — you retry.
+
+Also lands **ADR-0037** (Proposed) — the JO-as-atomic-move / Payment-Order / 1:1:1-invoicing / payment-before-movement architecture blueprint.
+
+`APP_VERSION` v1.7.4 → v1.7.5. tsc + build + i18n clean.
+
 ## v1.7.4 — 2026-06-29 (MFA-ordering fix)
 
 **Bug:** on login, the first-run setup modal (language + notifications) appeared **before** the MFA challenge, because `FirstRunSetup` renders at the App root (outside `ProtectedRoute`, where the aal2 gate lives) and didn't check the MFA level. **Fix:** `FirstRunSetup` now reads the authenticator-assurance level and stays hidden while the MFA challenge is pending — so MFA always comes first, then the setup.
