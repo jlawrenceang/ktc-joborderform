@@ -10,6 +10,8 @@ import { CameraIcon } from '../components/icons'
 import NowServing from '../components/NowServing'
 import { usePageTour } from '../components/TourProvider'
 import { checkerSteps } from '../admin/AdminTour'
+import { Capacitor } from '@capacitor/core'
+import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning'
 
 // Checker app screen: scan the slip QR (encodes /verify/<jo-id>) with the
 // camera, or type the JO number, then confirm X-ray per van. Reuses the same
@@ -41,6 +43,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 type Detector = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> }
 const hasBarcode = typeof window !== 'undefined' && 'BarcodeDetector' in window
+// Pull the JO uuid out of a scanned /verify/<uuid> slip QR (null = not a KTC slip).
+const matchVerify = (raw: string): string | null => {
+  const m = raw.match(/verify\/([0-9a-fA-F-]{36})/)
+  return m ? m[1] : null
+}
 
 export default function AppChecker() {
   const { t } = useT()
@@ -117,6 +124,25 @@ export default function AppChecker() {
   }
   async function startScan() {
     setError(null)
+    // Native (Capacitor) build: one-shot ML Kit scanner — a reliable native camera on
+    // Android/iOS, where the web BarcodeDetector is Chromium-only / absent. The web path
+    // below (getUserMedia + BarcodeDetector) stays the browser fallback (PWA/desktop).
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { camera } = await BarcodeScanner.requestPermissions()
+        if (camera !== 'granted' && camera !== 'limited') {
+          setError(t('Could not open the camera. Allow camera access, or type the JO number.')); return
+        }
+        const { barcodes } = await BarcodeScanner.scan({ formats: [BarcodeFormat.QrCode] })
+        const raw = barcodes[0]?.rawValue
+        const id = raw ? matchVerify(raw) : null
+        if (id) void openOrder(id)
+        else if (raw) setError(t('No job order found for that code.'))
+      } catch {
+        setError(t('Could not open the camera. Allow camera access, or type the JO number.'))
+      }
+      return
+    }
     if (!hasBarcode) { setError(t('Scanning isn’t supported on this browser — type the JO number instead.')); return }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } })
@@ -142,8 +168,8 @@ export default function AppChecker() {
       try {
         const codes = await detector.detect(video)
         if (codes.length) {
-          const m = codes[0].rawValue.match(/verify\/([0-9a-fA-F-]{36})/)
-          if (m) { stopScan(); void openOrderRef.current(m[1]) }
+          const id = matchVerify(codes[0].rawValue)
+          if (id) { stopScan(); void openOrderRef.current(id) }
         }
       } catch { /* transient detect errors are fine */ }
     }, 500)
