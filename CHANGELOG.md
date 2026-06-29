@@ -4,6 +4,22 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v1.7.3 — 2026-06-29 (Security audit fixes + Hybrid admin layout)
+
+The security-audit remediation (adversarially verified — 7 confirmed of 15, 8 false-positives refuted) + the roast's admin-layout fix. jarvis verified the whole batch and caught two blockers before prod (an RPS-confirm break + a customer-nav-loss) — both fixed.
+
+**Security (migrations 0196–0201, applied to prod):**
+- **0196 (#1):** `disposable_email_domains` was RLS-disabled with default grants — any authenticated user could wipe/poison the signup blocklist (onboarding DoS). Enabled RLS + revoked; it's RPC-only now.
+- **0197 (#3):** `cancel_release_order` refuses when the **base** release payment is under review (sibling to the 0194 supplement guard).
+- **0198 (#2 prevention):** the crown-jewel RPCs (`reset_staff_password`, `promote_new_staff`, `set_owner_access` via `is_root_owner`) now gate on hardened **`is_owner()`** (aal2 + live session) instead of the raw column — so once MFA is enrolled, a phished owner password alone can't mint staff. **Owner-failsafe-safe** (email backstop + `aal_satisfied()`=true for non-MFA accounts → no lockout). + security-event logging on every mint.
+- **0199 (#6)** JO `submit_supplement_proof` terminal/bill-state guard · **0200 (#7)** staff-notif evicted-JWT session gate · **0201 (#4)** invoice-before-confirm trigger — **base-payment only** (RPS deliberately exempt, since RPS has no invoice field today; see the all-charges invoice rule now on the roadmap).
+
+**UX (from the visual roast):** the **Hybrid admin layout** — at ≥1280px the ops screens become a dense near-full-width console with a desktop top-nav; **mobile/tablet keep the app-like column + bottom-tab unchanged** (admin-scoped via `.ktc-page--admin`/`.ktc-tabbar--admin`, so the customer shell is byte-identical at every width). + the **Suspend** button retoned to a true danger-red (was brand-orange).
+
+**Deferred to dedicated tested work:** #2-A2 mandatory-MFA enrollment + B step-up + C email-push (owner-lockout risk; the DB prevention is live) · #5 consignee-PII scoping · the **all-charges-need-both-invoices** compliance rule (spec'ing next).
+
+`APP_VERSION` v1.7.2 → v1.7.3. tsc + check:i18n + build clean.
+
 ## v1.7.2 — 2026-06-29 (Phase-5 UX/UI batch + resilience + e2e recalibration)
 
 The consolidated Phase-5 batch-fix (ship-review + UX/UI audit + visual roast findings), jarvis-verified across two passes (it caught a ship-blocker — see below), + the e2e suite recalibrated to a desktop/mobile × EN/FIL × light/dark matrix.

@@ -18,7 +18,7 @@ const btn = (kind: 'danger' | 'ok' | 'muted'): CSSProperties => ({
   border: kind === 'muted' ? '1px solid hsl(var(--line))' : 0,
   borderRadius: 10, padding: '7px 12px', fontWeight: 600, fontSize: 12, cursor: 'pointer',
   color: kind === 'muted' ? 'hsl(var(--ink-2))' : '#fff',
-  background: kind === 'danger' ? 'linear-gradient(135deg, var(--c-h24-80-52), var(--c-h20-80-44))'
+  background: kind === 'danger' ? 'linear-gradient(135deg, hsl(0 72% 52%), hsl(0 75% 43%))' // true danger-red (hue 0), distinct from the brand orange (hue ~22) so a destructive action doesn't read as a primary button
     : kind === 'ok' ? 'linear-gradient(135deg, var(--c-h150-55-42), var(--c-h150-60-34))'
     : 'var(--c-w70)',
 })
