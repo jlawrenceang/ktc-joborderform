@@ -2214,6 +2214,7 @@ export const tl: Record<string, string> = {
   "Add-on charge": "Add-on charge",
   "Select to bundle into a payment order": "Piliin para i-bundle sa isang payment order",
   "Record the invoice first": "I-record muna ang invoice",
+  "Awaiting payment review — confirm or reject the proof first": "Hinihintay ang review ng bayad — kumpirmahin o tanggihan muna ang patunay",
   "BIR invoice serial (4-8 digits)": "BIR invoice serial (4-8 digits)",
   "Record BOTH the ERP control number and the BIR invoice serial — required before any payment can be confirmed": "I-record PAREHO ang ERP control number at ang BIR invoice serial — kailangan ito bago ma-confirm ang anumang payment",
   "Confirm this single charge as paid (walk-in collection)": "I-confirm na bayad ang iisang charge na ito (walk-in collection)",

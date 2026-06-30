@@ -265,7 +265,7 @@ export default function App() {
 
           {/* Installable staff app (focused, role-aware) */}
           <Route path="/app" element={<Protected><AppHome /></Protected>} />
-          <Route path="/app/checker" element={<Admin perm="view_xray_queue"><AppChecker /></Admin>} />
+          <Route path="/app/checker" element={<Admin perm="confirm_xray"><AppChecker /></Admin>} />
           <Route path="/app/payment-orders" element={<Admin perm="review_payments"><PaymentOrderDesk app /></Admin>} />
           <Route path="/app/support" element={<Admin perm="manage_support"><SupportInbox app /></Admin>} />
           <Route path="/app/operations" element={<Admin perm="view_job_orders"><AllJobOrders app /></Admin>} />

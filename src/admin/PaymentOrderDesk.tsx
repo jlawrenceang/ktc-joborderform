@@ -345,6 +345,10 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
   // One billed charge row (inside a customer/consignee group).
   function ChargeLine({ c }: { c: ChargeRow }) {
     const final = c.invoice_state === 'final'
+    // Only an unpaid/rejected charge may be bundled — a 'submitted' charge is awaiting
+    // the cashier's confirm/reject of the customer's proof, so bundling it would let the
+    // same charge be settled twice (mirrors the create_payment_order RPC guard, 0229).
+    const bundleable = final && (c.payment_status === 'unpaid' || c.payment_status === 'rejected')
     return (
       <div style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--c-w60)', border: '1px solid var(--glass-brd)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -353,11 +357,11 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
               <input
                 type="checkbox"
                 checked={selected.has(c.id)}
-                disabled={!final}
+                disabled={!bundleable}
                 onChange={() => toggle(c.id)}
                 aria-label={t('Select charge {label} to bundle', { label: c.label })}
-                title={final ? t('Select to bundle into a payment order') : t('Record the invoice first')}
-                style={{ marginTop: 3, width: 16, height: 16, cursor: final ? 'pointer' : 'not-allowed' }}
+                title={!final ? t('Record the invoice first') : !bundleable ? t('Awaiting payment review — confirm or reject the proof first') : t('Select to bundle into a payment order')}
+                style={{ marginTop: 3, width: 16, height: 16, cursor: bundleable ? 'pointer' : 'not-allowed' }}
               />
             )}
             <div style={{ minWidth: 0 }}>

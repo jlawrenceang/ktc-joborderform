@@ -260,6 +260,8 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | MON-06 | **Release charges flow through the spine** ⚠️ SHIPPED v2.0.7 | Bill a release charge → customer pays → cashier confirms | Release charge is payable through the same Payment Order / charge path as JO charges | |
 | MON-07 | **Verify QR reflects true paid state** ⚠️ SHIPPED v2.0.7 | PUB-05 | Headline never says PAID while any billed charge (add-on/release) is unpaid | |
 | MON-08 | **Payment Order = one customer** | Try to bundle charges from two different customers | Rejected | |
+| MON-09 | **Payment Order = one consignee** ⚠️ SHIPPED v2.0.8 | Try to bundle charges from two different consignees of the same customer | Rejected — the desk groups by consignee and the RPC enforces it | |
+| MON-10 | **No bundling a charge with proof submitted** 💰⚠️ SHIPPED v2.0.8 | Customer uploads payment proof on a billed charge (→ submitted), then a cashier opens the Payment Order desk | The submitted charge is **visible** (for confirm/reject) but its bundle checkbox is **disabled**; the RPC also refuses it. It can't be settled twice (once by the customer's proof, once by a walk-in OR) | |
 
 ---
 

@@ -4,6 +4,16 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.8 — 2026-06-30 (Payment Order settlement guards — codex review)
+
+Two `create_payment_order` gaps + two route/page gate mismatches found in a second codex pass (Jarvis-verified):
+
+- **P1 (money-integrity blocker) — no bundling a charge with proof submitted (`0229`).** The desk loaded billed, unbundled charges excluding only `confirmed`/`reversed`, so a `submitted` charge (customer's proof awaiting cashier confirm/reject) stayed selectable — and `create_payment_order` had the same gap. A cashier could bundle that charge into a walk-in Payment Order and settle it by OR, re-opening a double-settlement window in the **reverse** direction of the 0227 fix. Now both the desk checkbox and the RPC allow bundling **only** `payment_status in ('unpaid','rejected')`; a `submitted` charge stays visible for proof review but is no longer bundle-selectable.
+- **P2 — Payment Order enforces one consignee, not just one customer (`0229`).** `create_payment_order` verified all charges shared a customer but inserted the caller-supplied `p_consignee` unchecked. It now rejects any charge whose parent consignee (`coalesce(job_order, release_order)`) differs from the named consignee (`is distinct from`, so the no-consignee group compares correctly).
+- **P3 — route/page permission gates aligned.** `/admin/charge-audit` routed + navved on `review_payments` but the page checked `complete_orders` (so a cashier was routed in then refused) — the page now checks `review_payments`, matching the `charge_audit` RLS. `/app/checker` routed on `view_xray_queue` while `AppChecker` requires `confirm_xray` — the route now gates on `confirm_xray`.
+
+Deployed to prod 2026-06-30: `0229` applied + frontend pushed.
+
 ## v2.0.7 — 2026-06-30 (go-live hardening — codex review fixes)
 
 Closes the items the v2.0.6 entry deferred, from an independent codex review of the post-cutover tree (Jarvis-verified):

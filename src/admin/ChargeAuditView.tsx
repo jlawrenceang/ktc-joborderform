@@ -28,7 +28,9 @@ function humanAction(action: string): string {
 export default function ChargeAuditView() {
   const { t } = useT()
   const { can, broker } = usePermissions()
-  const allowed = !!broker?.is_admin || !!broker?.is_owner || can('complete_orders')
+  // Match the charge_audit RLS (0206): admin OR review_payments — the route + nav gate on
+  // review_payments too, so this page no longer refuses a cashier the router lets in.
+  const allowed = !!broker?.is_admin || !!broker?.is_owner || can('review_payments')
 
   const [rows, setRows] = useState<ChargeAuditRow[]>([])
   const [names, setNames] = useState<Map<string, string>>(new Map())
