@@ -32,6 +32,7 @@ export interface Broker {
   full_name: string | null
   email: string | null
   contact_number: string | null
+  sms_opt_out?: boolean
   valid_id_path: string | null
   /** Stamped on upload; the ID becomes deletable 7 days later (0052). */
   valid_id_uploaded_at?: string | null

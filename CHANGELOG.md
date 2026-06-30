@@ -4,6 +4,16 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.10 — 2026-06-30 (SMS activation safety + Capacitor build readiness)
+
+Prepares SMS and Android packaging without flipping live customer texts on:
+
+- **SMSGate API current shape.** `send-sms` now posts to SMSGate's current `/3rdparty/v1/messages` endpoint with `textMessage` + `phoneNumbers`, replacing the legacy singular `/message` payload.
+- **SMS trigger respects admin routing (`0231`).** The dormant database SMS trigger now maps notification kinds to `notification_settings` and sends only when the event row is `sms` or `both`; default Email rows stay silent even if Vault is armed.
+- **Safer setup script.** `scripts/setup-sms.mjs` deploys the function, but if `SMS_GATEWAY_USER/PASS` are absent it disarms Vault instead of half-arming a nonconfigured SMS path.
+- **Customer opt-out UI.** `/account` now exposes the existing `set_sms_opt_out` RPC as an "SMS updates" toggle, so customers can turn texts off before/after activation.
+- **Docs refreshed.** SMS and Capacitor guides now match runtime: camera permission is already present, SMS needs gateway creds plus admin channel routing before texts go live.
+
 ## v2.0.9 — 2026-06-30 (customer-only self-service guards + Google OAuth flag)
 
 Final role-boundary hardening before the owner smoke:

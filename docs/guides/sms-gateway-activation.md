@@ -113,14 +113,14 @@ This single command does three things in order:
 
 1. **Deploys** the `send-sms` function to the live KTC project.
 2. **Sets** the secrets (your two gateway credentials + the auto-generated `SMS_SECRET`).
-3. **Arms the database** — writes the two private "Vault" rows (`sms_url`, `sms_secret`) that the notification trigger checks before sending. Until these exist, the portal stays silent; once they exist, texts start flowing for the events in Section 1.
+3. **Arms the database** - writes the two private "Vault" rows (`sms_url`, `sms_secret`) that the notification trigger checks before sending. Until these exist, the portal stays silent. Once they exist, texts can flow only for events whose admin notification channel is set to **SMS** or **Email + SMS**.
 
 When it finishes you will see lines ending in:
 
 ```
 ✓ send-sms function deployed
 ✓ secrets set (...)
-✓ vault updated — the notifications SMS trigger (migration 0193) is now armed
+✓ vault updated — the notifications SMS trigger is now armed
   Manual test:  curl -X POST https://mdlnfhyylvapzdubhyic.supabase.co/functions/v1/send-sms -H "x-sms-secret: <a long secret>" ...
 ```
 
@@ -161,7 +161,7 @@ This proves the whole chain works — portal → phone → carrier → a real ha
    - `"gateway not configured ..."` → the phone username/password did not get set. Re-check Section 4 step 2, then re-run `! node scripts/setup-sms.mjs`.
    - A gateway error / nothing → the phone may be offline, asleep, out of signal, or out of SMS allowance. Check the phone (Section 2).
 
-Because you only ever put **your own number** in the test, no customer is ever contacted during testing. Send a couple of tests to your own number until you are happy. **Once your own phone receives the test, the system is live** — the next time a real customer's order hits one of the Section 1 events, they will get a text automatically.
+Because you only ever put **your own number** in the test, no customer is ever contacted during testing. Send a couple of tests to your own number until you are happy. Then go to **Admin → Settings → Operations → Notifications** and set the rows you want to **SMS** or **Email + SMS**. **Once your own phone receives the test and the channel rows are set, the system is live** — the next matching real event will text the customer automatically.
 
 ---
 
@@ -196,7 +196,7 @@ To add or remove an event, a developer writes a **new** migration (forward-only 
 
 **Failure behaviour (reassuring).** If the phone is offline, asleep, or out of allowance, texts simply don't go out — **nothing else breaks**. The portal's notification save does not wait on the text (it is "fire-and-forget"), so orders, payments, and the app all keep working normally even if SMS is down. Customers still get their in-app and email notifications. So a dead SMS phone is a missing-text problem, never an outage.
 
-**The customer opt-out (already built).** Any customer can turn their own texts off; the system has a per-customer `sms_opt_out` switch (migration 0193) and respects it automatically. You do not manage this.
+**The customer opt-out.** Any customer can turn their own texts off from **My Account → SMS updates**; the system has a per-customer `sms_opt_out` switch and respects it automatically. You do not manage this.
 
 **The kill switch — how to turn SMS OFF fast if it misbehaves.** There are two levels:
 
@@ -210,7 +210,7 @@ To add or remove an event, a developer writes a **new** migration (forward-only 
 
    To turn it **back on**, just run `! node scripts/setup-sms.mjs` again — it re-writes those rows.
 
-**A note on a proper feature flag.** The portal already uses an on/off "feature flag" pattern elsewhere — for example customer emails are suspended-by-default behind a switch (`emails_enabled`). SMS does **not** yet have an equivalent single `sms_enabled` flag; today the on/off control is "are the Vault rows present" (the kill switch above) plus the per-customer opt-out. That is enough to launch and to stop it fast. **Recommend to your developer:** when they are back, ask them to add a simple `sms_enabled` setting mirroring the `emails_enabled` pattern, so toggling the whole channel is a one-line flip rather than deleting Vault rows. It is a small, nice-to-have hardening — not a blocker for going live.
+**Admin channel routing.** SMS also respects **Admin → Settings → Operations → Notifications**. Default rows are Email, so arming Vault alone does not start texting customers; set the specific event rows to SMS or Email + SMS when you are ready.
 
 ---
 
@@ -227,11 +227,12 @@ Tick these off in order:
 - [ ] **7.** Copied the printed "Manual test" command.
 - [ ] **8.** Sent a test text to **my own** number and **received it** on a real handset.
 - [ ] **9.** Confirmed the test reply was not "forbidden" or "gateway not configured".
-- [ ] **10.** Know the OFF switch: unplug the phone (instant) or run the disarm command (Section 8).
-- [ ] **11.** Left the event list in Section 7 unchanged (developer-only).
+- [ ] **10.** Set the desired rows in **Admin → Settings → Operations → Notifications** to **SMS** or **Email + SMS**.
+- [ ] **11.** Know the OFF switch: unplug the phone (instant), set notification rows back to Email/Off, or run the disarm command (Section 8).
+- [ ] **12.** Left the event list in Section 7 unchanged (developer-only).
 
-When boxes 1–9 are ticked, SMS notifications are **live**. The next real order/payment/release event in the list will text the customer automatically. Nothing further is required from you.
+When boxes 1–10 are ticked, SMS notifications are **live**. The next real order/payment/release event in the list will text the customer automatically. Nothing further is required from you.
 
 ---
 
-*Reference (for the returning developer): function `supabase/functions/send-sms/index.ts`; migration `supabase/migrations/0193_sms_notifications.sql` (trigger `notifications_sms` → `sms_on_notification()` on `public.notifications` AFTER INSERT); setup `scripts/setup-sms.mjs`; recipe skill `~/.claude/skills/sms-gateway/SKILL.md`. Latest migration at time of writing: 0227. Prod project ref `mdlnfhyylvapzdubhyic`; runtime authority `src/lib/supabase.ts`; the `mcp__supabase__*` tools point at jta-sys and must not be used against KTC.*
+*Reference (for the returning developer): function `supabase/functions/send-sms/index.ts`; migrations `supabase/migrations/0193_sms_notifications.sql` + `supabase/migrations/0231_sms_activation_safety.sql` (trigger `notifications_sms` → `sms_on_notification()` on `public.notifications` AFTER INSERT); setup `scripts/setup-sms.mjs`; recipe skill `~/.claude/skills/sms-gateway/SKILL.md`. Latest migration at time of writing: 0231. Prod project ref `mdlnfhyylvapzdubhyic`; runtime authority `src/lib/supabase.ts`; the `mcp__supabase__*` tools point at jta-sys and must not be used against KTC.*

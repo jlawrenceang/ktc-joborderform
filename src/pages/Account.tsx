@@ -41,6 +41,9 @@ export default function Account() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileMsg, setProfileMsg] = useState<Msg>(null)
   const [showReverify, setShowReverify] = useState(false)
+  const [smsOptOut, setSmsOptOut] = useState(false)
+  const [savingSms, setSavingSms] = useState(false)
+  const [smsMsg, setSmsMsg] = useState<Msg>(null)
 
   const [newEmail, setNewEmail] = useState('')
   const [savingEmail, setSavingEmail] = useState(false)
@@ -60,6 +63,7 @@ export default function Account() {
     setBaseContact(broker.contact_number ?? '')
     setFullName(broker.full_name ?? '')
     setContact(broker.contact_number ?? '')
+    setSmsOptOut(!!broker.sms_opt_out)
     // Keep customers.email in sync with the (possibly just-confirmed) auth email.
     // Needs .then() to actually dispatch — a bare `void supabase.from(...).update()`
     // is a lazy builder and never runs.
@@ -102,6 +106,22 @@ export default function Account() {
     setBaseName(fullName.trim())
     setBaseContact(contact.trim())
     setProfileMsg({ tone: 'success', text: t('✓ Your details were saved.') })
+  }
+
+  async function onChangeSms(nextOptOut: boolean) {
+    if (savingSms) return
+    setSavingSms(true)
+    setSmsMsg(null)
+    const prev = smsOptOut
+    setSmsOptOut(nextOptOut)
+    const { error } = await supabase.rpc('set_sms_opt_out', { p_opt_out: nextOptOut })
+    setSavingSms(false)
+    if (error) {
+      setSmsOptOut(prev)
+      setSmsMsg({ tone: 'error', text: error.message })
+      return
+    }
+    setSmsMsg({ tone: 'success', text: nextOptOut ? t('SMS updates are off.') : t('SMS updates are on.') })
   }
 
   function onSaveProfile(e: FormEvent) {
@@ -197,6 +217,26 @@ export default function Account() {
             {savingProfile ? t('Saving…') : t('Save changes')}
           </button>
         </form>
+
+        {/* SMS preference */}
+        <div className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>{t('SMS updates')}</h2>
+            <p className="ktc-label" style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5 }}>
+              {t('Receive text messages for urgent order, payment, and release updates. In-app notifications still work either way.')}
+            </p>
+          </div>
+          {smsMsg && <Notice tone={smsMsg.tone}>{smsMsg.text}</Notice>}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, fontWeight: 600, color: 'hsl(var(--ink))' }}>
+            <input
+              type="checkbox"
+              checked={!smsOptOut}
+              disabled={savingSms}
+              onChange={(e) => void onChangeSms(!e.target.checked)}
+            />
+            {savingSms ? t('Saving SMS preference…') : t('Receive SMS updates')}
+          </label>
+        </div>
 
         {/* Email */}
         <form onSubmit={onChangeEmail} className="ktc-glass" style={{ padding: 18, display: 'grid', gap: 14 }}>

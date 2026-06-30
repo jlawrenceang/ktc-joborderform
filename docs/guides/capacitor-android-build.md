@@ -193,12 +193,12 @@ That is fine to ship. If you want the KTC logo:
   folders under `android/app/src/main/res/`.
 - A splash screen is optional and not required for the checkers; skip it for now.
 
-**4.3 Camera permission — ACTION REQUIRED (one line to add)**
+**4.3 Camera permission — already present**
 
 The ML Kit scanner asks for the camera at runtime, but Android also requires the
-permission to be **declared** in the app's manifest. **It is not currently
-declared** — today the manifest only lists Internet. Without this line the scanner
-will be denied the camera on the device.
+permission to be **declared** in the app's manifest. This repo already declares
+both the camera permission and an optional camera feature, so there is no manual
+edit left to do here.
 
 Open this file:
 
@@ -206,22 +206,18 @@ Open this file:
 android/app/src/main/AndroidManifest.xml
 ```
 
-Find the line near the bottom that reads:
+Near the bottom you should see:
 
 ```
     <uses-permission android:name="android.permission.INTERNET" />
 ```
 
-**Add this line directly below it:**
-
 ```
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 ```
 
-Save the file. That is the only manual edit needed. (Optional, not required: you
-may also add `<uses-feature android:name="android.hardware.camera" android:required="false" />`
-so the app stays installable on the rare device with no camera — leave it out if
-unsure.)
+If those lines are present, keep going.
 
 > Why this matters: the scanner plugin's own manifest is empty, so the camera
 > permission is **not** merged in automatically. You must add it by hand, once. It
@@ -446,7 +442,7 @@ see `~/.claude/references/native-app-delivery.md`.)
 - [ ] Checker device: Developer mode + USB debugging on; `adb devices` lists it — 2.4
 - [ ] `npm install` → `npm run build` → `npx cap sync android` ran cleanly — 3
 - [ ] `npx cap open android`; Gradle sync finished with no errors — 3
-- [ ] **CAMERA permission line added** to `android/app/src/main/AndroidManifest.xml` — 4.3
+- [ ] **CAMERA permission confirmed** in `android/app/src/main/AndroidManifest.xml` — 4.3
 - [ ] DEBUG build installed; native scanner opens and reads a real slip QR — 5
 - [ ] Keystore created with `keytool` — 6.1
 - [ ] **Keystore file + 3 passwords/alias backed up in two safe places** — 6.1

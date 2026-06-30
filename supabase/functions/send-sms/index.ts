@@ -40,14 +40,19 @@ Deno.serve(async (req) => {
   }
   try {
     const { to, message } = await req.json()
-    const phoneNumbers = (Array.isArray(to) ? to : [to]).filter(Boolean)
+    const phoneNumbers = (Array.isArray(to) ? to : [to]).filter(Boolean).map(String)
     if (!phoneNumbers.length || !message) {
       return json({ ok: false, error: 'to + message required' }, 400)
     }
-    const r = await fetch(`${GATEWAY}/3rdparty/v1/message`, {
+    const r = await fetch(`${GATEWAY}/3rdparty/v1/messages`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: 'Basic ' + btoa(`${USER}:${PASS}`) },
-      body: JSON.stringify({ message, phoneNumbers }),
+      body: JSON.stringify({
+        textMessage: { text: String(message).slice(0, 320) },
+        phoneNumbers,
+        ttl: 3600,
+        priority: 1,
+      }),
     })
     return new Response(await r.text(), { status: r.status, headers: { 'Content-Type': 'application/json' } })
   } catch (e) {

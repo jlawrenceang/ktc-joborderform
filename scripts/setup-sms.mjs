@@ -2,7 +2,7 @@
 //   1. deploys supabase/functions/send-sms via the Management API
 //   2. sets the function secrets (gateway creds + the shared trigger secret)
 //   3. stores the function URL + secret in Vault so the notifications trigger
-//      (migration 0193, sms_on_notification) starts firing texts
+//      (sms_on_notification) can start firing texts
 //
 // Reads from the gitignored .env.local:
 //   SUPABASE_ACCESS_TOKEN=sbp_...                 (required — a PERSONAL token)
@@ -14,9 +14,8 @@
 //   SMS_SECRET=<any random string>                (optional; generated if absent)
 //
 // Without SMS_GATEWAY_USER/PASS the function still deploys and answers "gateway
-// not configured"; and the trigger stays a silent no-op until this script has
-// written the Vault rows. So you can run it once now (arms the Vault, dormant)
-// and rerun after adding the phone's credentials to .env.local to go live.
+// not configured", but this script disarms Vault so the DB trigger remains a
+// silent no-op. Rerun after adding the phone's credentials to go live.
 //
 // One-time gateway setup (manual): install "SMS Gateway for Android" (sms-gate.app)
 // on a dedicated phone + SIM kept charged + online, pick Cloud mode (api.sms-gate.app),
@@ -79,10 +78,17 @@ if (!get('SMS_GATEWAY_USER') || !get('SMS_GATEWAY_PASS')) {
   console.log('    SMS_GATEWAY_USER / SMS_GATEWAY_PASS are in .env.local and this script reruns.')
 }
 
-// 3) Vault: arm the notifications trigger (migration 0193) with where + how to call.
+// 3) Vault: arm the notifications trigger with where + how to call.
 const fnUrl = `https://${ref}.supabase.co/functions/v1/send-sms`
 const client = new pg.Client({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } })
 await client.connect()
+if (!get('SMS_GATEWAY_USER') || !get('SMS_GATEWAY_PASS')) {
+  await client.query("delete from vault.secrets where name in ('sms_url', 'sms_secret')")
+  await client.end()
+  console.log('✓ vault disarmed - SMS stays dormant until gateway credentials are present')
+  console.log(`  Manual config test after creds: curl -X POST ${fnUrl} -H "x-sms-secret: ${smsSecret}" -H "Content-Type: application/json" -d '{"to":["+639XXXXXXXXX"],"message":"KTC test"}'`)
+  process.exit(0)
+}
 for (const [name, value] of [['sms_url', fnUrl], ['sms_secret', smsSecret]]) {
   const { rows } = await client.query('select id from vault.secrets where name = $1', [name])
   if (rows.length) await client.query('select vault.update_secret($1, $2)', [rows[0].id, value])
