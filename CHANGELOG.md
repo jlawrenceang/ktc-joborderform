@@ -16,7 +16,7 @@ Closes the items the v2.0.6 entry deferred, from an independent codex review of 
 - **Charge type contract.** Centralized `ChargeType` as `service | rps | addon | release`, made `job_order_id` nullable, added `release_order_id`; removed the stale `'xray'` literal in `JobOrderCharges`.
 - **Native checker camera.** Added the `CAMERA` permission to `AndroidManifest.xml` — the Capacitor ML-Kit QR scanner was otherwise denied the camera.
 
-`0228` is staged (forward-only) and applied at go-live; the frontend degrades gracefully if it lands first.
+Deployed to prod 2026-06-30: frontend pushed (`850b46f`) and migration `0228` applied via `_apply_one.mjs` + verified live (all three filing functions cap at 200; `submit_charge_payment` is release-aware).
 
 ## v2.0.6 — 2026-06-30 (full break-test remediation — read-path scaling + JO-wedge gates)
 

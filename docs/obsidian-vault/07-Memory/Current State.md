@@ -9,14 +9,14 @@ last_updated: 2026-06-30
 
 > **For sequencing of what's next, read [[Roadmap]].** This page is a runtime snapshot — *what is live today*.
 
-## 2026-06-30 — ADR-0037 charges cutover SHIPPED + go-live hardening (v2.0.6, migration 0227→0228)
+## 2026-06-30 — ADR-0037 charges cutover SHIPPED + go-live hardening DEPLOYED (v2.0.7, migration 0228)
 
-**The cutover the 06-29 entry below deferred is now LIVE. `APP_VERSION` = `v2.0.6`; migrations through `0227` applied to prod.** The `charges`/`payment_orders` spine is the live operational money path — the old base/RPS/supplement flow is retired. Fully break-tested (gates / RLS / RBAC / writes hold). See memory `cutover-shipped-go-live-status` + [[target-architecture-jo-payment-invoice]].
+**The cutover the 06-29 entry below deferred is now LIVE, and the codex-review hardening is deployed on top. `APP_VERSION` = `v2.0.7`; migrations through `0228` applied to prod (`0228` applied 2026-06-30 via `_apply_one.mjs`, verified live).** The `charges`/`payment_orders` spine is the live operational money path — the old base/RPS/supplement flow is retired. Fully break-tested (gates / RLS / RBAC / writes hold). See memory `cutover-shipped-go-live-status` + [[target-architecture-jo-payment-invoice]].
 
 - **Cutover (≤`0227`)** — JO is the atomic move; **1:1:1 ERP/BIR invoicing** (draft→final); **Payment-Order N:1**; **payment-before-movement** bidirectional gate; supplements retired; completion = one rule reading `charges` (`0216`); release charges dual-written into the spine (`0214`/`0215`).
-- **Go-live hardening (2026-06-30, codex review)** — `0228` (staged): **release charges payable** through `submit_charge_payment` (parent-aware, job_orders OR release_orders) + **container cap 100→200** across all three filing RPCs (and the previously-uncapped `update_job_order`). Frontend: **Verify-QR "PAID" headline now reads every billed charge** (add-ons can't hide under a paid base); **per-route `/admin/*` + `/app/*` guards** mirroring the nav GRID (a role that can't see a tile can't reach the URL); charge **type contract** centralized (`service|rps|addon|release`, nullable `job_order_id`, `release_order_id`); Android **CAMERA** permission added for the native checker scanner.
+- **Go-live hardening DEPLOYED (v2.0.7, 2026-06-30, codex review; commit `850b46f` pushed + `0228` applied)** — **release charges payable** through `submit_charge_payment` (parent-aware, job_orders OR release_orders) + **container cap 100→200** across all three filing RPCs (and the previously-uncapped `update_job_order`). Frontend: **Verify-QR "PAID" headline now reads every billed charge** (add-ons can't hide under a paid base); **per-route `/admin/*` + `/app/*` guards** mirroring the nav GRID (a role that can't see a tile can't reach the URL); charge **type contract** centralized (`service|rps|addon|release`, nullable `job_order_id`, `release_order_id`); Android **CAMERA** permission added for the native checker scanner. Jarvis-verified SAFE TO SHIP.
 - **Pay-before-final-invoice is intentional** — the final ERP/BIR invoice is released only after payment, so it acts as the gate pass; customers may submit proof before the final invoice (owner-confirmed 2026-06-30). NOT a gap.
-- **Next** — apply `0228`; run `docs/go-live-smoke-test.md` (all roles + all lanes); operational onboarding (DEA rate, staff/broker accounts); owner side-by-side smoke walk; launch call.
+- **Next** — run `docs/go-live-smoke-test.md` (all roles + all lanes); operational onboarding (DEA rate, staff/broker accounts); owner side-by-side smoke walk; launch call.
 
 ## 2026-06-29 — X-ray Phase A anti-fraud billing BUILT (backend + frontend) — PRE-CUTOVER, old flow still live
 

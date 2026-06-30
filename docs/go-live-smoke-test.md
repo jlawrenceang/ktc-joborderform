@@ -2,7 +2,7 @@
 
 **All roles · all lanes · positive + negative.** This is the owner's authoritative walk-through before go-live. Work it top to bottom. Every row has an **Expected** result and a blank **Result** box — write PASS / FAIL / note. A lane is "green" only when every row passes.
 
-- **Version under test:** v2.0.6 · latest migration 0227 (update if newer when you run).
+- **Version under test:** v2.0.7 · latest migration 0228 (both deployed to prod 2026-06-30; update if newer when you run).
 - **Site:** the live production site (Supabase prod ref `mdlnfhyylvapzdubhyic`). The connected MCP Supabase tools point at a *different* project — never use them against this.
 - **How to record:** print this file or copy it; fill the Result column. Anything that is not exactly the Expected result is a FAIL — log what you actually saw.
 
@@ -12,7 +12,7 @@
 
 - 🟢 **Positive test** — the role/lane should be able to do this.
 - 🔴 **Negative test** — the role should be *blocked*; a "PASS" means it was correctly refused.
-- ⚠️ **FIX-IN-PROGRESS** — a known gap being fixed this session. The **Expected** shown is the *post-fix* behavior. Until the fix deploys you may still see the old behavior; note which you saw.
+- ⚠️ **SHIPPED v2.0.7** — a gap fixed **and deployed** this session (migration 0228 applied; frontend live). The **Expected** shown is the live behavior — test it as a normal row; if you instead see the old behavior, the Vercel build may still be propagating (give it a few minutes).
 - 💰 **Money/contract invariant** — billing-integrity check; treat a FAIL here as a go-live blocker.
 
 ---
@@ -26,7 +26,7 @@ You cannot test "all roles" without one account per role. Staff are **invite-onl
 | # | Account | How to create | Email to use |
 |---|---|---|---|
 | 0.1.1 | **Owner** | already exists (failsafe) | `jlawrenceang@gmail.com` |
-| 0.1.2 | **Admin** | Owner → `/admin/account-staff` (or Settings → invite staff) → invite, role = admin | `jlawrenceang+admin@gmail.com` |
+| 0.1.2 | **Admin** | Owner → `/admin/account` (staff accounts → invite) → invite, role = admin | `jlawrenceang+admin@gmail.com` |
 | 0.1.3 | **Operations** | same invite flow, role = operations | `jlawrenceang+ops@gmail.com` |
 | 0.1.4 | **Cashier** | same, role = cashier | `jlawrenceang+cash@gmail.com` |
 | 0.1.5 | **Checker** | same, role = checker | `jlawrenceang+check@gmail.com` |
@@ -43,7 +43,7 @@ You cannot test "all roles" without one account per role. Staff are **invite-onl
 
 | ID | Test | Expected | Result |
 |---|---|---|---|
-| PF-01 | 🟢 Invite each of the 5 staff roles | Invite email arrives for each; set-password link works; first login lands on the role's home (admin→`/admin`, ops→`/admin/job-orders`, cashier→`/app/payment-orders`, checker→`/app/checker`, csr→`/app/support`) | |
+| PF-01 | 🟢 Invite each of the 5 staff roles | Invite email arrives for each; set-password link works; first login lands on the role's home (admin→`/admin`, ops→`/app/operations`, cashier→`/app/payment-orders`, checker→`/app/checker`, csr→`/app/support`) | |
 | PF-02 | 🟢 Customer A signup → approve | After Owner approval, Customer A can reach `/job-order` and file (no "pending" banner) | |
 | PF-03 | 🔴 Customer B left pending | Customer B sees the pending/awaiting-approval banner and **cannot** file a job order | |
 
@@ -67,7 +67,7 @@ Open these in a **private/incognito window** with no session.
 | PUB-02 | 🟢 Open `/register` | Signup form renders; consent/agreement shown | |
 | PUB-03 | 🟢 Open `/agreement`, `/terms`, `/privacy`, `/irr` | Each renders the legal copy | |
 | PUB-04 | 🟢 Scan/open a **Verify QR** `/verify/<job-order-id>` for a real order | Shows order status, containers, and PAID / NOT-PAID + a charges table | |
-| PUB-05 | 💰⚠️ FIX-IN-PROGRESS — Verify a job order that is paid on the base charge **but has an unpaid add-on** | **Expected (post-fix):** the headline does **NOT** say PAID while any billed charge is unpaid — it reflects *all* charges. (Old behavior: headline showed PAID from base/RPS only.) | |
+| PUB-05 | 💰⚠️ SHIPPED v2.0.7 — Verify a job order that is paid on the base charge **but has an unpaid add-on** | The headline does **NOT** say PAID while any billed charge is unpaid — it reflects *all* charges (add-ons included). | |
 | PUB-06 | 🔴 Try a protected URL with no session, e.g. `/admin`, `/job-orders`, `/account` | Redirected to login / `/` — never renders the protected screen | |
 | PUB-07 | 🔴 Try `/verify/<random-non-existent-id>` | Graceful "not found" — no crash, no data leak | |
 
@@ -83,7 +83,7 @@ Login as **Customer A** (`+custa`).
 |---|---|---|---|
 | CUST-01 | 🟢 `/job-order` — file with valid consignee, entry number, vessel visit, 1–3 containers | Order created with status **submitted**; appears in `/job-orders`; a base charge is seeded | |
 | CUST-02 | 🔴 File with a duplicate entry number / missing required field | Rejected with a clear message; no order created | |
-| CUST-03 | 🟢⚠️ FIX-IN-PROGRESS — paste/add **150 containers** in one order | **Expected (post-fix):** accepts up to the raised cap (200); a 150-van C-entry files successfully. (Old behavior: UI lets you build 150–200 but backend rejected >100 on submit.) | |
+| CUST-03 | 🟢⚠️ SHIPPED v2.0.7 — paste/add **150 containers** in one order | Accepts up to the raised cap (200); a 150-van C-entry files successfully (backend now caps at 200, not 100). | |
 | CUST-04 | 🔴 Try to exceed the max container cap (e.g. 250 rows) | Blocked with a clear "at most N containers" message before/at submit — not a silent truncation | |
 | CUST-05 | 🟢 Print the slip `/job-order/<id>/print` | Slip renders with the Verify QR; QR resolves to `/verify/<id>` | |
 | CUST-06 | 🟢 Cancel a submitted order (if allowed pre-processing) | Status → cancelled; reflected in `/job-orders` | |
@@ -155,7 +155,7 @@ Login as **Admin** (`+admin`).
 
 # PART 5 — Operations (orders + X-ray + vessels; NO money)
 
-Login as **Operations** (`+ops`). Home: `/admin/job-orders`.
+Login as **Operations** (`+ops`). Home (post-login landing): `/app/operations` — the full back-office order list is at `/admin/job-orders`.
 
 | ID | Test | Expected | Result |
 |---|---|---|---|
@@ -177,7 +177,7 @@ Login as **Cashier** (`+cash`). Home: `/app/payment-orders`.
 | CASH-01 | 🟢 `/app/payment-orders` — review a submitted payment | Proof visible; can confirm/reject (gate `review_payments`) | |
 | CASH-02 | 💰 Confirm a charge payment | Only confirms against a **final ERP+BIR invoice**; charge → confirmed; order auto-completes if it was the last gate | |
 | CASH-03 | 💰 Reject a payment with a note | Charge → rejected; customer can re-submit (CUST-10 again) | |
-| CASH-04 | 🟢 Create a **Payment Order** bundling several billed charges for one customer | `create_payment_order` — only billed, unbundled, same-customer charges; ⚠️ FIX-IN-PROGRESS: **release** charges now appear and can be bundled too (post-fix) | |
+| CASH-04 | 🟢 Create a **Payment Order** bundling several billed charges for one customer | `create_payment_order` — only billed, unbundled, same-customer charges; ⚠️ SHIPPED v2.0.7: **release** charges now appear and can be bundled too | |
 | CASH-05 | 💰 Confirm a Payment Order with one collection OR number | `confirm_payment_order` records the OR, confirms each bundled charge | |
 | CASH-06 | 🟢 Record a final invoice (cashier has `record_invoice`) | invoice_state → final | |
 | CASH-07 | 🔴 Try to accept / hold / reject an **order** | Refused — cashier lost `accept_orders` / `hold_reject_orders` (separation of duties) | |
@@ -226,7 +226,7 @@ Login as **CSR** (`+csr`). Home: `/app/support`.
 
 # PART 10 — Cross-cutting RBAC negative sweep (highest-value security test)
 
-The `/admin/*` routes historically admitted **any** staff at the route level, relying on each screen + the backend to refuse. ⚠️ FIX-IN-PROGRESS adds a **per-route permission guard**. Run this matrix: for each restricted role, type each URL directly in the address bar and confirm the **screen body** refuses (not just a hidden nav tile).
+The `/admin/*` routes historically admitted **any** staff at the route level, relying on each screen + the backend to refuse. ⚠️ SHIPPED v2.0.7 adds a **per-route permission guard** (now live). Run this matrix: for each restricted role, type each URL directly in the address bar and confirm the **screen body** refuses (not just a hidden nav tile).
 
 For **each** of Operations, Cashier, Checker, CSR, and Customer A, visit each URL:
 
@@ -257,8 +257,8 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 | MON-03 | **Maker-checker on add-ons** | Same person creates + approves an add-on | Blocked (ADM-07) | |
 | MON-04 | **Reversal, never delete** | Reverse a confirmed charge | Credit-note + audit row, original preserved | |
 | MON-05 | **Auto-complete on last gate** | Confirm the final outstanding charge on an order whose X-ray is done | Order auto-completes immediately | |
-| MON-06 | **Release charges flow through the spine** ⚠️ FIX-IN-PROGRESS | Bill a release charge → customer pays → cashier confirms | Release charge is payable through the same Payment Order / charge path as JO charges (post-fix) | |
-| MON-07 | **Verify QR reflects true paid state** ⚠️ FIX-IN-PROGRESS | PUB-05 | Headline never says PAID while any billed charge (add-on/release) is unpaid | |
+| MON-06 | **Release charges flow through the spine** ⚠️ SHIPPED v2.0.7 | Bill a release charge → customer pays → cashier confirms | Release charge is payable through the same Payment Order / charge path as JO charges | |
+| MON-07 | **Verify QR reflects true paid state** ⚠️ SHIPPED v2.0.7 | PUB-05 | Headline never says PAID while any billed charge (add-on/release) is unpaid | |
 | MON-08 | **Payment Order = one customer** | Try to bundle charges from two different customers | Rejected | |
 
 ---
@@ -322,12 +322,14 @@ These are the contract invariants. A FAIL here blocks go-live regardless of UI p
 
 ---
 
-## Known fixes landing this session (so a ⚠️ row isn't a surprise)
+## Fixes shipped this session — v2.0.7 + migration 0228 (deployed to prod 2026-06-30)
 
-1. **Container cap** — backend raised to match the 150–200 editor (was hard-capped at 100). → CUST-03/04.
+These were the ⚠️ rows. All are **live** (frontend pushed `850b46f`; migration `0228` applied + verified on prod):
+
+1. **Container cap** — backend raised 100→200 to match the 150–200 editor (`0228`). → CUST-03/04.
 2. **Verify-QR PAID headline** — now reflects *all* billed charges incl. add-ons/release, not just base/RPS. → PUB-05, MON-07.
-3. **Release charges parent-aware** — Payment Order desk + `submit_charge_payment` authorize through both job_orders and release_orders. → CASH-04, MON-06.
+3. **Release charges parent-aware** — Payment Order desk + `submit_charge_payment` authorize through both job_orders and release_orders (`0228`). → CASH-04, MON-06.
 4. **Per-route `/admin/*` guards** — restricted roles bounced from direct URLs, not just hidden nav. → Part 10.
 5. **Stale type defs** — charge contract centralized (`service | rps | addon | release`, nullable `job_order_id`, `release_order_id`); stale `'xray'` literal removed.
 
-If the site you're testing is **before** these deploy, the parenthetical "old behavior" notes tell you what you'll see instead — not a FAIL, just not-yet-fixed.
+If a ⚠️ row still shows the *old* behavior, the Vercel build may not have propagated yet (give it a few minutes) — it's not a FAIL.
