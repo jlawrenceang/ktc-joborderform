@@ -4,14 +4,18 @@ import { supabase } from './supabase'
 // One owning file for the `charges` / `charge_audit` shapes so the admin charge
 // approval, reconciliation, and audit screens don't redeclare them.
 
-export type ChargeType = 'service' | 'rps' | 'addon'
+export type ChargeType = 'service' | 'rps' | 'addon' | 'release'
 export type BillStatus = 'proposed' | 'billed' | 'cancelled'
 export type InvoiceState = 'draft' | 'final'
 export type ChargePaymentStatus = 'unpaid' | 'submitted' | 'confirmed' | 'rejected' | 'reversed'
 
 export interface Charge {
   id: string
-  job_order_id: string
+  // A charge hangs off EITHER a job order OR a release order (XOR — migration
+  // 0214 `charges_one_parent`), so job_order_id is nullable and release charges
+  // carry release_order_id instead.
+  job_order_id: string | null
+  release_order_id?: string | null
   charge_type: ChargeType
   label: string
   qty: number

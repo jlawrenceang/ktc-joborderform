@@ -46,7 +46,7 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'All' },
 ]
 
-const TYPE_LABEL: Record<ChargeType, string> = { service: 'X-ray service', rps: 'RPS move', addon: 'Add-on' }
+const TYPE_LABEL: Record<ChargeType, string> = { service: 'X-ray service', rps: 'RPS move', addon: 'Add-on', release: 'Release' }
 
 export default function ChargeApproval() {
   const { t } = useT()

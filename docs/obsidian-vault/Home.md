@@ -13,14 +13,14 @@ KTC Container Terminal Corp. — the **KTC Online Portal** for port / container-
 
 | Metric | Value |
 |---|---|
-| Version | `v1.7.5` live on `portal.ktcterminal.com` |
-| Migrations | **~190 files** (`0001` … `0201`), all applied + tracked (split portal + fuel lanes) |
+| Version | `v2.0.6` live on `portal.ktcterminal.com` |
+| Migrations | **~228 files** (`0001` … `0228`), all applied + tracked (split portal + fuel lanes); `0228` (release-payable + container-cap 200) staged for go-live |
 | Public face | signed-out `/` = a public **Landing** (terminal-photo hero); **Lara** non-LLM customer assistant; **"Continue with Google"** sign-in |
 | Access hardening | pending customers **verify-only** at the RLS layer (`0163`); consent **server-enforced** (`0162`); disposable-email block (`0164`) |
 | Staff roles | admin · operations · cashier · checker · csr (+ owner / root owner) — gated by `has_permission`. `purchaser` (fuel desk) exists in the DB but is **frontend-deferred** |
 | Completion | **two-gate** — all services + base payment + RPS (if needed) + every supplement, all confirmed; derived "✓ Cleared for release" badge |
-| Active focus | **Phase-5 verification + v1.7.0→v1.7.5 shipped** (2026-06-29): audit Phases 2–4 merged, UX/UI batch + 8-config e2e recalibration, **security-audit fixes `0196`–`0201`** (incl. owner→staff-minting prevention), **Hybrid admin layout**, and a **whole-app MfaGate**. **Next major work = [ADR-0037](../adr/0037-jo-as-atomic-move-payment-orders-1-1-1-invoicing.md)** *(Accepted)* — the move-spine architecture (every move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement). Pre-launch clean reshape; **Phase A first**. Fuel monitoring still parked after Phase 0 |
-| Go-live gate | `docs/go-live-todo.md` — **MFA now enrolled + owner password rotated** (2026-06-29); still: Google-OAuth config · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) still blank · ADR-0037 **Phase A** (the BIR-invoice compliance build) · full sandbox break-test · ST05 manual Lanes A–K · launch call |
+| Active focus | **ADR-0037 charges cutover SHIPPED — `v2.0.6`, migration `0227`** (the move-spine: every move = a JO; 1:1:1 ERP/BIR invoicing; Payment-Order N:1; payment-before-movement; supplements retired). Fully break-tested (gates/RLS/RBAC/writes hold). **Now: go-live prep** — codex-review fixes (`0228` release-payable + container-cap 200, Verify-QR all-charge PAID, per-route admin guards), the all-roles/all-lanes manual smoke test (`docs/go-live-smoke-test.md`), and operational onboarding (DEA rate, staff/broker accounts). Fuel still parked after Phase 0. See [[target-architecture-jo-payment-invoice]] · memory `cutover-shipped-go-live-status` |
+| Go-live gate | `docs/go-live-smoke-test.md` (all roles + all lanes) + `docs/go-live-todo.md` — done: ADR-0037 cutover, MFA enrolled, owner password rotated. Still: apply `0228` · Google-OAuth config · Agreement v4 counsel pass + NPC/DPO · payment details (bank/GCash/QR) · owner side-by-side smoke walk · launch call |
 | Prod data | test data purged 2026-06-23 — first real order = `JO-000001` (0 orders / 0 customers / 0 releases) |
 
 ## Where the rules and memory live

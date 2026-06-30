@@ -19,7 +19,7 @@ import { PaperclipIcon } from './icons'
 
 type Charge = {
   id: string
-  charge_type: 'xray' | 'rps' | 'addon'
+  charge_type: 'service' | 'rps' | 'addon' | 'release'
   label: string
   qty: number
   unit_rate: number | null

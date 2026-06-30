@@ -20,6 +20,9 @@ export default function Verify() {
   const { id } = useParams<{ id: string }>()
   const [phase, setPhase] = useState<'loading' | 'found' | 'notfound'>('loading')
   const [v, setV] = useState<V | null>(null)
+  // Charge-level paid state, reported up by VerifyCharges (every billed charge,
+  // add-ons included). null = not yet known → stay conservative (never flash PAID).
+  const [chargeState, setChargeState] = useState<{ allPaid: boolean; count: number } | null>(null)
 
   useEffect(() => {
     if (!id) { setPhase('notfound'); return }
@@ -30,8 +33,12 @@ export default function Verify() {
     })
   }, [id])
 
-  // Fully paid = base confirmed AND (no RPS due OR RPS confirmed).
-  const paid = v?.payment_status === 'confirmed' && (v?.rps_status !== 'needed' || v?.rps_payment_status === 'confirmed')
+  // Fully paid = base confirmed AND (no RPS due OR RPS confirmed) AND every billed
+  // charge (incl. add-ons) confirmed. A paid base with an unpaid add-on must NOT
+  // read PAID — that was the anti-fraud gap. While charges load (chargeState null)
+  // stay conservative so an edited slip can't catch a momentary false PAID.
+  const basePaid = v?.payment_status === 'confirmed' && (v?.rps_status !== 'needed' || v?.rps_payment_status === 'confirmed')
+  const paid = basePaid && (chargeState ? (chargeState.count === 0 || chargeState.allPaid) : false)
   const headTone = phase === 'notfound' ? { bg: '#fdecea', brd: '#f3b6ad', ink: '#a31708' }
     : paid ? { bg: '#e9f7ee', brd: '#b3e3c4', ink: '#13682f' }
     : { bg: '#fff6e6', brd: '#f4c89a', ink: '#a35a16' }
@@ -80,7 +87,7 @@ export default function Verify() {
               </table>
 
               {/* Authoritative charges — a forged/edited paper invoice won't match these amounts. */}
-              <VerifyCharges jobOrderId={id!} />
+              <VerifyCharges jobOrderId={id!} onState={setChargeState} />
 
               <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 10, background: '#f3f6fb', border: '1px solid #dde6f1', fontSize: 11.5, color: '#46566c', lineHeight: 1.5 }}>
                 <b>Check this against the paper.</b> Match the JO number and container numbers above to the physical slip and the actual containers. Genuine KTC verification appears only at <b>portal.ktcterminal.com</b>.

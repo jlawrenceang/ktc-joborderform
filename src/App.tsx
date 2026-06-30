@@ -28,6 +28,7 @@ import JobOrder from './pages/JobOrder'
 import VerifyId from './pages/VerifyId'
 import MyJobOrders from './pages/MyJobOrders'
 import AdminRoute from './admin/AdminRoute'
+import { type Permission } from './lib/usePermissions'
 
 // Code-split: customers never download the admin portal (and vice versa for
 // the rarely-visited print view) — keeps the first paint lean.
@@ -69,10 +70,10 @@ function Protected({ children }: { children: ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
 }
 
-function Admin({ children }: { children: ReactNode }) {
+function Admin({ children, perm }: { children: ReactNode; perm?: Permission | Permission[] }) {
   return (
     <ProtectedRoute>
-      <AdminRoute>{children}</AdminRoute>
+      <AdminRoute perm={perm}>{children}</AdminRoute>
     </ProtectedRoute>
   )
 }
@@ -264,32 +265,34 @@ export default function App() {
 
           {/* Installable staff app (focused, role-aware) */}
           <Route path="/app" element={<Protected><AppHome /></Protected>} />
-          <Route path="/app/checker" element={<Admin><AppChecker /></Admin>} />
-          <Route path="/app/payment-orders" element={<Admin><PaymentOrderDesk app /></Admin>} />
-          <Route path="/app/support" element={<Admin><SupportInbox app /></Admin>} />
-          <Route path="/app/operations" element={<Admin><AllJobOrders app /></Admin>} />
+          <Route path="/app/checker" element={<Admin perm="view_xray_queue"><AppChecker /></Admin>} />
+          <Route path="/app/payment-orders" element={<Admin perm="review_payments"><PaymentOrderDesk app /></Admin>} />
+          <Route path="/app/support" element={<Admin perm="manage_support"><SupportInbox app /></Admin>} />
+          <Route path="/app/operations" element={<Admin perm="view_job_orders"><AllJobOrders app /></Admin>} />
 
           {/* Admin portal */}
-          <Route path="/admin" element={<Admin><Dashboard /></Admin>} />
+          {/* perm mirrors the AdminBottomNav GRID 1:1 (see AdminRoute). Routes left
+              ungated are universal-to-staff: their own account, notifications, manual. */}
+          <Route path="/admin" element={<Admin perm="manage_approvals"><Dashboard /></Admin>} />
           <Route path="/admin/account" element={<Admin><AccountStaff /></Admin>} />
-          <Route path="/admin/approvals" element={<Admin><Approvals /></Admin>} />
-          <Route path="/admin/customers" element={<Admin><Brokers /></Admin>} />
-          <Route path="/admin/customers/:id" element={<Admin><CustomerDetail /></Admin>} />
-          <Route path="/admin/consignees" element={<Admin><Consignees /></Admin>} />
-          <Route path="/admin/job-orders" element={<Admin><AllJobOrders /></Admin>} />
-          <Route path="/admin/new-job-order" element={<Admin><AdminNewJobOrder /></Admin>} />
-          <Route path="/admin/checker" element={<Admin><Checker /></Admin>} />
-          <Route path="/admin/payment-orders" element={<Admin><PaymentOrderDesk /></Admin>} />
-          <Route path="/admin/charges" element={<Admin><ChargeApproval /></Admin>} />
-          <Route path="/admin/reconciliation" element={<Admin><Reconciliation /></Admin>} />
-          <Route path="/admin/charge-audit" element={<Admin><ChargeAuditView /></Admin>} />
-          <Route path="/admin/releases" element={<Admin><AdminReleases /></Admin>} />
-          <Route path="/admin/vessel-schedule" element={<Admin><VesselSchedule /></Admin>} />
-          <Route path="/admin/logs" element={<Admin><Logs /></Admin>} />
-          <Route path="/admin/security" element={<Admin><Security /></Admin>} />
-          <Route path="/admin/settings" element={<Admin><Settings /></Admin>} />
-          <Route path="/admin/bulletin" element={<Admin><BulletinBoardAdmin /></Admin>} />
-          <Route path="/admin/support" element={<Admin><SupportInbox /></Admin>} />
+          <Route path="/admin/approvals" element={<Admin perm="manage_approvals"><Approvals /></Admin>} />
+          <Route path="/admin/customers" element={<Admin perm="manage_customers"><Brokers /></Admin>} />
+          <Route path="/admin/customers/:id" element={<Admin perm="manage_customers"><CustomerDetail /></Admin>} />
+          <Route path="/admin/consignees" element={<Admin perm={['manage_consignees', 'review_consignee_requests']}><Consignees /></Admin>} />
+          <Route path="/admin/job-orders" element={<Admin perm="view_job_orders"><AllJobOrders /></Admin>} />
+          <Route path="/admin/new-job-order" element={<Admin perm="file_job_orders"><AdminNewJobOrder /></Admin>} />
+          <Route path="/admin/checker" element={<Admin perm="view_xray_queue"><Checker /></Admin>} />
+          <Route path="/admin/payment-orders" element={<Admin perm="review_payments"><PaymentOrderDesk /></Admin>} />
+          <Route path="/admin/charges" element={<Admin perm="complete_orders"><ChargeApproval /></Admin>} />
+          <Route path="/admin/reconciliation" element={<Admin perm="manage_approvals"><Reconciliation /></Admin>} />
+          <Route path="/admin/charge-audit" element={<Admin perm="review_payments"><ChargeAuditView /></Admin>} />
+          <Route path="/admin/releases" element={<Admin perm={['verify_release_docs', 'review_payments']}><AdminReleases /></Admin>} />
+          <Route path="/admin/vessel-schedule" element={<Admin perm="manage_vessel_schedule"><VesselSchedule /></Admin>} />
+          <Route path="/admin/logs" element={<Admin perm="manage_approvals"><Logs /></Admin>} />
+          <Route path="/admin/security" element={<Admin perm="manage_approvals"><Security /></Admin>} />
+          <Route path="/admin/settings" element={<Admin perm="manage_pricing"><Settings /></Admin>} />
+          <Route path="/admin/bulletin" element={<Admin perm="manage_pricing"><BulletinBoardAdmin /></Admin>} />
+          <Route path="/admin/support" element={<Admin perm="manage_support"><SupportInbox /></Admin>} />
           <Route path="/admin/notifications" element={<Admin><AdminNotifications /></Admin>} />
           <Route path="/admin/manual" element={<Admin><AdminManual /></Admin>} />
 

@@ -19,8 +19,10 @@ import { useT } from '../lib/i18n'
 
 interface ChargeRow {
   id: string
-  job_order_id: string
-  charge_type: 'service' | 'rps' | 'addon'
+  // A charge hangs off EITHER a job order OR a release order (XOR, migration 0214).
+  job_order_id: string | null
+  release_order_id: string | null
+  charge_type: 'service' | 'rps' | 'addon' | 'release'
   label: string
   qty: number
   unit_rate: number | null
@@ -41,6 +43,15 @@ interface ChargeRow {
     broker?: { id: string; full_name: string | null; customer_code: string | null } | null
     consignee?: { code: string; name: string } | null
   } | null
+  // Release charges carry their parent here instead — same customer/consignee
+  // shape so grouping + display work identically for both parents.
+  release_order?: {
+    id: string
+    release_number: string | null
+    consignee_id: string | null
+    customer?: { id: string; full_name: string | null; customer_code: string | null } | null
+    consignee?: { code: string; name: string } | null
+  } | null
 }
 
 interface PoChargeRow {
@@ -52,6 +63,7 @@ interface PoChargeRow {
   erp_invoice_no: string | null
   bir_invoice_no: string | null
   job_order?: { jo_number: string | null } | null
+  release_order?: { release_number: string | null } | null
 }
 
 interface PoRow {
@@ -78,14 +90,20 @@ interface Group {
 }
 
 const CHARGE_SELECT =
-  'id, job_order_id, charge_type, label, qty, unit_rate, amount, vatable, bill_status, erp_invoice_no, bir_invoice_no, invoice_state, payment_status, payment_order_id, created_by, created_at, job_order:job_orders(id, jo_number, consignee_id, broker:customers(id, full_name, customer_code), consignee:consignees(code, name))'
+  'id, job_order_id, release_order_id, charge_type, label, qty, unit_rate, amount, vatable, bill_status, erp_invoice_no, bir_invoice_no, invoice_state, payment_status, payment_order_id, created_by, created_at, job_order:job_orders(id, jo_number, consignee_id, broker:customers(id, full_name, customer_code), consignee:consignees(code, name)), release_order:release_orders(id, release_number, consignee_id, customer:customers(id, full_name, customer_code), consignee:consignees(code, name))'
 const PO_SELECT =
-  'id, po_number, customer_id, consignee_id, status, collection_or_no, payment_status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), charges:charges(id, label, amount, vatable, invoice_state, erp_invoice_no, bir_invoice_no, job_order:job_orders(jo_number))'
+  'id, po_number, customer_id, consignee_id, status, collection_or_no, payment_status, created_at, customer:customers(full_name, customer_code), consignee:consignees(code, name), charges:charges(id, label, amount, vatable, invoice_state, erp_invoice_no, bir_invoice_no, job_order:job_orders(jo_number), release_order:release_orders(release_number))'
+
+// The parent reference shown on a charge row — JO number, or the release number
+// for a release charge (a charge hangs off either parent, migration 0214).
+const parentRef = (c: { job_order?: { jo_number: string | null } | null; release_order?: { release_number: string | null } | null }) =>
+  c.job_order?.jo_number ?? c.release_order?.release_number ?? '—'
 
 const CHARGE_TYPE_LABEL: Record<string, string> = {
   service: 'X-ray service',
   rps: 'RPS move',
   addon: 'Add-on charge',
+  release: 'Release charge',
 }
 
 function one<T>(v: T | T[] | null | undefined): T | null {
@@ -156,13 +174,18 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
     setLoadError(null)
     const cRows = ((chargesRes.data ?? []) as unknown as ChargeRow[]).map((c) => {
       const jo = one(c.job_order)
-      return { ...c, job_order: jo ? { ...jo, broker: one(jo.broker), consignee: one(jo.consignee) } : null }
+      const ro = one(c.release_order)
+      return {
+        ...c,
+        job_order: jo ? { ...jo, broker: one(jo.broker), consignee: one(jo.consignee) } : null,
+        release_order: ro ? { ...ro, customer: one(ro.customer), consignee: one(ro.consignee) } : null,
+      }
     })
     const pRows = ((posRes.data ?? []) as unknown as PoRow[]).map((p) => ({
       ...p,
       customer: one(p.customer),
       consignee: one(p.consignee),
-      charges: (p.charges ?? []).map((ch) => ({ ...ch, job_order: one(ch.job_order) })),
+      charges: (p.charges ?? []).map((ch) => ({ ...ch, job_order: one(ch.job_order), release_order: one(ch.release_order) })),
     }))
     setCharges(cRows)
     setPos(pRows)
@@ -186,18 +209,23 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
   const groups = useMemo<Group[]>(() => {
     const m = new Map<string, Group>()
     for (const c of charges) {
+      // Parent is a job order OR a release order — read customer/consignee from
+      // whichever is set so release charges group + collect like JO charges.
       const jo = c.job_order
-      const customerId = jo?.broker?.id ?? 'unknown'
-      const consigneeId = jo?.consignee_id ?? null
+      const ro = c.release_order
+      const broker = jo?.broker ?? ro?.customer ?? null
+      const consignee = jo?.consignee ?? ro?.consignee ?? null
+      const customerId = broker?.id ?? 'unknown'
+      const consigneeId = jo?.consignee_id ?? ro?.consignee_id ?? null
       const key = `${customerId}::${consigneeId ?? 'none'}`
       let g = m.get(key)
       if (!g) {
         g = {
           key,
-          customerName: jo?.broker?.full_name ?? t('Unknown customer'),
-          customerCode: jo?.broker?.customer_code ?? null,
+          customerName: broker?.full_name ?? t('Unknown customer'),
+          customerCode: broker?.customer_code ?? null,
           consigneeId,
-          consigneeLabel: jo?.consignee ? `${jo.consignee.code} · ${jo.consignee.name}` : t('No consignee'),
+          consigneeLabel: consignee ? `${consignee.code} · ${consignee.name}` : t('No consignee'),
           charges: [],
         }
         m.set(key, g)
@@ -334,7 +362,7 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
             )}
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                <b className="ktc-mono" style={{ fontSize: 14 }}>{c.job_order?.jo_number ?? '—'}</b>
+                <b className="ktc-mono" style={{ fontSize: 14 }}>{parentRef(c)}</b>
                 <span style={{ fontSize: 13.5 }}>{c.label}</span>
                 <span className="ktc-chip ktc-chip--info">{t(CHARGE_TYPE_LABEL[c.charge_type] ?? c.charge_type)}</span>
               </div>
@@ -410,7 +438,7 @@ export default function PaymentOrderDesk({ app = false }: { app?: boolean }) {
         <div style={{ display: 'grid', gap: 5, marginTop: 10 }}>
           {items.map((c) => (
             <div key={c.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', fontSize: 12.5, padding: '6px 10px', borderRadius: 9, background: 'var(--c-w55)', border: '1px solid var(--glass-brd)' }}>
-              <b className="ktc-mono">{c.job_order?.jo_number ?? '—'}</b>
+              <b className="ktc-mono">{parentRef(c)}</b>
               <span>{c.label}</span>
               <span className="ktc-mono" style={{ fontWeight: 600 }}>{peso(c.amount)}</span>
               <span style={{ marginLeft: 'auto' }}><InvoiceChip c={c} /></span>

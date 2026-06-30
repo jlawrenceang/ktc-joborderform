@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { loadPricingConfig, peso } from '../lib/pricing'
 import { useT } from '../lib/i18n'
@@ -37,11 +37,17 @@ const UNPAID = { bg: '#fff6e6', ink: '#a35a16' }
 
 const money = (n: number | null) => (n == null ? '—' : peso(n))
 
-export default function VerifyCharges({ jobOrderId }: { jobOrderId: string }) {
+// onState lets the parent (Verify) derive its PAID headline from the AUTHORITATIVE
+// charge rows — every billed charge, add-ons included — instead of the base/RPS
+// status alone. count=0 means no billed charges gate the headline.
+export default function VerifyCharges({ jobOrderId, onState }: { jobOrderId: string; onState?: (s: { allPaid: boolean; count: number }) => void }) {
   const { t } = useT()
   const [phase, setPhase] = useState<'loading' | 'ready' | 'error'>('loading')
   const [rows, setRows] = useState<VRow[]>([])
   const [vatRate, setVatRate] = useState(0.12)
+  // Ref so the load effect can report up without re-running on every parent render.
+  const onStateRef = useRef(onState)
+  onStateRef.current = onState
 
   useEffect(() => {
     let active = true
@@ -51,14 +57,16 @@ export default function VerifyCharges({ jobOrderId }: { jobOrderId: string }) {
     ]).then(([{ data, error }, cfg]) => {
       if (!active) return
       if (error) { setPhase('error'); return }
-      setRows(((data ?? []) as Record<string, unknown>[]).map((r) => ({
+      const built = ((data ?? []) as Record<string, unknown>[]).map((r) => ({
         ...(r as unknown as VRow),
         qty: r.qty == null ? 0 : Number(r.qty),
         unit_rate: r.unit_rate == null ? null : Number(r.unit_rate),
         amount: r.amount == null ? null : Number(r.amount),
-      })))
+      }))
+      setRows(built)
       setVatRate(cfg.vatRate)
       setPhase('ready')
+      onStateRef.current?.({ allPaid: built.every((c) => c.payment_status === 'confirmed'), count: built.length })
     })
     return () => { active = false }
   }, [jobOrderId])

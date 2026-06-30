@@ -4,6 +4,20 @@ All notable changes to the KTC broker portal. Newest first. Dates are absolute (
 
 **Versioning (since v1.1.0):** every deployment bumps `APP_VERSION` in `src/version.ts`, gets a matching `## vX.Y.Z` header here, and a git tag. The portal footers show the full provenance — version, git commit, build date (e.g. `v1.1.0 (3d81eca · 2026-06-13)`) — so the running deployment is always identifiable at a glance.
 
+## v2.0.7 — 2026-06-30 (go-live hardening — codex review fixes)
+
+Closes the items the v2.0.6 entry deferred, from an independent codex review of the post-cutover tree (Jarvis-verified):
+
+- **P1 — release charges are payable (`0228`).** `submit_charge_payment` authorized only through `job_orders`, so a release charge (`job_order_id` NULL, `release_order_id` set) could never be paid by the customer even though `create_payment_order` / `confirm_charge_payment` / `confirm_payment_order` were made parent-aware in `0215`. The RPC and the **Payment Order desk** (select / grouping / display) are now parent-aware through **both** parents — release charges flow through the same spine. A customer still can only pay a charge whose parent they own.
+- **P2 — Verify-QR "PAID" headline reads every billed charge.** The public `/verify/:id` headline derived PAID from the base order + RPS only, so a paid base with an **unpaid add-on** still showed PAID. It now also requires every billed charge (add-ons included) confirmed, and stays conservative while charges load so an edited slip can't catch a false PAID flash.
+- **Pay-before-final-invoice kept (by design).** Customers may submit payment proof before the final ERP/BIR invoice — the final invoice is released only after payment, so it acts as the gate pass (owner-confirmed). No change.
+- **Per-route admin guards.** `/admin/*` admitted any staff at the route level (relying on hidden nav + RLS); a restricted role could reach a page by typing its URL. `AdminRoute` now enforces a per-route permission that **mirrors the nav GRID 1:1** — if you can't see the tile, you can't open the URL. Owner passes all.
+- **Container cap 100→200 (`0228`).** The filing editor was built for 150–200-van C-entries while the backend rejected >100. Raised across `file_job_order`, `admin_file_job_order`, and `update_job_order` (which had **no** upper cap). Each function reproduced verbatim from its current live version with only the cap changed.
+- **Charge type contract.** Centralized `ChargeType` as `service | rps | addon | release`, made `job_order_id` nullable, added `release_order_id`; removed the stale `'xray'` literal in `JobOrderCharges`.
+- **Native checker camera.** Added the `CAMERA` permission to `AndroidManifest.xml` — the Capacitor ML-Kit QR scanner was otherwise denied the camera.
+
+`0228` is staged (forward-only) and applied at go-live; the frontend degrades gracefully if it lands first.
+
 ## v2.0.6 — 2026-06-30 (full break-test remediation — read-path scaling + JO-wedge gates)
 
 The full pre-go-live sandbox break-test (every role × every lane adversarial + CRUD / race / config-runtime + a real load pass on ~3,000 seeded charges) confirmed the **anti-fraud write path, RLS isolation, RBAC, and injection defenses all HOLD** under adversarial + concurrent probing — and caught one HIGH + JO-wedge gaps:
