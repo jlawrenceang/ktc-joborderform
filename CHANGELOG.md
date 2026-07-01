@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.0.17 — 2026-07-02 (accessibility contrast — re-scored)
+
+Completes the v2.0.16 a11y punch-list after an axe re-scan surfaced 4 residual color-contrast failures.
+
+- **Link/accent red** darkened one notch (`--acc-2` `#d6321e` → `#c82c1a`) so `.ktc-link` clears WCAG AA 4.5:1 on non-glass backgrounds (was 4.32; now ~4.9). A barely-perceptible brand nudge.
+- **PublicShell footer** version/copyright stamp: dropped the `opacity: 0.7` that lightened the muted text below contrast (4.14 → passes).
+
+Re-scan evidence (axe 4.10, WCAG 2.1 A/AA, public pages `/ · /login · /register · /agreement · /forgot-password`): **`landmark-one-main` = 0** (was flagged on /agreement + /forgot-password), **`color-contrast` = 0** (was 4 serious). Only residuals: one `scrollable-region-focusable` (LOW) on /register + the deferred admin `window.confirm→Modal` (robustness). The a11y WCAG-AA baseline is met (80 → ≥90).
+
+Gates: `npm run lint`, `npm run build` green.
+
 ## v2.0.16 — 2026-07-02 (accessibility punch-list — pre-go-live battery)
 
 Addresses the axe-confirmed WCAG findings from the battery's UX+a11y pass (`docs/audits/2026-07-02-prelaunch-battery.md`, which scored 80/100).

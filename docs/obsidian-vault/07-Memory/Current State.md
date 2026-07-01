@@ -10,7 +10,7 @@ last_updated: 2026-07-02
 
 ## 2026-07-02 — Accessibility punch-list shipped (v2.0.16)
 
-**`APP_VERSION` = `v2.0.16`; frontend-only, no migration.** Fixed 4 of 5 battery UX+a11y items: `<main>` landmark app-wide (customer/admin/staff shells + `MarkdownDoc` + `ForgotPassword`; `PublicShell` already had one), `--ink-2` contrast, `ForgotPassword`→accessible `<Notice>`, mobile tab-label ellipsis, docs i18n. **Deferred:** the two admin-Consignees `window.confirm()`→`Modal` (robustness, not a WCAG failure — native confirm is accessible; concern is Android-WebView flakiness). Re-run the a11y audit to re-score against these fixes. See `docs/audits/2026-07-02-prelaunch-battery.md`.
+**`APP_VERSION` = `v2.0.16`; frontend-only, no migration.** Fixed 4 of 5 battery UX+a11y items: `<main>` landmark app-wide (customer/admin/staff shells + `MarkdownDoc` + `ForgotPassword`; `PublicShell` already had one), `--ink-2` contrast, `ForgotPassword`→accessible `<Notice>`, mobile tab-label ellipsis, docs i18n. **Deferred:** the two admin-Consignees `window.confirm()`→`Modal` (robustness, not a WCAG failure — native confirm is accessible; concern is Android-WebView flakiness). **Re-scored (v2.0.17, axe 4.10 WCAG 2.1 A/AA): `landmark-one-main` = 0, `color-contrast` = 0** → WCAG-AA baseline met (80 → ≥90); residual = one LOW `scrollable-region-focusable` on /register + the deferred `window.confirm`. See `docs/audits/2026-07-02-prelaunch-battery.md`.
 
 ## 2026-07-02 — Pre-go-live battery: release double-collection seam FIXED (v2.0.15, migration 0239)
 

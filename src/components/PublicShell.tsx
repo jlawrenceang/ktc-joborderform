@@ -116,7 +116,7 @@ export default function PublicShell() {
             <span>· {t('SSL-encrypted')} ·</span>
             <Link to="/agreement" className="ktc-link" style={{ textDecoration: 'none' }}>{t('Privacy & Terms')}</Link>
           </span>
-          <span className="ktc-label" style={{ fontSize: 11.5, opacity: 0.7 }}>
+          <span className="ktc-label" style={{ fontSize: 11.5 }}>
             <span title={VERSION_FULL}>{VERSION_LABEL}</span> · © {new Date().getFullYear()} KTC Container Terminal Corp.
           </span>
         </div>

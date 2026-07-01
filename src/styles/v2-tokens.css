@@ -46,7 +46,7 @@
 
   /* accent = KTC brand */
   --acc: #f26a21;
-  --acc-2: #d6321e;
+  --acc-2: #c82c1a; /* WCAG AA: clears 4.5:1 for .ktc-link on non-glass bg (was #d6321e = 4.32) */
   --acc-rgb: 242 106 33;
 
   /* status tones (chips, notices) — one hue per semantic state */
