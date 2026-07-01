@@ -73,7 +73,7 @@ export default function AppLayout({ children, title }: { children: ReactNode; ti
         </button>
       </nav>
 
-      <div className="ktc-stagger">{children}</div>
+      <main className="ktc-stagger">{children}</main>
 
       <footer style={{ marginTop: 28, textAlign: 'center', fontSize: 11.5, color: 'hsl(var(--ink-2))', opacity: 0.7 }}>
         {/* Self-hides unless the browser offers install + not already standalone —

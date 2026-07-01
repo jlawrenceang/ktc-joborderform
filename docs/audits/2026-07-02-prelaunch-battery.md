@@ -25,7 +25,8 @@
 ### HIGH — release double-collection seam — FIXED (v2.0.15, migration 0239)
 The release/pull-out lane ran two unreconciled settlement paths: the authoritative release desk (`release_orders`) and a shadow `charge_type='release'` dual-write (0215) that was independently invoiceable/collectable in the cashier's Payment Order queue → the same release money could be collected twice (a second OR). **Fix:** a BEFORE-UPDATE guard trigger on `charges` (`0239`) blocks a release charge from being bundled / advanced to submitted-confirmed / invoice-finalized via the charge path (client-proof); frontend hides release charges from the cashier queue. Jarvis-verified SAFE-TO-APPLY; **prod reconciliation returned 0 non-pristine release charges — no historical double-collection.** JO money spine independently verified SOUND.
 
-### MEDIUM/LOW — UX + accessibility punch-list (80/100) — OPEN
+### MEDIUM/LOW — UX + accessibility punch-list (80/100) — 4 of 5 FIXED (v2.0.16), 1 deferred
+Fixed in v2.0.16: `<main>` landmark app-wide (`Shell`/`AdminShell`/`AppLayout`/`MarkdownDoc`/`ForgotPassword`), `--ink-2` contrast, `ForgotPassword`→`<Notice>`, mobile tab-label ellipsis, docs i18n. **Deferred:** the two admin-Consignees `window.confirm()`→`Modal` (robustness, not a WCAG failure — native confirm is accessible; the concern is Android-WebView flakiness) — a careful follow-up. Re-run the audit to re-score. Original findings:
 Real but narrow (axe-confirmed on public pages + code review):
 1. **No `<main>` landmark** anywhere — one-line fix in `Shell.tsx:65` + `MarkdownDoc.tsx` (systemic).
 2. **`--ink-2` contrast** fails on footer/version-stamp context (`v2-tokens.css:16`).

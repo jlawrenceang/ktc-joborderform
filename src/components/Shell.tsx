@@ -73,6 +73,7 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
         <AccountMenu settingsTo="/account" settingsLabel="My Account" role="Customer" />
       </nav>
 
+      <main className="ktc-page-main">
       {locked ? (
         <div className="ktc-rise">
           <PendingPanel broker={broker!} />
@@ -100,6 +101,7 @@ export default function Shell({ children, wide }: { children: ReactNode; wide?: 
           {children}
         </div>
       )}
+      </main>
 
       <footer className="ktc-foot">
         <div className="ktc-foot-links">

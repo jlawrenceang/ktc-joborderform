@@ -81,7 +81,7 @@ export default function AdminShell({ children }: { children: ReactNode; crumb?: 
 
       <AdminTopNav />
 
-      <div className="ktc-stagger">{children}</div>
+      <main className="ktc-stagger">{children}</main>
 
       <AdminBottomNav />
 

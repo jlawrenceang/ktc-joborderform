@@ -8,6 +8,10 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
+## 2026-07-02 — Accessibility punch-list shipped (v2.0.16)
+
+**`APP_VERSION` = `v2.0.16`; frontend-only, no migration.** Fixed 4 of 5 battery UX+a11y items: `<main>` landmark app-wide (customer/admin/staff shells + `MarkdownDoc` + `ForgotPassword`; `PublicShell` already had one), `--ink-2` contrast, `ForgotPassword`→accessible `<Notice>`, mobile tab-label ellipsis, docs i18n. **Deferred:** the two admin-Consignees `window.confirm()`→`Modal` (robustness, not a WCAG failure — native confirm is accessible; concern is Android-WebView flakiness). Re-run the a11y audit to re-score against these fixes. See `docs/audits/2026-07-02-prelaunch-battery.md`.
+
 ## 2026-07-02 — Pre-go-live battery: release double-collection seam FIXED (v2.0.15, migration 0239)
 
 **`APP_VERSION` = `v2.0.15`; migration `0239` applied + verified on prod + sandbox.** The pre-go-live app-test battery's billing-integrity pass found the release/pull-out lane could **double-collect** — the shadow `charge_type='release'` dual-write (0215) was independently collectable via the cashier Payment Order path alongside the authoritative release desk. Fixed with a BEFORE-UPDATE guard trigger on `charges` (`0239`) blocking release-charge settlement via the charge path + a frontend hide; release stays settled only at the release desk. Jarvis-verified SAFE; **prod reconciliation clean (0 non-pristine release charges — no historical double-collection).** JO money spine independently verified SOUND. Full record: `docs/audits/2026-07-02-prelaunch-battery.md`.

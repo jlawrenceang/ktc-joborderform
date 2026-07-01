@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.0.16 — 2026-07-02 (accessibility punch-list — pre-go-live battery)
+
+Addresses the axe-confirmed WCAG findings from the battery's UX+a11y pass (`docs/audits/2026-07-02-prelaunch-battery.md`, which scored 80/100).
+
+- **`<main>` landmark app-wide** — added to the customer shell (`Shell`), admin shell (`AdminShell`), staff-app shell (`AppLayout`), the legal-doc view (`MarkdownDoc`), and `ForgotPassword` (`PublicShell` already had one). Fixes the `landmark-one-main` failures on `/agreement` + `/forgot-password`.
+- **Contrast** — darkened `--ink-2` (light theme, `222 11% 32%` → `222 13% 27%`) so muted / footer / version-stamp text clears WCAG contrast.
+- **ForgotPassword** success/error notices now use the accessible shared `<Notice>` (`role="alert"`/`"status"`) instead of hand-rolled divs.
+- **Mobile tab labels** now ellipsis-truncate instead of clipping/overlapping when Tagalog runs long (`.ktc-tab-label`).
+- **Docs i18n** — the `MarkdownDoc` back / back-to-top buttons are now translated.
+
+Deferred (robustness, NOT a WCAG failure — native `confirm()` is screen-reader/keyboard accessible; the concern is Android-WebView flakiness): the two `window.confirm()`s on the admin Consignees page (bulk-approve, delete) → app `Modal`. A careful follow-up on those data ops.
+
+Verification: `npm run lint`, `npm run check:i18n`, `npm run build` green. A re-run of the a11y audit will re-score against these fixes.
+
 ## v2.0.15 — 2026-07-02 (release double-collection fix — pre-go-live battery)
 
 The pre-go-live app-test battery (billing-integrity dimension) found the release/pull-out lane could collect the same money twice. Migration `0239` applied + verified on prod (+ sandbox); Jarvis-verified SAFE-TO-APPLY; prod confirmed clean (0 rows to reconcile). Full battery record: `docs/audits/2026-07-02-prelaunch-battery.md`.

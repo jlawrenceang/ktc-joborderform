@@ -943,7 +943,7 @@
   .ktc-tab:hover { background: rgb(var(--acc-rgb) / 0.08); }
   .ktc-tab.is-active { color: var(--acc-2); background: rgb(var(--acc-rgb) / 0.12); }
   .ktc-tab-icon { display: grid; place-items: center; position: relative; }
-  .ktc-tab-label { font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; }
+  .ktc-tab-label { font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; text-align: center; }
   .ktc-tab-badge {
     position: absolute;
     top: -6px;

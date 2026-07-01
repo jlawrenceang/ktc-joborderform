@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ProtectedDoc from './ProtectedDoc'
+import { useT } from '../lib/i18n'
 
 // Render a small, fixed subset of Markdown (headings, bullets, bold, italic,
 // rules, paragraphs) — enough for the legal docs, with no external dependency.
@@ -91,11 +92,12 @@ export function MarkdownBody({ body }: { body: string }) {
 
 export default function MarkdownDoc({ body }: { body: string }) {
   const navigate = useNavigate()
+  const { t } = useT()
   return (
-    <div style={{ maxWidth: 780, margin: '0 auto', padding: '28px 24px 80px' }}>
+    <main style={{ maxWidth: 780, margin: '0 auto', padding: '28px 24px 80px' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
         <img src="/ktc-logo.png" alt="KTC Container Terminal Corp" style={{ height: 48 }} />
-        <button className="ktc-link" onClick={() => navigate(-1)}>← Back</button>
+        <button className="ktc-link" onClick={() => navigate(-1)}>{t('← Back')}</button>
       </header>
       <ProtectedDoc>
         <div className="ktc-glass" style={{ padding: '32px 34px' }}>
@@ -103,9 +105,9 @@ export default function MarkdownDoc({ body }: { body: string }) {
         </div>
       </ProtectedDoc>
       <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 22 }}>
-        <button className="ktc-link" onClick={() => navigate(-1)}>← Back</button>
-        <button className="ktc-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Back to top</button>
+        <button className="ktc-link" onClick={() => navigate(-1)}>{t('← Back')}</button>
+        <button className="ktc-link" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>{t('↑ Back to top')}</button>
       </div>
-    </div>
+    </main>
   )
 }

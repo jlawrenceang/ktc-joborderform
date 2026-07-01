@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Turnstile, { captchaEnabled } from '../components/Turnstile'
 import { useT } from '../lib/i18n'
+import Notice from '../components/Notice'
 
 // After a reset email is sent, hold the button for this long (per email) so a
 // user can't fire a burst of emails — and gets a friendly countdown instead of
@@ -78,7 +79,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
+    <main style={{ display: 'grid', placeItems: 'center', minHeight: '100%', padding: 24 }}>
       <div className="ktc-glass" style={{ width: '100%', maxWidth: 440, padding: '36px 36px 32px' }}>
         <img src="/ktc-logo.png" alt={t('KTC Container Terminal Corp')} style={{ height: 56, marginBottom: 18 }} />
         <h1 style={{ margin: 0, fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>{t('Reset password')}</h1>
@@ -86,16 +87,8 @@ export default function ForgotPassword() {
           {t('Enter your account email and we’ll send you a link to set a new password.')}
         </p>
 
-        {notice && (
-          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'var(--c-h150-55-95)', border: '1px solid var(--c-h150-45-80)', color: 'var(--c-h150-55-26)', fontSize: 13, lineHeight: 1.55, fontWeight: 500 }}>
-            {notice}
-          </div>
-        )}
-        {error && (
-          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: 'var(--c-h0-75-96)', border: '1px solid var(--c-h0-70-85)', color: 'var(--c-h0-65-42)', fontSize: 13, fontWeight: 500 }}>
-            {error}
-          </div>
-        )}
+        {notice && <div style={{ marginBottom: 16 }}><Notice tone="success">{notice}</Notice></div>}
+        {error && <div style={{ marginBottom: 16 }}><Notice tone="error">{error}</Notice></div>}
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 14 }}>
           <div style={{ display: 'grid', gap: 6 }}>
@@ -120,6 +113,6 @@ export default function ForgotPassword() {
           <Link to="/login" className="ktc-link">{t('← Back to sign in')}</Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

@@ -77,6 +77,8 @@ export const tl: Record<string, string> = {
   // --- 2026-07-02 tariff data-trap batch (CX-04/05/06/12) ---
   "Could not open the tariff images. Please try again.": "Hindi mabuksan ang mga tariff image. Pakisubukan ulit.",
   "Tariff images must be PNG, JPEG, or WEBP.": "Ang mga tariff image ay dapat PNG, JPEG, o WEBP.",
+  // --- 2026-07-02 a11y punch-list: MarkdownDoc back-to-top button ---
+  "↑ Back to top": "↑ Balik sa itaas",
   // --- 2026-07-02 walkthrough batch (CX-08): tour copy aligned to current UI ---
   "Switch between the table and the month calendar view. Tick \"Show past/cancelled\" to also see recent past and cancelled calls.": "Magpalipat-lipat sa table at sa month calendar view. I-tick ang \"Show past/cancelled\" para makita rin ang mga kamakailang nakaraan at kanseladong tawag.",
   "The calls customers file against. Add one with the form, or Sync from the connected Google Sheet to bulk-update (matched by vessel-visit, so a sync updates rather than duplicates).": "Ang mga tawag na fina-file-an ng mga customer. Magdagdag gamit ang form, o mag-Sync mula sa nakakonektang Google Sheet para mag-bulk-update (nakabatay sa vessel-visit, kaya nag-a-update ang sync sa halip na mag-duplicate).",
@@ -805,7 +807,7 @@ export const tl: Record<string, string> = {
   "{total} order(s)": "{total} order(s)",
   "/ container": "/ container",
   "/ move": "/ move",
-  "← Back": "← Back",
+  "← Back": "← Bumalik",
   "← Back to sign in": "← Bumalik sa sign in",
   "← Prev": "← Prev",
   "↓ Please scroll to the end of the agreement to enable the consent checkboxes.": "↓ Paki-scroll hanggang dulo ng agreement para ma-enable ang mga consent checkbox.",
