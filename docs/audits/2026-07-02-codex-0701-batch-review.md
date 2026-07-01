@@ -34,6 +34,21 @@
 > Gates green. Remaining: low/cleanup only — CX-10 (email enum + rate-limit), CX-11 (entry-number `C-`
 > consistency), CX-12 (JobOrder doc-upload error masking), CX-13 (cosmetic residue).
 
+> **LOW batch (CX-10/11/12/13) — RESOLVED 2026-07-02.** **CX-10** — migration `0238` (Jarvis-verified,
+> applied + verified on prod): `request_customer_email_change` rate-limit (3/rolling hour) + anti-enumeration
+> (an email owned by another account → generic `'sent'`, no mail/row); owner-lock + confirm-side collision
+> guards unchanged. **CX-11** — admin `NewJobOrder` normalizes the entry number to `C-` (the EditForm
+> "rewrite" is working-as-intended: the contract is C-format and `save()` enforces it). **CX-12** — the
+> JobOrder verification-doc uploader surfaces both problems at once (non-image + over-limit). **CX-13** —
+> dropped the dead email-change SELECT policy (`0238`); `VesselCalendar`'s jump-to-data effect no longer
+> re-runs every render.
+> **Deferred (each needs a design/product decision — not silently dropped):** the Lara tile-glyph split
+> (`ChatWidget.tsx` — show the menu emoji or remove the split); the trusted-device token length floor
+> (`0236` — Jarvis confirmed NOT exploitable); the vessel-calendar "Today" landing on the nearest data-month
+> vs the true current month (`VesselCalendar.tsx` — product intent).
+>
+> **All MEDIUM+ findings and every actionable LOW from this review are now closed.**
+
 ### Automated Layer-1 gates
 | Gate | Result |
 |---|---|

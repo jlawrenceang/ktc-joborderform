@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.0.14 — 2026-07-02 (review LOW batch: email rate-limit/anti-enum + entry-number + upload UX)
+
+Closes the LOW findings from the 2026-07-01 review (CX-10/11/12/13; `docs/audits/2026-07-02-codex-0701-batch-review.md`). Migration `0238` applied + verified on prod; Jarvis-verified SAFE-TO-APPLY.
+
+- **Email-change rate-limit + anti-enumeration (`0238`, CX-10).** `request_customer_email_change` now caps a customer at 3 requests/rolling hour (stops email-bombing arbitrary addresses) and, for an email already owned by another account, returns the same generic "sent" with no mail/row (so the roster can't be probed). The `confirm_` collision + owner-lock guards are unchanged.
+- **Admin entry-number consistency (CX-11).** Admin file-on-behalf (`NewJobOrder`) now normalizes the Entry Number to `C-` format on submit, matching customer filing. (The EditForm "rewrite" the review flagged is working-as-intended — the contract is C-format and `save()` already enforces it.)
+- **Verification-doc upload (CX-12).** The JobOrder uploader surfaces both problems at once (non-image AND over-limit) instead of only whichever ran last.
+- **Cleanup (CX-13).** Dropped the dead email-change SELECT policy (`0238`); `VesselCalendar`'s jump-to-data effect no longer re-runs every render.
+
+Deferred (each needs a design/product decision; documented in the audit): the Lara tile-glyph split, the trusted-device token length floor (not exploitable), and the vessel-calendar "Today" nearest-month behavior.
+
+Verification: `npm run lint`, `npm run check:i18n`, `node scripts/check-security-invariants.mjs`, `npm run build` all green; `0238` applied via `_apply_one.mjs` + verified on prod.
+
 ## v2.0.13 — 2026-07-02 (review remediation: tariff data-traps + walkthrough/UX)
 
 Closes the two MEDIUM remediation batches from the 2026-07-01 review (`docs/audits/2026-07-02-codex-0701-batch-review.md`). Frontend-only, no migration.

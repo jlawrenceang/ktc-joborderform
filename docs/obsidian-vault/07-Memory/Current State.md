@@ -8,6 +8,18 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
+## 2026-07-02 — Review LOW batch shipped: email rate-limit/anti-enum + entry-number + upload UX (v2.0.14, migration 0238)
+
+**`APP_VERSION` = `v2.0.14`; migration `0238` applied + verified on prod.** Closes the LOW findings (CX-10/11/12/13) from the 2026-07-01 review — the whole review catalog is now resolved except a few explicitly-deferred cosmetic items.
+
+- **CX-10 (`0238`)** — email-change rate-limit (3/hr, anti-bomb) + anti-enumeration (taken email → generic "sent", no mail/row); owner-lock + confirm-side guards unchanged.
+- **CX-11** — admin NewJobOrder normalizes the entry number to `C-` (the EditForm "rewrite" was working-as-intended).
+- **CX-12** — JobOrder verification-doc uploader shows both errors (non-image + over-limit) at once.
+- **CX-13** — dropped the dead email-change SELECT policy (`0238`); VesselCalendar effect no longer re-runs every render.
+- **Deferred (documented)** — Lara tile-glyph (design call), token length floor (not exploitable), vessel "Today" nearest-month (product call).
+
+**Next** — the 2026-07-01 review is closed; resume the go-live path (ST08 all-roles/all-lanes walkthrough, Android Part 15).
+
 ## 2026-07-02 — Review remediation shipped: tariff data-traps + walkthrough/UX (v2.0.13)
 
 **`APP_VERSION` = `v2.0.13`; frontend-only, no migration.** Closes the two MEDIUM remediation batches from the 2026-07-01 review (`docs/audits/2026-07-02-codex-0701-batch-review.md`).
@@ -236,7 +248,7 @@ Also added: Playwright E2E Phase 1 (8 unauth smoke tests passing). Phase 2 (auth
 
 ## Backend
 
-- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0237_security_stepup_owner_email_lock_trusted_revoke`** are applied to production (the `0237` security batch applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
+- Supabase project `mdlnfhyylvapzdubhyic` (KTC's own account). Migrations `0001_init` through **`0238_email_change_ratelimit_antienum`** are applied to production (the `0237`/`0238` security + review-remediation batches applied + verified 2026-07-02). RLS + role-permission matrix (`has_permission`) + `session_alive()` remain load-bearing across helpers; owner failsafe/root-owner grants, customer approval, payment gates, and server-side CAPTCHA must not be weakened. Email (Resend) is live; SMS and native cloud push are dormant until their secrets/functions are explicitly armed.
 
 ## In progress / not yet
 

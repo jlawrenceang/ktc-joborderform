@@ -71,7 +71,9 @@ export function MonthCalendar({ rows }: { rows: VesselRow[] }) {
       .sort((a, b) => Math.abs(a.getTime() - today.getTime()) - Math.abs(b.getTime() - today.getTime()))
     const nearest = dated[0]
     if (nearest) setOffset((nearest.getFullYear() - today.getFullYear()) * 12 + nearest.getMonth() - today.getMonth())
-  }, [offset, rows, today])
+    // `today` is a fresh Date() each render — keep it OUT of the deps so this jump-to-data
+    // effect runs only when offset/rows actually change, not on every render.
+  }, [offset, rows])
 
   const byDay = new Map<number, VesselRow[]>()
   for (const r of rows) {

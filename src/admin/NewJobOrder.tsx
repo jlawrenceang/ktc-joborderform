@@ -6,6 +6,7 @@ import { usePermissions } from '../lib/usePermissions'
 import SearchPicker, { type PickerItem } from '../components/SearchPicker'
 import ContainerLinesEditor, { emptyLine, type LineDraft } from '../components/ContainerLinesEditor'
 import { searchConsignees, searchCustomers } from '../lib/pickerSearches'
+import { normalizeEntryNumber } from '../lib/entryNumber'
 import { useT } from '../lib/i18n'
 import { PrinterIcon } from '../components/icons'
 
@@ -69,7 +70,7 @@ export default function NewJobOrder() {
     const { data, error: rpcErr } = await supabase.rpc('admin_file_job_order', {
       p_customer_id: customer.id,
       p_consignee_id: consignee.id,
-      p_entry_number: entryNumber.trim() || null,
+      p_entry_number: entryNumber.trim() ? normalizeEntryNumber(entryNumber) : null,
       p_lines: filled.map((l) => ({
         container_number: l.container_number.trim(),
         service_request: l.service_request,

@@ -121,14 +121,19 @@ export default function JobOrder() {
     setDocError(null)
     const incoming = Array.from(files)
     const images = incoming.filter((f) => f.type.startsWith('image/'))
-    if (images.length !== incoming.length) setDocError(t('Only image files are allowed for job order verification documents.'))
+    // Collect ALL problems so a mixed selection (non-image AND over the limit) surfaces
+    // both reasons at once, not just whichever setDocError ran last.
+    const issues: string[] = []
+    if (images.length !== incoming.length) issues.push(t('Only image files are allowed for job order verification documents.'))
     const room = MAX_SUPPORTING_IMAGES - supportingDocs.length
     if (room <= 0) {
-      setDocError(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+      issues.push(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+      setDocError(issues.join(' '))
       return
     }
     const next = images.slice(0, room)
-    if (images.length > room) setDocError(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+    if (images.length > room) issues.push(t('You can attach up to {n} image(s).', { n: MAX_SUPPORTING_IMAGES }))
+    if (issues.length) setDocError(issues.join(' '))
     setSupportingDocs((prev) => [...prev, ...next])
   }
 
