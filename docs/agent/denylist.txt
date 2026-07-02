@@ -1,0 +1,25 @@
+# Promotion denylist — words that must NEVER leave this repo for the global framework layer
+# (sanitized-promotion check: grep any lesson/pitfall/skill text against this list BEFORE
+# promoting it upstream; a hit means the text carries client identity or schema vocabulary
+# and must be genericized first). One term per line; case-insensitive matching intended.
+ktc
+ktcportal
+ktcterminal
+KTC Container Terminal
+portal.ktcterminal.com
+dpo@ktcterminal.com
+support@ktcterminal.com
+mdlnfhyylvapzdubhyic
+Lara
+consignees_public
+job_orders
+payment_orders
+charge_audit
+staff_role
+csr
+purchaser
+boc-mirror
+vessel-sync
+jta-sys
+jlawrenceang@gmail.com
+twsylxbftvkwporglxnv

@@ -49,6 +49,7 @@ scripts/_pushadmin.mjs
 docs/screenshots/
 docs/ktc-screenshots/
 docs/ktc-screenshots.zip
+scratch_shots/
 
 # generated translation-review export (regenerate via scripts/export-translations.mjs)
 docs/translations-review.csv

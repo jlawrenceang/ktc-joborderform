@@ -56,3 +56,10 @@ that only the owner can complete. Keep this current — tick items as they're do
       Lara's waiting slot (currently a holding answer).
 - [x] Seed the support contact (`support_contact`) — done.
 - [ ] **Run ST08** (`docs/smoke-test-08-go-live.md`, the active/current go-live blind walkthrough) on the live site before launch. Start with the July 1 hardening rows for route/menu transitions, trusted MFA, email change, Lara, bulletin archive, tariff images, CIS print, request tracking, New JO filing, vessel calendar, 2FA recovery, and 30-minute customer idle behavior.
+
+## 5. Engineering runs still pending before go/no-go (station audit, 2026-07-02)
+- [ ] **Mutating e2e lane** in the sandbox — the read-only battery passed 184/184; the authenticated/mutating half is the open piece (`docs/audits/2026-07-02-prelaunch-battery.md`).
+- [ ] **Fresh roast re-run** — only artifact is pre-hardening (2026-06-28); bar is 90/100, below = fix + re-run.
+- [ ] **Go/no-go decision doc** — write at decision time: rollback rehearsed, abort signal named, no-go is a normal outcome.
+- [ ] **Watch-window plan** — length, who watches what, and the andon rule (field defects re-enter the line at Station 0, never patched blind). No artifact exists yet.
+(Ordering + detail: `docs/agent/successor-notes.md` §go-live punch list.)

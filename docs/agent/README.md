@@ -27,6 +27,9 @@ Rule: the constitution names a concern, this folder owns the detail, the vault r
 | `tooling-inventory.md` | Picking a tool, CLI, or MCP server. |
 | `obsidian-memory-policy.md` | Ending a session, or writing session/milestone/core notes. |
 | `doc-governance.md` | Updating `CLAUDE.md`, `AGENTS.md`, any doc under `docs/`, or resolving stale docs. |
+| `domain-scm-knowledge.md` | Building or extending any terminal/logistics/billing domain feature — start from the canonical model. |
+| `successor-notes.md` | Starting fresh in this repo (new agent/model): the trust map, the go-live punch list, the armed next steps. |
+| `denylist.txt` | Promoting any lesson from this repo to the global framework layer — grep the text against it first. |
 
 ## Operating rules for this folder
 

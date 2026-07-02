@@ -1,8 +1,10 @@
 #!/bin/sh
-# Pre-commit secret scan — CANONICAL TEMPLATE (single owner; ADR-0001 ladder item 1, adopted 2026-07-02).
-# Blocks a commit whose STAGED ADDITIONS match a secret pattern — the one advisory-only gap whose
-# failure mode is irreversible (a pushed secret must be rotated). Deterministic and agent-agnostic:
-# a git hook fires for Claude, Codex, and the human alike, on every platform (Git's bundled sh).
+# Pre-commit guards — CANONICAL TEMPLATE (single owner; ADR-0001 ladder item 1, adopted 2026-07-02).
+# Check 1: secret scan — blocks a commit whose STAGED ADDITIONS match a secret pattern (the one
+# advisory-only gap whose failure mode is irreversible: a pushed secret must be rotated).
+# Check 2: constitution cap — blocks a project CLAUDE.md staged at >200 words (Doc Governance;
+# added 2026-07-02 after a project constitution drifted to 240 unnoticed — prose caps don't fire).
+# Deterministic and agent-agnostic: a git hook fires for Claude, Codex, and the human alike.
 #
 # Install in ANY repo (2 steps; /scaffold seeds this for new repos):
 #   cp ~/.claude/tools/secret-scan/pre-commit .githooks/pre-commit
@@ -45,5 +47,25 @@ if [ -n "$hits" ]; then
   echo "Remove the secret from the staged changes. If it was EVER committed before, rotate it -"
   echo "history retains it. Owner-only conscious override: git commit --no-verify (rule: /ship forbids agents)."
   exit 1
+fi
+
+# Constitution cap (Doc Governance): a PROJECT repo's CLAUDE.md stays <=150 words (soft);
+# 150-200 needs explicit owner confirmation (WARN); >200 is forbidden (BLOCK). Enforced here
+# because a numeric cap that lives only as prose drifts silently. Fires only when the repo-root
+# CLAUDE.md is itself staged; counts the STAGED version. The framework repo is exempt (its
+# CLAUDE.md is the cross-repo bible, exempt by rule) - detected by the canonical hook living in-tree.
+if [ ! -f "$top/tools/secret-scan/pre-commit" ] && \
+   git diff --cached --name-only --diff-filter=ACMR | grep -qx 'CLAUDE.md'; then
+  words="$(git show :CLAUDE.md | wc -w | tr -d '[:space:]')"
+  if [ "${words:-0}" -gt 200 ]; then
+    echo ""
+    echo "COMMIT BLOCKED - CLAUDE.md is $words words (cap: 200 hard, 150 soft; Doc Governance)."
+    echo "The constitution carries domain facts only - move narrative/detail to the repo's docs"
+    echo "layer (docs/agent/*, the vault) and point to it by path."
+    echo "Owner-only conscious override: git commit --no-verify (rule: /ship forbids agents)."
+    exit 1
+  elif [ "${words:-0}" -gt 150 ]; then
+    echo "pre-commit WARN: CLAUDE.md is $words words (150-200 band - needs explicit owner confirmation per Doc Governance)."
+  fi
 fi
 exit 0

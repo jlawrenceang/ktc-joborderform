@@ -18,7 +18,7 @@ When a doc conflicts with runtime, runtime wins. Fix or archive the stale doc in
 
 | Layer | File(s) | What it holds |
 |---|---|---|
-| Constitution | `CLAUDE.md` | Mission, non-negotiables, runtime authority, release-gate pointer, supporting-doc index. **≤150w soft / 200 hard** (owner-confirmed at 198); narrative → Business Context. |
+| Constitution | `CLAUDE.md` | One-line identity + pointer, non-negotiables (incl. runtime authority), release-gate pointer, one pointers line. **≤150w soft / 200 hard** (trimmed to 137, 2026-07-02; the cap is machine-enforced by the pre-commit hook); narrative → Business Context. |
 | Codex mirror | `AGENTS.md` | Short pointer into the constitution + Codex operating stances. No duplicate rules. |
 | Modular reference | `docs/agent/*` | One concern per file. Detail behind the constitution. Stable; retrievable by path. |
 | Live memory | `docs/obsidian-vault/` | Current state, roadmap, sessions, per-core pages. Changes every session. |
@@ -30,7 +30,7 @@ Rule: a rule has exactly one owning file. Every other file references it by path
 
 ## What belongs where
 
-- `CLAUDE.md` contains the mission, non-negotiables, runtime-authority line, release-gate pointer, supporting-doc index, doc-precedence line — **and nothing else**. If new content can't live in `docs/agent/*`, question whether it belongs in the constitution at all.
+- `CLAUDE.md` contains the one-line identity, the non-negotiables (runtime authority among them), the release-gate pointer, and one pointers line — **and nothing else**. Doc precedence lives HERE (this file, the ladder above) and in `AGENTS.md`, not in the constitution. If new content can't live in `docs/agent/*`, question whether it belongs in the constitution at all.
 - `AGENTS.md` contains only the re-pointer plus Codex-specific stances.
 - `docs/agent/*` holds durable rules — nothing that should live in the vault.
 - The vault holds snapshots: what is live, what is pending, what was done — with wiki-links.
