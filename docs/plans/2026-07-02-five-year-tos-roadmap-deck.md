@@ -1,3 +1,6 @@
+<!-- NOTE (2026-07-02): the .html beside this file is now HAND-CRAFTED (customer-facing vision deck,
+     owner-directed redesign) — do NOT regenerate it with tools/deck.mjs from this outline.
+     This .md remains the internal content outline; the plan .md remains the source of truth. -->
 <!-- layout: cover -->
 # KTC · Five-Year Roadmap
 ## From Online Portal to Terminal + Depot Operating System

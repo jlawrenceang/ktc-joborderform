@@ -83,3 +83,11 @@ This ADR sets **direction and the first keystone**, not a committed delivery sch
 * `docs/research/navis-tos-landscape-2026-06-13.md` — grounded research brief (Navis product map, TOS modules, depot M&R, EDI/data standards, gap analysis, roadmap, glossary).
 * `docs/obsidian-vault/09-Future/Terminal & Depot Operating System (North Star).md` — the live vision note.
 * Provenance: ultracode multi-agent research run, 2026-06-13 (5 facets, 14 claims fact-checked, 1 refuted).
+
+---
+
+## Addendum — 2026-07-02: the three open questions, answered (owner)
+
+1. **Existing tooling characterized:** KTC's operations run on **ERPNext/Frappe** (the books — BIR invoicing stays there, as this ADR already directed) plus **Excel, SharePoint, Google Sheets, and manual processes** for gate/yard/M&R-class work. Consequences: operational modules are **CREATE** (strangle the spreadsheets one module at a time); finance is a **coexistence boundary** (the spine posts billing outputs toward Frappe's books; no book migration is planned); the **buy-option (Option D) closes** — ERPNext is not a TOS, and no incumbent TOS exists to buy against.
+2. **Lead pillar order ratified: gate ops → depot M&R → billing depth (2-1-3)** — with the owner's ambition that all three land within the first sequence band. The delivery model is **phase durations, not calendar years**: the five-year roadmap's years are default sequence bands; the owner pulls any phase forward when the business needs it (`docs/plans/2026-07-02-five-year-tos-roadmap.md` §1.5 owns the phase table).
+3. **Spine scope: container-only, extension-ready.** ISO 6346 containers are the business today; the event log is designed so a cargo-type dimension can be added later without rework, and nothing mixed-cargo is built speculatively. **The Year-1 spine schema freeze is unblocked.**

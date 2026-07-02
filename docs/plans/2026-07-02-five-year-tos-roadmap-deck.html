@@ -1,42 +1,305 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KTC · Five-Year Roadmap</title><style>:root{--accent:#0e7490;--ink:#0b1526;--ink2:#51607a;--paper:#f6f8fb;--line:#dde4ee;--shell:#0b1526}
-*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}
-body{font:18px/1.6 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--shell);overflow:hidden}
-#deck{height:100vh;width:100vw;position:relative}
-.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:9vh 10vw;background:var(--paper);overflow:auto}
-.slide.active{display:flex;animation:in .45s cubic-bezier(.2,.7,.2,1)}
-@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.slide h1{font-family:"Segoe UI",system-ui,sans-serif;font-size:clamp(30px,5vw,62px);font-weight:700;letter-spacing:-.025em;line-height:1.04;margin-bottom:.4em}
-.slide h2{font-family:"Segoe UI",system-ui,sans-serif;font-size:clamp(24px,3.4vw,40px);font-weight:650;letter-spacing:-.015em;margin-bottom:.5em}
-.slide h3{font-size:1.35em;font-weight:700;color:var(--ink2);margin-bottom:.3em}
-.slide p{margin:.45em 0;max-width:62ch}.slide ul,.slide ol{margin:.4em 0 .4em 1.1em;max-width:62ch}.slide li{margin:.3em 0}
-.slide li::marker{color:var(--accent)}.slide strong{color:var(--accent)}
-.slide code{font:.88em ui-monospace,"SF Mono",monospace;background:#00000010;padding:.1em .35em;border-radius:5px}
-.slide pre{background:var(--shell);color:#f0f3f0;padding:1em 1.2em;border-radius:11px;overflow:auto;margin:.6em 0;font-size:.85em}.slide pre code{background:none;color:inherit}
-.slide blockquote{font-size:1.25em;font-style:italic;border-left:3px solid var(--accent);padding-left:.9em;color:var(--ink2);margin:.6em 0}
-.slide a{color:var(--accent);text-underline-offset:3px}.slide img{max-width:100%;border-radius:10px}.slide hr{border:0;border-top:1px solid var(--line);margin:1em 0}
-.slide--cover{justify-content:center;background:var(--shell);color:var(--paper)}.slide--cover h1{font-size:clamp(38px,7vw,86px)}.slide--cover h2,.slide--cover h3{color:#c9cdd6}.slide--cover::before{content:"";position:absolute;top:0;left:0;width:100%;height:6px;background:var(--accent)}
-.slide--section{justify-content:center;background:var(--accent);color:#ffffff}.slide--section h1,.slide--section h2,.slide--section h3{color:#ffffff}.slide--section strong{color:#ffffff;text-decoration:underline;text-decoration-thickness:2px}
-.slide--quote{justify-content:center;align-items:center;text-align:center}.slide--quote blockquote{font-size:clamp(24px,3.4vw,42px);border:0;max-width:26ch;font-style:normal;font-weight:600;color:var(--ink)}
-.slide--two-col>:not(h1):not(h2){column-count:2;column-gap:3em}
-.slide--chart{justify-content:flex-start}.chart{flex:1;min-height:54vh;margin-top:.4em;width:100%}
-.notes{display:none}
-#bar{position:fixed;bottom:0;left:0;height:3px;background:var(--accent);width:0;transition:width .35s ease;z-index:20}
-#count{position:fixed;bottom:14px;right:18px;font:13px "Segoe UI",system-ui,sans-serif;color:var(--ink2);background:#ffffffcc;padding:3px 11px;border-radius:20px;z-index:20}
-#notes{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:var(--shell);color:#e8e8e8;padding:16px 10vw;font-size:15px;line-height:1.5;display:none;z-index:30;border-top:3px solid var(--accent);white-space:pre-wrap}
-@media print{body{overflow:visible;background:#fff}.slide{display:flex!important;position:relative;height:100vh;page-break-after:always;animation:none}#bar,#count{display:none}}</style></head><body><main id="deck"><section class="slide slide--cover"><h1>KTC · Five-Year Roadmap</h1><h2>From Online Portal to Terminal + Depot Operating System</h2><p>Executing ADR-0015 (Octopi-class, container spine first) · 2026 → 2031</p><aside class="notes">The plan doc (same folder, same date) is the source of truth; this deck is the walkthrough.</aside></section>
-<section class="slide slide--default"><h2>Where we stand — mid-2026</h2><ul><li>Portal <strong>v2.0.x at the last go-live stations</strong> — 184/184 read-only battery, break-test closed, blind walk done</li><li>Money spine <strong>sound</strong> (8 billing invariants)</li><li>The container itself: <strong>still off-system</strong> — the single biggest missing foundation</li><li>Reference class decided: <strong>depot-tier, never enterprise-TOS</strong> (small terminals pay enterprise prices and use ~30% of the features)</li></ul></section>
-<section class="slide slide--default"><h2>The thesis (already ratified — ADR-0015)</h2><p>Build the <strong>container data spine</strong> first:</p><ul><li><code>containers</code> — ISO 6346-keyed, check-digit validated, owner line + grade</li><li><code>container_events</code> — <strong>append-only; the source of truth</strong> (every &quot;current state&quot; is derived)</li><li><strong>EIR</strong> at every gate event — photos, damage codes, signatures</li></ul><p>Every later module is a projection over this spine. In a custodian business, <strong>the audit trail is the product</strong>.</p></section>
-<section class="slide slide--default"><h2>Year 1 · Operate, then lay the spine</h2><p><strong>H1:</strong> finish the four open stations (mutating e2e → roast at 90 → ST08 side-by-side → go/no-go + watch window) — then operate, boring on purpose <strong>H2:</strong> the spine + e-EIR gate v1, reusing patterns the portal already has (e-sig, upload/review, serving queues)</p><p><em>Exit: every gate crossing spine-recorded for 60 days straight.</em></p></section>
-<section class="slide slide--default"><h2>Year 2 · Gate ops + depot M&amp;R — the revenue core</h2><ul><li>Gate: appointments · weighbridge/<strong>VGM</strong> (calibration expiry = a monitored system fact) · TAPP-accredited trucker registry</li><li><strong>M&amp;R: survey → CEDEX-coded estimate → line approval → repair → release</strong> — the defining depot workflow, billable end-to-end</li><li>Storage billing: day-counted from the movement record, per-line free time + per-diem</li></ul><p><em>Exit: one full M&amp;R cycle in production for ≥2 lines; a quarter of auto-derived storage invoices.</em></p></section>
-<section class="slide slide--default"><h2>Year 3 · Yard truth + billing generalization</h2><ul><li>Yard map: block/bay/row/tier · occupancy is a <strong>query, never a stored flag</strong></li><li>Work orders: pull-based single-next-job queues</li><li>Tariff engine: every invoice line = movement event × tariff row</li><li>The kaizen metric: <strong>rehandles per move</strong> (the ideal is two touches)</li></ul></section>
-<section class="slide slide--default"><h2>Year 4 · Integration — speak the lines&#39; languages</h2><ul><li><strong>Outbound adapters:</strong> one internal event → EDIFACT CODECO <em>or</em> DCSA JSON per partner (the industry dual-speaks through the 2020s)</li><li><strong>Universal inbox:</strong> accept EDI, spreadsheets, PDF pre-advise, portal email — normalize internally; <em>never gate on the counterparty modernizing</em> (manual pre-advise is standard PH practice)</li><li>BOC: <strong>reconcile</strong> e2m/E-TRACC — never file</li><li>Start with ONE line, prove the round-trip, then the second</li></ul></section>
-<section class="slide slide--default"><h2>Year 5 · Measure, optimize — and the option</h2><ul><li>KPI layer: moves/hour · truck turn time · dwell · rehandles · M&amp;R cycle time</li><li>Berth scheduling only if vessel business grows (interval model, no optimizer)</li><li><strong>The productization gate (owner decision, an ADR):</strong> five years of operating our own depot on it = the demo; the market gap (web-native vs legacy roll-ups) is real; &quot;<em>no — it stays KTC&#39;s edge</em>&quot; is an equally valid outcome</li></ul></section>
-<section class="slide slide--default"><h2>Execution: who builds what</h2><ul><li><strong>Schema/spine, billing</strong> — default-class, single-owner, <code>/spec</code> → <code>jarvis</code> always + eval invariants</li><li><strong>Screens/CRUD</strong> — Sonnet-class off the confirmed spec → roast at 90</li><li><strong>EDI adapters</strong> — default; red-tested on planted bad messages → fixture round-trips</li><li><strong>Module go-lives</strong> — the full 15-station line → owner side-by-side</li></ul><p><strong>The fences hold:</strong> no stowage optimization, no equipment automation, no BIR rebuild, no PCS — new evidence + an ADR, or not at all.</p></section>
-<section class="slide slide--quote"><blockquote>Sequence by dependency, not visibility. The spine is invisible to customers — and it is the whole future.</blockquote><p><strong>Owner&#39;s open questions (each gates a fork):</strong> characterize the existing tooling · which pillar leads commercially · container-only or mixed cargo (blocks the Y1-H2 schema freeze).</p></section></main><div id="bar"></div><div id="count"></div><div id="notes"></div><script>(function(){var S=[].slice.call(document.querySelectorAll('.slide')),cur=0,mounted={},N=document.getElementById('notes');
-function mount(sl){if(typeof vegaEmbed==='undefined')return;[].forEach.call(sl.querySelectorAll('.chart'),function(el){if(mounted[el.id])return;mounted[el.id]=1;try{var sp=JSON.parse(el.dataset.spec.replace(/&#39;/g,"'"));if(!sp.width)sp.width='container';if(!sp.height)sp.height='container';if(!sp.background)sp.background='transparent';vegaEmbed('#'+el.id,sp,{actions:false})}catch(e){el.textContent='chart error: '+e.message}})}
-function show(n){cur=Math.max(0,Math.min(S.length-1,n));S.forEach(function(s,i){s.classList.toggle('active',i===cur)});document.getElementById('bar').style.width=((cur+1)/S.length*100)+'%';document.getElementById('count').textContent=(cur+1)+' / '+S.length;location.hash=cur+1;mount(S[cur]);var a=S[cur].querySelector('.notes');if(N.style.display==='block')N.textContent=a?a.textContent:'(no notes)'}
-function next(){show(cur+1)}function prev(){show(cur-1)}
-addEventListener('keydown',function(e){var k=e.key;if(k==='ArrowRight'||k==='ArrowDown'||k===' '||k==='PageDown'){e.preventDefault();next()}else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'){e.preventDefault();prev()}else if(k==='Home'){show(0)}else if(k==='End'){show(S.length-1)}else if(k==='s'||k==='S'){var a=S[cur].querySelector('.notes');N.style.display=N.style.display==='block'?'none':'block';N.textContent=a?a.textContent:'(no notes)'}});
-var sx=0;addEventListener('touchstart',function(e){sx=e.touches[0].clientX});addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-sx;if(dx<-50)next();else if(dx>50)prev()});
-addEventListener('click',function(e){if(e.target.closest('a')||e.target.closest('#notes'))return;(e.clientX/innerWidth>0.5?next:prev)()});
-show((parseInt(location.hash.slice(1),10)||1)-1)})();</script></body></html>
+<!DOCTYPE html>
+<!-- HAND-CRAFTED customer-facing vision deck (2026-07-02, replaces the deck.mjs render — do NOT regenerate
+     with tools/deck.mjs; the .md beside it is the content outline, this file is the presentation).
+     Nav: ← → / space / click right edge · P = print view (one slide per page). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KTC — The Terminal &amp; Depot Operating System · Five-Year Vision</title>
+<style>
+  :root{
+    --harbor:#081420; --harbor2:#0c1d2e; --steel:#16283a; --line:#1f3549;
+    --ink:#e8eef4; --ink2:#8aa0b4; --ink3:#54708a;
+    --amber:#f0a638; --amber2:#c77f1a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:var(--harbor);color:var(--ink);
+    font:400 16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif;overflow:hidden}
+  ::selection{background:var(--amber);color:#081420}
+
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:7vh 9vw;opacity:0;transform:translateX(4vw);transition:opacity .45s ease,transform .45s ease;
+    pointer-events:none;visibility:hidden}
+  .slide.active{opacity:1;transform:none;pointer-events:auto;visibility:visible}
+  .slide.prev{transform:translateX(-4vw)}
+
+  .kick{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);
+    font-weight:700;margin-bottom:2.2vh}
+  .kick .n{color:var(--ink3);margin-right:1.2em}
+  h1{font-size:clamp(40px,6.2vw,86px);line-height:1.02;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(30px,4.2vw,56px);line-height:1.06;font-weight:800;letter-spacing:-.015em;margin-bottom:3.5vh}
+  h2 em{color:var(--amber);font-style:normal}
+  .sub{font-size:clamp(16px,1.5vw,21px);color:var(--ink2);max-width:62ch;margin-top:2.5vh}
+  .lead{font-size:clamp(17px,1.6vw,22px);color:var(--ink2);max-width:64ch}
+  .lead strong,li strong{color:var(--ink);font-weight:700}
+  .accentbar{width:64px;height:3px;background:var(--amber);margin:3.2vh 0 0}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:start}
+  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:2.2vw;align-items:stretch}
+
+  .card{background:var(--harbor2);border:1px solid var(--line);border-radius:10px;padding:2.6vh 1.6vw}
+  .card h3{font-size:clamp(15px,1.25vw,19px);font-weight:700;margin-bottom:1vh;color:var(--ink)}
+  .card p{font-size:clamp(13px,1.05vw,15.5px);color:var(--ink2)}
+  .card .tag{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--amber);font-weight:700;margin-bottom:1.1vh}
+
+  .big{font-size:clamp(44px,5vw,72px);font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--amber)}
+  .big small{display:block;font-size:clamp(12px,1vw,14px);font-weight:600;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink2);margin-top:1.2vh;line-height:1.4}
+
+  ul.feat{list-style:none;display:grid;gap:1.6vh;font-size:clamp(14px,1.25vw,17.5px);color:var(--ink2)}
+  ul.feat li{padding-left:1.6em;position:relative}
+  ul.feat li::before{content:"";position:absolute;left:0;top:.52em;width:.7em;height:2px;background:var(--amber)}
+
+  /* phase roadmap */
+  .road{display:grid;gap:1.1vh;margin-top:1vh}
+  .ph{display:grid;grid-template-columns:64px 1fr auto;gap:1.4vw;align-items:center;
+    background:var(--harbor2);border:1px solid var(--line);border-radius:8px;padding:1.5vh 1.3vw}
+  .ph .id{font-weight:800;font-size:clamp(16px,1.5vw,22px);color:var(--amber)}
+  .ph .what{font-size:clamp(13px,1.15vw,16.5px);color:var(--ink)}
+  .ph .what span{color:var(--ink3);display:block;font-size:.86em}
+  .ph .dur{font-size:clamp(12px,1vw,14px);color:var(--ink2);font-weight:700;white-space:nowrap;
+    border:1px solid var(--line);border-radius:99px;padding:.35em .9em}
+  .ph.now{border-color:var(--amber2);box-shadow:0 0 0 1px var(--amber2) inset}
+  .ph.now .dur{color:var(--amber);border-color:var(--amber2)}
+
+  /* event spine visual */
+  .spine{display:flex;align-items:center;gap:0;margin:4vh 0 2vh}
+  .ev{flex:1;text-align:center;position:relative}
+  .ev .dot{width:14px;height:14px;border-radius:50%;background:var(--harbor);border:3px solid var(--amber);
+    margin:0 auto 1.4vh;position:relative;z-index:1}
+  .ev .lbl{font-size:clamp(11px,.95vw,13.5px);font-weight:700;color:var(--ink)}
+  .ev .t{font-size:clamp(10px,.85vw,12px);color:var(--ink3)}
+  .ev::after{content:"";position:absolute;top:6px;left:50%;width:100%;height:2px;background:var(--line)}
+  .ev:last-child::after{display:none}
+
+  /* container stack motif */
+  .stack{position:absolute;right:6vw;bottom:0;width:30vw;max-width:460px;opacity:.5;pointer-events:none}
+
+  .foot{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;
+    padding:14px 24px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);z-index:5}
+  .prog{position:fixed;top:0;left:0;height:3px;background:var(--amber);width:0;transition:width .3s ease;z-index:6}
+
+  .quote{font-size:clamp(24px,3vw,40px);font-weight:700;line-height:1.25;max-width:26ch}
+  .quote em{color:var(--amber);font-style:normal}
+
+  .loop{display:flex;flex-wrap:wrap;gap:.7vw;margin:3vh 0;align-items:center}
+  .loop .st{background:var(--steel);border:1px solid var(--line);border-radius:8px;
+    padding:1.2vh 1.1vw;font-size:clamp(12px,1.05vw,15px);font-weight:700}
+  .loop .st small{display:block;font-weight:400;color:var(--ink2);font-size:.84em}
+  .loop .arr{color:var(--amber);font-weight:800}
+  .loop .st.money{border-color:var(--amber2)}
+
+  @media print{
+    html,body{overflow:visible;background:#fff;color:#111}
+    .slide{position:relative;inset:auto;opacity:1;transform:none;visibility:visible;pointer-events:auto;
+      page-break-after:always;min-height:96vh;padding:6vh 8vw;color:#111}
+    :root{--ink:#111;--ink2:#444;--ink3:#777;--harbor2:#f5f5f2;--steel:#eee;--line:#ddd}
+    .foot,.prog{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="prog" id="prog"></div>
+
+<!-- 1 · COVER -->
+<section class="slide active">
+  <div class="kick">KTC Container Terminal Corp. · 2026 → 2031</div>
+  <h1>From online portal<br>to the operating system<br>of the <span style="color:var(--amber)">terminal</span>.</h1>
+  <p class="sub">A five-year build-out from the portal customers already use to a full terminal &amp; depot
+  operating system — gate, yard, repairs, billing, and shipping-line integration on one spine.</p>
+  <div class="accentbar"></div>
+  <svg class="stack" viewBox="0 0 460 300" fill="none">
+    <g stroke="#1f3549" stroke-width="2">
+      <rect x="20"  y="240" width="130" height="52" fill="#0c1d2e"/>
+      <rect x="160" y="240" width="130" height="52" fill="#0c1d2e"/>
+      <rect x="300" y="240" width="130" height="52" fill="#0c1d2e"/>
+      <rect x="90"  y="182" width="130" height="52" fill="#0c1d2e"/>
+      <rect x="230" y="182" width="130" height="52" fill="#0c1d2e"/>
+      <rect x="160" y="124" width="130" height="52" fill="#16283a" stroke="#f0a638"/>
+    </g>
+    <g stroke="#54708a" stroke-width="1" opacity=".6">
+      <line x1="35" y1="240" x2="35" y2="292"/><line x1="135" y1="240" x2="135" y2="292"/>
+      <line x1="175" y1="240" x2="175" y2="292"/><line x1="275" y1="240" x2="275" y2="292"/>
+      <line x1="315" y1="240" x2="315" y2="292"/><line x1="415" y1="240" x2="415" y2="292"/>
+      <line x1="105" y1="182" x2="105" y2="234"/><line x1="205" y1="182" x2="205" y2="234"/>
+      <line x1="245" y1="182" x2="245" y2="234"/><line x1="345" y1="182" x2="345" y2="234"/>
+      <line x1="175" y1="124" x2="175" y2="176"/><line x1="275" y1="124" x2="275" y2="176"/>
+    </g>
+    <line x1="0" y1="292" x2="460" y2="292" stroke="#1f3549" stroke-width="2"/>
+  </svg>
+</section>
+
+<!-- 2 · PROOF -->
+<section class="slide">
+  <div class="kick"><span class="n">02</span>Where we already are</div>
+  <h2>The portal is <em>built, hardened, and proven.</em></h2>
+  <div class="cols3">
+    <div class="card"><div class="big">184<small>of 184 automated end-to-end checks passing</small></div></div>
+    <div class="card"><div class="big">7/7<small>adversarial break-test findings found &amp; closed</small></div></div>
+    <div class="card"><div class="big">6<small>staff roles, every permission enforced server-side</small></div></div>
+  </div>
+  <p class="lead" style="margin-top:3.5vh">Customers file job orders, releases, and payments online today —
+  X-ray queues, cashiering, vessel schedules, bilingual help. The money paths carry
+  <strong>eight audited billing invariants</strong>. This is the foundation the next five years build on,
+  not a prototype.</p>
+</section>
+
+<!-- 3 · THE GAP -->
+<section class="slide">
+  <div class="kick"><span class="n">03</span>The opportunity</div>
+  <h2>The portal knows the <em>paperwork.</em><br>It doesn't yet know the <em>container.</em></h2>
+  <div class="cols">
+    <ul class="feat">
+      <li>Gate logs, yard positions, and repair estimates live in <strong>spreadsheets, SharePoint, and memory</strong> — invisible to the system and to customers.</li>
+      <li>Every dispute with a shipping line comes down to <strong>whose record is believed</strong> — and paper loses.</li>
+      <li>Storage days, repair approvals, and handling events are <strong>revenue that must be remembered</strong> to be billed.</li>
+    </ul>
+    <ul class="feat">
+      <li>Shipping lines increasingly expect <strong>electronic gate reports and instant status</strong> — the operators who provide them get the volume.</li>
+      <li>The books stay in ERPNext where they belong. What's missing is the <strong>operations brain</strong> beside them.</li>
+      <li>The systems the industry sells for this are <strong>enterprise-priced, decades old, and built for mega-ports</strong>. We build the modern one, sized for KTC.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 4 · THE IDEA -->
+<section class="slide">
+  <div class="kick"><span class="n">04</span>The idea — decided and ratified</div>
+  <h2>Make the container a <em>first-class citizen.</em></h2>
+  <p class="lead">One record per box, keyed on its international ID. One <strong>append-only event history</strong>
+  nothing can rewrite. One legal-grade <strong>digital EIR</strong> — photos, damage codes, signatures — at every
+  gate crossing. Every module after that is just a window onto this spine.</p>
+  <div class="spine">
+    <div class="ev"><div class="dot"></div><div class="lbl">Gate in</div><div class="t">EIR + survey</div></div>
+    <div class="ev"><div class="dot"></div><div class="lbl">Yard</div><div class="t">position known</div></div>
+    <div class="ev"><div class="dot"></div><div class="lbl">Repair</div><div class="t">estimate → approval</div></div>
+    <div class="ev"><div class="dot"></div><div class="lbl">Storage</div><div class="t">days counted</div></div>
+    <div class="ev"><div class="dot"></div><div class="lbl">Gate out</div><div class="t">release verified</div></div>
+    <div class="ev"><div class="dot"></div><div class="lbl">Invoice</div><div class="t">from the record</div></div>
+  </div>
+  <p class="lead" style="font-size:15px;color:var(--ink3)">In a business where every box belongs to a shipping line
+  and every move is billed back to it, <strong style="color:var(--ink2)">the audit trail is the product.</strong></p>
+</section>
+
+<!-- 5 · DELIVERY MODEL -->
+<section class="slide">
+  <div class="kick"><span class="n">05</span>How it gets delivered</div>
+  <h2>Phases with durations — <em>not promises on a calendar.</em></h2>
+  <div class="road">
+    <div class="ph now"><div class="id">P0</div><div class="what">Finish go-live, operate the portal<span>the last four checkpoints, then a watch window</span></div><div class="dur">1–2 months</div></div>
+    <div class="ph"><div class="id">P1</div><div class="what">The container / EIR spine<span>every box, every event, every EIR — from day one</span></div><div class="dur">3–4 months</div></div>
+    <div class="ph"><div class="id">P2</div><div class="what">Gate operations<span>appointments · certified weighing · EIR at the gate in minutes</span></div><div class="dur">~3 months</div></div>
+    <div class="ph"><div class="id">P3</div><div class="what">Depot repairs &amp; storage billing<span>survey → estimate → line approval → repair → invoice</span></div><div class="dur">4–5 months</div></div>
+    <div class="ph"><div class="id">P4–P7</div><div class="what">Tariff engine · yard map · line integration · KPIs<span>each phase starts when its foundation is proven</span></div><div class="dur">sequenced</div></div>
+  </div>
+  <p class="lead" style="font-size:15px;margin-top:2vh;color:var(--ink3)">The order is fixed by dependency; the calendar
+  is yours. Any phase can be pulled forward when the business needs it — and no phase starts on an unproven foundation.</p>
+</section>
+
+<!-- 6 · GATE -->
+<section class="slide">
+  <div class="kick"><span class="n">06</span>Phase 2 · The gate</div>
+  <h2>The gate becomes a <em>system,</em><br>not a clipboard.</h2>
+  <div class="cols">
+    <ul class="feat">
+      <li><strong>Booked arrival windows</strong> — trucks stop stacking up; the yard breathes.</li>
+      <li><strong>Digital EIR in minutes</strong> — photos, damage marks, seal, weight, signature, at the box.</li>
+      <li><strong>Certified weighing built in</strong> — export boxes never bounce for a lapsed scale certificate.</li>
+    </ul>
+    <ul class="feat">
+      <li><strong>Accredited trucker registry</strong> — permits tracked with renewal alarms, not binders.</li>
+      <li><strong>Release validation at exit</strong> — no box leaves without a matched line reference. Ever.</li>
+      <li>Every gate event lands on the spine — <strong>billable, provable, permanent.</strong></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 7 · M&R -->
+<section class="slide">
+  <div class="kick"><span class="n">07</span>Phase 3 · Repairs &amp; storage — the revenue engine</div>
+  <h2>Every repair approved.<br>Every storage day <em>billed.</em></h2>
+  <div class="loop">
+    <div class="st">Survey<small>at the gate, with photos</small></div><div class="arr">→</div>
+    <div class="st">Estimate<small>industry damage codes</small></div><div class="arr">→</div>
+    <div class="st money">Line approval<small>digital, line-item</small></div><div class="arr">→</div>
+    <div class="st">Repair<small>only approved scope</small></div><div class="arr">→</div>
+    <div class="st money">Invoice<small>from the record</small></div>
+  </div>
+  <p class="lead">This loop is <strong>the defining workflow of depot software</strong> — and today it runs on
+  spreadsheets and phone calls. Systematized, nothing leaks: storage days count themselves from gate-in to
+  gate-out, repair markups bill from approved estimates, and the industry-standard inspection criteria are
+  built into the form, not the inspector's memory.</p>
+</section>
+
+<!-- 8 · INTEGRATION -->
+<section class="slide">
+  <div class="kick"><span class="n">08</span>Phases 4–6 · Yard, tariffs, and the lines</div>
+  <h2>Speak every line's language — <em>without waiting for anyone.</em></h2>
+  <div class="cols3">
+    <div class="card"><div class="tag">Yard truth</div><h3>Every box findable</h3><p>Block-bay-row-tier positions, a live yard map, and re-handles measured — the crew stops searching and starts moving.</p></div>
+    <div class="card"><div class="tag">One tariff engine</div><h3>Every peso traceable</h3><p>Each invoice line derives from a recorded movement × an agreed rate. Disputes end at the audit trail.</p></div>
+    <div class="card"><div class="tag">Line integration</div><h3>Their format, our spine</h3><p>Standard electronic gate reports for lines that speak EDI — and a universal inbox for the ones that send spreadsheets and email. Customs records reconciled, never re-keyed.</p></div>
+  </div>
+  <p class="lead" style="margin-top:3vh;font-size:15px;color:var(--ink3)">One line first, proven end-to-end. Then the next. Integration is won line by line — not promised all at once.</p>
+</section>
+
+<!-- 9 · OUTCOMES -->
+<section class="slide">
+  <div class="kick"><span class="n">09</span>What KTC gains</div>
+  <h2>Control. Capture. <em>Standing.</em></h2>
+  <div class="cols3">
+    <div class="card"><div class="tag">Revenue capture</div><h3>Nothing forgotten</h3><p>Storage days, repairs, handling — billed from records, not recollection. Depot-side charges can run 8–15% of a shipper's logistics cost; capturing them fully is the fastest payback in the plan.</p></div>
+    <div class="card"><div class="tag">Dispute protection</div><h3>The record wins</h3><p>A photo-backed EIR and an unchangeable event history at every handover. When a line disputes a damage or a day count — KTC's record is the strong one.</p></div>
+    <div class="card"><div class="tag">Market position</div><h3>The modern operator</h3><p>Instant status for customers, electronic reporting for lines, KPIs for management. The service level that wins volume — at depot scale, on a modern web stack.</p></div>
+  </div>
+</section>
+
+<!-- 10 · WHY SAFE -->
+<section class="slide">
+  <div class="kick"><span class="n">10</span>Why this path is safe</div>
+  <h2>Built the way the portal was built — <em>proven before trusted.</em></h2>
+  <ul class="feat" style="max-width:66ch">
+    <li><strong>It already works this way:</strong> the live portal passed 184/184 automated checks, an adversarial break-test, and a blind human walkthrough before launch. Every phase of this plan passes the same production line.</li>
+    <li><strong>Nothing bet on a rewrite:</strong> the books stay in ERPNext; the spine grows underneath the running portal; spreadsheets are retired one module at a time — never a big-bang cutover.</li>
+    <li><strong>Independent verification on every money path:</strong> no billing logic ships on its author's word alone.</li>
+    <li><strong>Each phase has an exit test</strong> — measured in production — before the next begins. A phase that isn't proven doesn't get built on.</li>
+  </ul>
+</section>
+
+<!-- 11 · CLOSE -->
+<section class="slide">
+  <div class="kick"><span class="n">11</span>The road ahead</div>
+  <p class="quote">The container becomes the record.<br>The record becomes the revenue.<br>
+  <em>The system becomes the terminal's edge.</em></p>
+  <p class="sub" style="margin-top:4vh"><strong style="color:var(--ink)">Next steps:</strong> close the last four
+  go-live checkpoints · confirm the phase-1 spine scope · first spine milestone review at the end of P1.</p>
+  <div class="accentbar"></div>
+</section>
+
+<div class="foot">
+  <span>KTC · Terminal &amp; Depot Operating System — Five-Year Vision</span>
+  <span id="ctr">1 / 11</span>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];let i=0;
+  const prog=document.getElementById('prog'),ctr=document.getElementById('ctr');
+  function go(n){
+    n=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>{s.classList.toggle('active',k===n);s.classList.toggle('prev',k<n)});
+    i=n;prog.style.width=((n+1)/slides.length*100)+'%';ctr.textContent=(n+1)+' / '+slides.length;
+  }
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key))go(i+1);
+    if(['ArrowLeft','PageUp'].includes(e.key))go(i-1);
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+    if(e.key==='p'||e.key==='P')print();
+  });
+  addEventListener('click',e=>{ if(e.target.closest('a'))return;
+    (e.clientX>innerWidth*.5)?go(i+1):go(i-1)});
+  go(0);
+</script>
+</body>
+</html>

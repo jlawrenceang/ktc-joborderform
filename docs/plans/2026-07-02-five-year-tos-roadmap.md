@@ -27,11 +27,30 @@ Every module ships through the framework's Loop (spec → plan → build → ver
 | Gate (B4), billing/VAS incl. inspections (B7) | Partial — implemented as portal workflows, not spine projections | June research §E |
 | Depot M&R | Absent | June research §C |
 
-**Standing decisions that constrain this plan (do not re-litigate without new evidence):** Octopi-class not N4 (ADR-0015 option A rejected) · spine first (option C rejected) · buy-vs-build revisit only after the "existing TOS" characterization (option D "not foreclosed") · do-NOT-attempt-early list (stowage optimization, full EDI suite up front, equipment automation, optimizer decking, BIR invoice rebuild, PCS membership) · BIR invoicing stays in the existing accounting stack.
+**Standing decisions that constrain this plan (do not re-litigate without new evidence):** Octopi-class not N4 (ADR-0015 option A rejected) · spine first (option C rejected) · buy-option (D) CLOSED 2026-07-02 — the characterization found ERPNext (books) + spreadsheets (ops), no incumbent TOS · do-NOT-attempt-early list (stowage optimization, full EDI suite up front, equipment automation, optimizer decking, BIR invoice rebuild, PCS membership) · BIR invoicing stays in the existing accounting stack.
 
-**Open questions carried from ADR-0015 (owner's to answer, each gates a fork below):** (1) characterize KTC's *existing* operational tooling — decides upgrade-vs-create per module; (2) which pillar leads commercially, terminal ops vs depot M&R vs billing; (3) container-only or mixed-cargo spine (affects the data model — decide before Y1-H2 schema freeze).
+**Open questions: ANSWERED 2026-07-02 (owner; recorded as the ADR-0015 addendum):** (1) the incumbent stack is **ERPNext/Frappe for the books + Excel/SharePoint/Google Sheets + manual process for operations** — so ops modules are CREATE (strangle the spreadsheets one phase at a time), finance is a **coexistence boundary** (the spine emits billing outputs toward Frappe; no book migration in this plan), and the buy-option closes (no incumbent TOS exists); (2) pillar order **gate → M&R → billing (2-1-3)**, all three targeted inside the first sequence band; (3) **container-only, extension-ready** — the Year-1 spine schema freeze is UNBLOCKED.
 
 ---
+
+## 1.5 The delivery model: phases with durations, not calendar years (owner-ratified 2026-07-02)
+
+The years below are **default sequence bands**, not calendar commitments. Each module block is a **phase with a duration estimate**; the dependency order is binding, the calendar is not, and **the owner pulls any phase forward** when the business needs it. First-band ambition: the spine plus all three lead pillars started, in the ratified order **gate → M&R → billing**.
+
+| Phase | Scope | Duration est. | Depends on |
+|---|---|---|---|
+| P0 | Go-live closeout + operate (the 4 open stations + watch window) | 1–2 mo | — |
+| P1 | Container/EIR spine (container-only, extension-ready) | 3–4 mo | P0 |
+| P2 | Gate operations v2 (appointments · VGM · EIR-at-gate) | ~3 mo | P1 |
+| P3 | Depot M&R + storage billing | 4–5 mo | P1 (+P2 gate data) |
+| P4 | Billing/tariff generalization | 2–3 mo | P3 |
+| P5 | Yard map + work orders | 3–4 mo | P1 |
+| P6 | Integration (first line: CODECO/DCSA + universal inbox + BOC reconcile) | 4–6 mo, then ~2 mo per additional line | P2–P4 |
+| P7 | KPI/BI · berth (conditional) · the productization gate | 2–3 mo | P5–P6 |
+
+Band mapping: Y1 = P0+P1 (+P2 start) · Y2 = P2+P3 · Y3 = P4+P5 · Y4 = P6 · Y5 = P7. Durations assume current capacity (solo operator + the agent pipeline), firm up per phase at its `/spec`, and carry the ramp discount — first-of-class phases run slower than steady state.
+
+**ERPNext/Frappe boundary (standing):** Frappe keeps the books (BIR invoicing stays there — ADR-0015); the spine emits billing outputs toward it; ops modules replace the spreadsheets/SharePoint layer one phase at a time. No book migration inside this plan.
 
 ## 2. Year 1 (2026–27) — Operate, then lay the spine
 
@@ -180,8 +199,8 @@ flowchart TD
 | Regulatory shift (TOP-CRMS unfreezes; PPA/BOC turf resolves against off-dock operators) | any new PPA/BOC issuance touching depot registration | re-scope Y4's compliance surfaces first — regulation outranks roadmap |
 | Talent wall (regional TOS-ops talent is "dozens, not hundreds") | hiring/ops onboarding stalls a module's adoption | slow the module cadence, deepen operator UX + training material instead — adoption beats features |
 | Line-integration cost blowout (the domain's known hidden cost) | first CODECO onboarding exceeds 2× its spec estimate | stop; universal-inbox-only for that line; re-estimate the Y4 exit gate |
-| Spine schema wrong for mixed cargo (open Q3 unanswered before Y1-H2) | breakbulk/RoRo business materializes | the schema freeze WAITS on Q3's answer — this is a named blocker, not a surprise |
-| Buy-option resurfaces (ADR-0015 Q1) | "existing TOS" characterization finds a system worth keeping | honest buy-vs-build ADR before Y2 commits — option D was never foreclosed |
+| Mixed cargo materializes later (Q3 answered: container-only, extension-ready) | breakbulk/RoRo volume appears | the event log's extension point takes a cargo-type dimension — a deliberate ADR, never a rework-in-place |
+| Frappe boundary friction (Q1 answered: ERPNext holds the books) | double-entry drift between spine billing outputs and Frappe books | the boundary is reconciled per phase exit gate; book migration stays out of scope without its own ADR |
 | Solo-operator bus factor | — | the successor-notes + this plan + the framework's methodology ARE the mitigation: any capable agent continues from the written state |
 
 **Never on this roadmap (the fence, restated):** N4-scale automation, stowage optimization, optimizer decking, PCS membership, BIR invoice rebuild — revisiting any of these requires new evidence and an ADR, not enthusiasm.
