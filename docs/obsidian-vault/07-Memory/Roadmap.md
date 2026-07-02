@@ -2,7 +2,7 @@
 title: Roadmap
 tags: [memory, roadmap, planning]
 type: memory
-last_updated: 2026-07-01
+last_updated: 2026-07-02
 ---
 
 # 🧭 Roadmap (Phased)
@@ -41,6 +41,44 @@ Legend: **COMPLETED** · **NOW** · **NEXT** · **LATER** · **PARKED** · **NOR
 5. BOC Sheets mirror (blocked on Google service-account creds); bounded admin import if needed.
 6. Implement the 4 Playwright mutation `fixme` lanes; wire Playwright into CI.
 7. Per-customer accredited-consignee scoping; JO drafts + document attachments; status-change notifications.
+
+## LATER — Customer access & adoption (post-go-live UX; owner brainstorm 2026-07-02)
+
+Non-blocking next-phase wins to lower the barrier to using the portal and drive adoption. Grouped by effort. **The fast-path ideas must not weaken identity/accountability** (the anti-fraud spine).
+
+### Staff login & session (from the 2026-07-02 owner ideas)
+- **Biometric / PIN staff unlock (native app).** Replace username+password typing on shared gate devices with fingerprint/face unlock — or tap-your-name + a short PIN, or a badge QR. Identity stays EXPLICIT; the biometric/PIN authenticates. Pairs with the native app + trusted-device revoke (`0237`).
+- **Remember-me on the native device.** Persist the staff session so they don't re-login constantly; gate re-open with biometric/PIN. Balanced by single-session, idle-logout, and the "forget this device" revoke (`0237`).
+- ❌ **Rejected — password-only login (auto-identify by password).** A password *proves* identity, it doesn't *state* it: password-as-identifier causes collisions, forces unsafe searchable password storage, and destroys the who-did-what audit trail. Use the biometric/PIN path instead.
+
+### Quick-action "checkout" — magic-link, registered customers
+- **Quick-Pay magic link (start here).** Registered customer gets the "charge ready" email → taps a one-time, short-lived, single-purpose link → focused "pay this charge" page (amount + attach proof) → submit. No portal login; email is the identity; token is single-use + expiring + scoped; approved-customers only; action stays backend-enforced.
+- **Quick-File magic link (second).** Same passwordless pattern for a focused filing form; heavier (consignee/entry/vessel/containers). Builds on Lara's draft→New-JO handoff.
+
+### Ease of access — quick wins
+- **Customer PWA install ("Add to Home Screen") + web push** — the responsive site as an app-like icon with push, no store. (Staff PWA exists; extend a customer install prompt.)
+- **Passwordless magic-link sign-in** for customers generally (alongside the existing Google login) — kills "forgot password" friction.
+- **Notify on the customer's channel** (SMS/Viber) with a deep "track / pay" link straight to the order.
+- **"Re-file this order" (clone a past JO) + saved/favourite consignees** — brokers repeat similar orders; one tap to duplicate.
+- **Public no-login rate calculator + vessel schedule** as a teaser / lead-gen.
+
+### Ease of access — long term
+- **Customer native app (Capacitor)** — push, camera doc-capture (snap the DO/BL), offline drafts, QR scan; the customer-facing counterpart to the staff app.
+- **Real payment gateway** (GCash / card / bank API) — instant confirmation, no upload-proof-then-cashier-confirm; big UX + cashier-load win.
+- **Multi-user company accounts** — a broker firm with several staff + roles under one customer (supersedes the parked per-customer accredited-consignee scoping in LATER above).
+- **ERP auto-invoicing (Frappe)** — remove the manual invoice step deferred at cutover.
+- **Programmatic API / EDI** for high-volume brokers.
+
+### Promote / drive adoption — quick wins
+- **QR posters at the office/terminal windows** — "Skip the queue, file online"; counter staff nudge walk-ins to register (physical → digital funnel).
+- **Announce to the existing broker list** (email + SMS blast) that the portal is live.
+- **Share-to-client buttons** (order status, rate estimate, printable slip).
+- **First-run nudges** ("finish your first Job Order") on top of the existing tours/video.
+
+### Promote / drive adoption — long term
+- **Priority / fast-lane for online pre-payment** — a behavior lever: pre-paid-online orders served first.
+- **Customer history / analytics dashboard** (volume, spend, past orders) for stickiness.
+- **Referral / "invite your team."**
 
 ## PARKED ⏸️ — Fuel monitoring (Phase 0 done)
 
