@@ -107,3 +107,7 @@ For the current version, scale, and what's shipping next, start at `docs/obsidia
 ## Status
 
 Live and deployed on Vercel. The portal is in active development against the north-star roadmap, with ongoing pre-go-live hardening (security, break-testing, and operational polish). Current version and migration count are tracked in the living docs above rather than duplicated here.
+
+## Engineering discipline
+
+Backend-enforced access on every control path (RLS + SECURITY DEFINER RPCs; CAPTCHA and MFA server-enforced) · forward-only migrations · a six-check release gate on every change (`docs/agent/release-gate.md`) plus a security-invariants script and pre-commit secret scan · independent verification on money/permission paths, with the full pre-launch battery (e2e, security review, billing-integrity property checks, accessibility ≥90, load, sandbox break-test, blind walkthrough) recorded in `docs/audits/` · dated changelog + ADRs (`docs/adr/`) as the decision record. The five-year build-out toward the terminal + depot operating system: `docs/plans/2026-07-02-five-year-tos-roadmap.md`.
