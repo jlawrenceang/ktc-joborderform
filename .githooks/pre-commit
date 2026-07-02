@@ -1,0 +1,49 @@
+#!/bin/sh
+# Pre-commit secret scan — CANONICAL TEMPLATE (single owner; ADR-0001 ladder item 1, adopted 2026-07-02).
+# Blocks a commit whose STAGED ADDITIONS match a secret pattern — the one advisory-only gap whose
+# failure mode is irreversible (a pushed secret must be rotated). Deterministic and agent-agnostic:
+# a git hook fires for Claude, Codex, and the human alike, on every platform (Git's bundled sh).
+#
+# Install in ANY repo (2 steps; /scaffold seeds this for new repos):
+#   cp ~/.claude/tools/secret-scan/pre-commit .githooks/pre-commit
+#   git config core.hooksPath .githooks
+# Pattern resolution order (so downstream repos inherit pattern updates via each framework deploy):
+#   1) <repo>/tools/secret-scan/secret-patterns.grep   (the framework repo itself, or a repo vendoring them)
+#   2) ~/.claude/tools/secret-scan/secret-patterns.grep (the deployed global layer — the downstream default)
+#   3) neither found -> FAIL CLOSED.
+# Conscious owner override: git commit --no-verify (agents are forbidden this flag by /ship).
+
+top="$(git rev-parse --show-toplevel)" || exit 1
+pat_file="$top/tools/secret-scan/secret-patterns.grep"
+[ -f "$pat_file" ] || pat_file="$HOME/.claude/tools/secret-scan/secret-patterns.grep"
+if [ ! -f "$pat_file" ]; then
+  echo "pre-commit: no secret-pattern file found (repo tools/secret-scan/ or ~/.claude/tools/secret-scan/) - failing closed."
+  exit 1
+fi
+
+# Strip comment/blank lines into a temp pattern list (a '#' comment line IS a valid ERE and could
+# false-match, e.g. when committing the pattern file itself — so never feed comments to grep -f).
+tmp_pats="$(mktemp)" || exit 1
+trap 'rm -f "$tmp_pats"' EXIT
+grep -v '^#' "$pat_file" | grep -v '^[ 	]*$' > "$tmp_pats"
+# Fail closed on an empty active-pattern list too (grep -f on an empty file matches NOTHING,
+# which would silently pass everything — the inverse of this hook's job).
+[ -s "$tmp_pats" ] || { echo "pre-commit: pattern file has no active patterns - failing closed."; exit 1; }
+
+# Scan only ADDED lines of the staged diff (not context, not removals, not the whole repo).
+# Both greps are -E on purpose: in GNU *basic* regex, \+ is a quantifier, so a BRE '^\+\+\+'
+# silently matches everything and -v would then drop every line (a live bug caught in red-testing).
+hits="$(git diff --cached -U0 --diff-filter=ACMR \
+  | grep -E '^\+' | grep -Ev '^\+\+\+' \
+  | grep -nE -f "$tmp_pats" || true)"
+
+if [ -n "$hits" ]; then
+  echo ""
+  echo "COMMIT BLOCKED - staged changes match secret pattern(s) ($pat_file):"
+  echo "$hits" | head -10 | sed 's/^/    /'
+  echo ""
+  echo "Remove the secret from the staged changes. If it was EVER committed before, rotate it -"
+  echo "history retains it. Owner-only conscious override: git commit --no-verify (rule: /ship forbids agents)."
+  exit 1
+fi
+exit 0
