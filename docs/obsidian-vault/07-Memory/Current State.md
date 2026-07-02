@@ -8,7 +8,17 @@ last_updated: 2026-07-02
 
 # 📌 Current State (Runtime-Aligned)
 
-## 2026-07-02 — Sandbox break-test: 5 of 7 fixes applied (migration 0240)
+## 2026-07-02 — Sandbox break-test CLOSED: all 7 fixed (v2.0.18, migrations 0240–0243)
+
+**`APP_VERSION` = `v2.0.18`; latest migration `0243`; prod + sandbox current + in sync.** The last two follow-ups (BT-03, BT-05) shipped, completing the 7-finding batch (BT-01/02/04/06/07 landed in `0240`).
+
+- **BT-03 (`0241`) — consignee PII scrape closed.** A code/name-only `consignees_public` definer view now backs the 5 broker order-display embeds (MyJobOrders, Releases, Lara track/list, `JobOrderPrint` slip); the broker consignee read policy is narrowed to `requested_by = current_broker_id()` (JO/release relationship branches dropped), so filing a throwaway JO no longer unlocks TIN/contacts/doc paths. Staff reads + a broker's own consignee requests unchanged. Jarvis caught the missed `JobOrderPrint` embed pre-ship.
+- **BT-05 (`0242`) — consent version enforced server-side.** `has_recorded_consent()` compares `terms_version` to single-source `app_config('agreement_version')` (`v4`), **fail-open** if the row is missing (never a lockout). Poka-yoke: a future agreement bump must update **both** `legal.ts` and the `app_config` row.
+- **Regression caught + fixed (`0243`).** Post-apply grantee check found `consignees_public` shipped anon-readable — Supabase default privileges auto-grant `anon` SELECT on every new public view, so the whole consignee directory (code/name) was briefly public. `0243` revokes anon (verified prod + sandbox, anon → `42501`). New [[Pitfalls]] entry: every new public view needs an explicit anon revoke.
+
+**All 7 break-test findings closed.** JLA framework upgraded to **v1.4.9** this session. **Next session (owner's plan): a fresh full-lifecycle break-test against this clean state**, plus remaining go-live items (ST08 side-by-side, authenticated e2e/roast, Android Part 15).
+
+## 2026-07-02 — Sandbox break-test: 5 of 7 fixes applied (migration 0240) — *superseded by the section above (all 7 now closed)*
 
 **Migration `0240` applied + verified on prod + sandbox.** An ultracode adversarial sandbox break-test (`docs/audits/2026-07-02-sandbox-breaktest.md`) found 7 confirmed exploitable issues (1 HIGH, 4 MEDIUM, 2 LOW). Fixed in `0240` (Jarvis-verified SAFE): **BT-01** (release-docs bucket now enforces 5 MB + image/PDF server-side — was client-only), **BT-02** (create_payment_order idempotent/all-or-raise bundling — closes the concurrent-cashier "collected PO over zero charges" race), **BT-04** (consignee-request length caps + 25-pending cap), **BT-06** (no charge on a completed JO), **BT-07** (release consignee existence check). **Still open — 2 careful follow-ups:** BT-03 (consignee PII read — route broker display through a safe code/name path before narrowing the RLS) + BT-05 (consent-version re-check — single-source to avoid a lockout on the next agreement bump). Then re-run the break-test + ship.
 
