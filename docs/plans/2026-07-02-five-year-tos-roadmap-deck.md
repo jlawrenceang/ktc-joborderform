@@ -66,12 +66,10 @@ Every later module is a projection over this spine. In a custodian business, **t
 ---
 ## Execution: who builds what
 
-| Class | Routing | Check |
-|---|---|---|
-| Schema/spine, billing | default-class, single-owner, `/spec` | `jarvis` always + eval invariants |
-| Screens/CRUD | Sonnet-class off the confirmed spec | roast at 90 |
-| EDI adapters | default; red-tested on planted bad messages | fixture round-trips |
-| Module go-lives | the full 15-station line | owner side-by-side |
+- **Schema/spine, billing** — default-class, single-owner, `/spec` → `jarvis` always + eval invariants
+- **Screens/CRUD** — Sonnet-class off the confirmed spec → roast at 90
+- **EDI adapters** — default; red-tested on planted bad messages → fixture round-trips
+- **Module go-lives** — the full 15-station line → owner side-by-side
 
 **The fences hold:** no stowage optimization, no equipment automation, no BIR rebuild, no PCS — new evidence + an ADR, or not at all.
 
