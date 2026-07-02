@@ -70,7 +70,9 @@ console.log(`Building KTC Portal live APK against Supabase ref: ${ref}`)
 run('npx', ['tsc', '--noEmit'], { env })
 run('npx', ['vite', 'build'], { env })
 run('npx', ['cap', 'sync', 'android'], { env })
-run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleDebug'], { cwd: resolve('android'), env })
+// Explicit `.\` (win) / `./` (unix): cmd.exe won't resolve a bare `gradlew.bat` from the
+// cwd when NoDefaultCurrentDirectoryInExePath is set — the relative prefix fixes that.
+run(process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew', ['assembleDebug'], { cwd: resolve('android'), env })
 
 const src = resolve('android/app/build/outputs/apk/debug/app-debug.apk')
 const out = resolve('KTC-Portal-live-debug.apk')

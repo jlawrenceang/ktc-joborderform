@@ -75,7 +75,9 @@ try {
   run('npx', ['tsc', '--noEmit'], { env })
   run('npx', ['vite', 'build', '--mode', 'sandbox'], { env })
   run('npx', ['cap', 'sync', 'android'], { env })
-  run(process.platform === 'win32' ? 'gradlew.bat' : './gradlew', ['assembleDebug'], { cwd: resolve('android'), env })
+  // Explicit `.\` (win) / `./` (unix): cmd.exe won't resolve a bare `gradlew.bat` from the
+  // cwd when NoDefaultCurrentDirectoryInExePath is set — the relative prefix fixes that.
+  run(process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew', ['assembleDebug'], { cwd: resolve('android'), env })
 } finally {
   writeFileSync(stringsPath, originalStrings)
 }
