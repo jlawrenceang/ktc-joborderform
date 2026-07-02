@@ -9,6 +9,8 @@ Closes the last two findings from the 2026-07-02 sandbox break-test (`docs/audit
 
 Deploy order: the frontend (view-backed embeds, all five including the print slip `JobOrderPrint`) ships first, then `0241`/`0242` apply to prod, so the `consignees_public` view is in place as the RLS narrows (brief cosmetic consignee-column gap possible during the deploy tail, self-healing). Verification: `npm run build` green; both migrations applied + verified on sandbox — scrape closed (broker reads 0 arbitrary consignees, policy has no JO/release branch), display intact via the view, staff (admin + checker) unaffected, 0 customers forced to re-consent; Jarvis-clean on both (it caught the missed print-slip embed pre-ship); prod apply owner-authorized, applied with this release.
 
+- **Follow-up (`0243`) — `consignees_public` locked to authenticated.** Post-apply verification caught that the new view was anon-readable: Supabase's default privileges on the `public` schema auto-grant `anon` SELECT on every new view, so despite `0241` granting only `authenticated`, the whole consignee directory (id/code/name) was briefly readable by unauthenticated anon-key requests (the base `consignees` table never was). `0243` revokes anon; verified on prod + sandbox (anon → `42501`, authenticated unaffected). Logged as a PITFALLS entry (every new public view needs an explicit anon revoke). No frontend impact.
+
 ## v2.0.17 — 2026-07-02 (accessibility contrast — re-scored)
 
 Completes the v2.0.16 a11y punch-list after an axe re-scan surfaced 4 residual color-contrast failures.

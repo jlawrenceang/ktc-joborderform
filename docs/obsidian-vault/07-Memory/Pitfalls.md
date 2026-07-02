@@ -2,7 +2,7 @@
 title: Pitfalls
 tags: [memory, pitfalls]
 type: memory
-last_updated: 2026-06-29
+last_updated: 2026-07-02
 ---
 
 # ⚠️ Known Pitfalls (ktc-portal)
@@ -15,3 +15,4 @@ Repo-specific traps. Framework-level / operating traps live in `~/.claude/PITFAL
 - **Don't hardcode migration/ADR counts in docs.** The `System Scale` ADR row drifted (said 0025, disk had 0027). Keep counts in [[Current State]] and link.
 - **The aal2/MFA gate must sit ABOVE the router, not at the route level.** The MFA challenge originally lived inside `ProtectedRoute`, so App-root overlays rendered *beside* it (`FirstRunSetup`, `SessionSupersededOverlay`) and could show at aal1 (the bug the owner hit 2026-06-29). Fix: a top-level `MfaGate` in `App.tsx` that renders **only** `MfaChallenge` when a session is aal1-needing-aal2 — everything else is its child. Lesson: any whole-app auth/assurance gate belongs above `<Routes>`; anything rendered at the App root bypasses a route-level gate. (`MfaGate`, v1.7.5.)
 - **`BASE_URL=localhost` in `.env.local` silently points the whole e2e suite at a dead port.** The smoke "14/14 fail" looked like stale selectors but was the Playwright `baseURL` resolving to `localhost:3000`. `playwright.config.ts` now ignores a localhost `BASE_URL` and resolves to the deployed site unless explicitly overridden. Check the target URL before debugging selectors.
+- **A new `public`-schema VIEW is anon-readable by default — Supabase's `ALTER DEFAULT PRIVILEGES` auto-grants `anon` (and authenticated/service_role) SELECT on every new view.** `0241`'s `consignees_public` granted only `authenticated`, yet the view shipped anon-readable, publicly exposing the whole consignee directory (id/code/name) until `0243` revoked it. A definer view bypasses base-table RLS, so the default anon grant is a real leak, not cosmetic. **Rule:** any new public view/table meant for authenticated users must end with an explicit `revoke select on <obj> from anon;` (unless it's genuinely public like `app_config`'s version string). Verify grantees post-apply (`information_schema.role_table_grants`), don't assume the `grant` line is the whole story. (BT-03 remediation, v2.0.18.)

@@ -8,7 +8,10 @@
 > - **BT-01, BT-02, BT-04, BT-06, BT-07** → migration `0240` — applied + verified on **prod + sandbox**, Jarvis-clean (v2.0.17 batch).
 > - **BT-03** (consignee PII scrape) → migration `0241`: a code/name-only `consignees_public` definer view for the 4 broker display embeds + the broker branch of the consignees read policy narrowed to `requested_by = me` (JO/release relationship branches dropped). Sandbox-verified — scrape closed (broker reads 0 arbitrary consignees), broker display renders via the view, staff reads (admin + checker) unaffected.
 > - **BT-05** (frontend-only consent gate) → migration `0242`: `has_recorded_consent()` now compares `terms_version` to a single-source `app_config('agreement_version')` (fail-open if the row is missing — never a lockout). Sandbox-verified — 0 current customers would be forced to re-consent.
-> - BT-03/BT-05 status: built, Jarvis-reviewed, sandbox-applied + verified. **Prod apply (0241/0242) + frontend ship (v2.0.18) + break-test re-run pending** — see the session wrap for the exact deploy order (view lands before the RLS narrow to avoid a broker-display gap).
+> - **BT-03 + BT-05 CLOSED (v2.0.18).** Frontend shipped (5 view-backed embeds); `0241`/`0242` applied + verified on **prod + sandbox** (scrape closed — policy has no JO/release branch, broker reads 0 arbitrary consignees; display intact via the view; staff unaffected; `has_recorded_consent` compares to `app_config('v4')` fail-open; 0 forced re-consents). Jarvis caught the missed `JobOrderPrint` embed pre-ship.
+> - **Regression found + fixed in-session (`0243`).** Post-apply grantee check caught that `consignees_public` was anon-readable (Supabase default privileges auto-grant `anon` on new public views) — the whole consignee directory (code/name) was briefly public. `0243` revokes anon; verified on prod + sandbox (anon → 42501). PITFALLS entry added.
+>
+> **All 7 break-test findings are now closed.**
 
 ## Findings (ranked)
 
