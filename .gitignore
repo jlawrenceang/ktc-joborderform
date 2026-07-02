@@ -89,3 +89,11 @@ scratch*.mjs
 # B-agent E2E test artifacts (regenerable)
 dist-e2e/
 _tmp_e2e/
+
+# design-sync working state (staged scripts, build output, machine cache — regenerated per run;
+# the durable set .design-sync/{config.json,NOTES.md,conventions.md,previews/,overrides/} IS committed)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
